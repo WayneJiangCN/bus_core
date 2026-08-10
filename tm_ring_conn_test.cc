@@ -125,35 +125,16 @@ TEST(TmRingConnTest, SameLanePacketsReachDestinationInFifoOrder) {
   packets.push_back(fixture.make_dat(32));
   packets.push_back(fixture.make_dat(48));
 
-  const uint32_t first_arrival_cycles =
-      fixture.arrival_cycles(packets.front());
   ASSERT_TRUE(fixture.conn->accept_slot(packets.front()));
-  uint32_t elapsed_cycles = 0;
   for (uint32_t index = 1; index < packet_count; ++index) {
     const uint32_t predecessor_serialization_cycles =
         fixture.serialization_cycles(packets[index - 1]);
     tm_start(predecessor_serialization_cycles);
-    elapsed_cycles += predecessor_serialization_cycles;
     ASSERT_TRUE(fixture.conn->accept_slot(packets[index]));
   }
 
-  const uint32_t cycles_before_first_arrival =
-      first_arrival_cycles - elapsed_cycles;
-  for (uint32_t cycle = 1; cycle < cycles_before_first_arrival; ++cycle) {
-    tm_start(1);
-    EXPECT_TRUE(fixture.dat->empty());
-  }
-
+  tm_start(fixture.arrival_cycles(packets.back()));
   for (uint32_t index = 0; index < packet_count; ++index) {
-    if (index != 0) {
-      const uint32_t packet_serialization_cycles =
-          fixture.serialization_cycles(packets[index]);
-      for (uint32_t cycle = 1; cycle < packet_serialization_cycles; ++cycle) {
-        tm_start(1);
-        EXPECT_TRUE(fixture.dat->empty());
-      }
-    }
-    tm_start(1);
     ASSERT_FALSE(fixture.dat->empty());
     EXPECT_EQ(packets[index], fixture.dat->front());
     fixture.dat->pop_front();

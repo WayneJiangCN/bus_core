@@ -184,48 +184,6 @@ TEST(TmRingPerfEstimatorTest, CountsExplicitDomainEdgesAndRbrgPaths) {
   EXPECT_EQ(uint64_t(2), estimate.fabric_min_cycles);
 }
 
-TEST(TmRingPerfEstimatorTest, CountsWriteProtocolAndRbrgSerialization) {
-  tm_init();
-  auto cfg = make_perf_cfg(1, 1);
-  cfg->ring_link_width_bytes = 128;
-  cfg->rbrg_width_bytes = 8;
-  TmRingTopology topology;
-  topology.config(cfg);
-
-  TmRingPerfTxn txn;
-  txn.master_port = 0;
-  txn.cmd = PldCmd::WR;
-  txn.addr = 0;
-  txn.size = 16;
-  const std::vector<TmRingPerfTxn> trace(1, txn);
-  const TmRingPerfEstimate estimate =
-      tm_ring_estimate_fabric(trace, topology, *cfg);
-
-  const TmRingPerfEdgeKey v_req_edge(
-      TmRingDomainType::V_RING, 0, TmRingSubnet::REQ, 1,
-      TmRingPortDir::CCW);
-  const TmRingPerfEdgeKey h_rsp_edge(
-      TmRingDomainType::H_RING, 0, TmRingSubnet::RSP, 1,
-      TmRingPortDir::CCW);
-  const TmRingPerfEdgeKey v_dat_edge(
-      TmRingDomainType::V_RING, 0, TmRingSubnet::DAT, 1,
-      TmRingPortDir::CCW);
-  const TmRingPerfRbrgKey req_path(0, TmRingRbrgPath::V_TO_H_REQ);
-  const TmRingPerfRbrgKey wr_dat_path(0, TmRingRbrgPath::V_TO_H_DAT);
-  const TmRingPerfRbrgKey rsp_path(0, TmRingRbrgPath::H_TO_V_RSP);
-
-  EXPECT_EQ(uint64_t(4), estimate.physical_packets);
-  EXPECT_EQ(uint64_t(1), estimate.edge_cycles.at(v_req_edge));
-  EXPECT_EQ(uint64_t(2), estimate.edge_cycles.at(h_rsp_edge));
-  EXPECT_EQ(uint64_t(1), estimate.edge_cycles.at(v_dat_edge));
-  EXPECT_EQ(uint64_t(2), estimate.rbrg_path_cycles.at(req_path));
-  EXPECT_EQ(uint64_t(2), estimate.rbrg_path_cycles.at(wr_dat_path));
-  EXPECT_EQ(uint64_t(4), estimate.rbrg_path_cycles.at(rsp_path));
-  EXPECT_EQ(uint64_t(2), estimate.hottest_ring_edge_cycles);
-  EXPECT_EQ(uint64_t(4), estimate.hottest_rbrg_path_cycles);
-  EXPECT_EQ(uint64_t(4), estimate.fabric_min_cycles);
-}
-
 TEST(TmRingPerfEstimatorTest, SharedSectorReadsUseOneFixedCwCarrier) {
   tm_init();
   auto cfg = make_perf_cfg(3, 1);

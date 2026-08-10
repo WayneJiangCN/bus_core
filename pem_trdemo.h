@@ -160,7 +160,7 @@ private:
 
     std::unordered_map<uint64_t, PairEntry> pair_buffer_;
     uint32_t max_pair_entries_ = TOTAL_UOP_COUNT;
-    static constexpr uint32_t WRITE_BUF_POOL_SIZE = 64;
+    static constexpr uint32_t WRITE_BUF_POOL_SIZE = 2048;
     uint8_t write_buf_pool_[WRITE_BUF_POOL_SIZE][4];
     std::queue<uint32_t> free_write_buf_ids_;
     std::unordered_map<uint64_t, uint64_t> read_issue_cycles_;

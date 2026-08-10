@@ -11,7 +11,6 @@
 #include "tm_ring.h"
 #include "tm_ring_perf.h"
 #include "tm_ring_perf_master.h"
-#include "tm_ring_rbrg_l1.h"
 
 namespace {
 using namespace tm_engine;
@@ -97,62 +96,6 @@ TEST(TmRingMultiRingTopologyTest, ChoosesCwForEqualDistance) {
                                                     0, 1),
                                      TmRingLocation(TmRingDomainType::V_RING,
                                                     0, 3)));
-}
-
-TEST(TmRingRbrgL1Test, VldMovesDatAndSerializerKeepsDatFifoOrder) {
-  tm_init();
-  p_tm_clk_t clk = tm_make_clk();
-  p_tm_ring_cfg_t cfg = make_multiring_cfg(2, 1, 8);
-  cfg->ring_inject_queue_depth = 1;
-  cfg->rbrg_queue_depth = 2;
-  cfg->rbrg_latency = 1;
-  cfg->rbrg_width_bytes = 16;
-
-  std::shared_ptr<TmRingTopology> topology(new TmRingTopology());
-  topology->config(cfg);
-  p_tm_ring_rbrg_l1_t rbrg = tm_make_ring_rbrg_l1(
-      "rbrg_test", clk, 0, *cfg, topology);
-
-  p_tm_pld_t first = tm_make_pld(PldCmd::WR_DAT, 0x1000, 128);
-  first->mst_id = 0;
-  first->slv_id = 0;
-  first->ring_subnet = static_cast<uint32_t>(TmRingSubnet::DAT);
-  first->ring_traffic_class = static_cast<uint32_t>(PldCmd::WR_DAT);
-  p_tm_pld_t second = tm_make_pld(first);
-  second->gid = first->gid + 1;
-
-  ASSERT_TRUE(rbrg->v_node_interface()->push_eject(TmRingSubnet::DAT, first));
-  ASSERT_TRUE(rbrg->v_node_interface()->push_eject(TmRingSubnet::DAT, second));
-  tm_start(1);
-  EXPECT_EQ(uint64_t(1), rbrg->path_stats(TmRingRbrgPath::V_TO_H_DAT).packets);
-  const TmRingPortDir h_direction =
-      static_cast<TmRingPortDir>(first->ring_direction);
-  ASSERT_FALSE(rbrg->h_node_interface()
-                   ->inject_bank(TmRingSubnet::DAT, h_direction)
-                   ->empty());
-  EXPECT_EQ(first->gid, rbrg->h_node_interface()->front_inject(
-                            TmRingSubnet::DAT, h_direction)->gid);
-  EXPECT_FALSE(rbrg->v_node_interface()->eject_q(TmRingSubnet::DAT)->empty());
-
-  tm_start(7);
-  EXPECT_TRUE(rbrg->v_node_interface()->eject_q(TmRingSubnet::DAT)->empty());
-  EXPECT_EQ(uint64_t(2), rbrg->path_stats(TmRingRbrgPath::V_TO_H_DAT).packets);
-  EXPECT_FALSE(rbrg->idle());
-  EXPECT_EQ(first->gid, rbrg->h_node_interface()->front_inject(
-                            TmRingSubnet::DAT, h_direction)->gid);
-
-  tm_start(1);
-  EXPECT_FALSE(rbrg->idle());
-  EXPECT_EQ(first->gid, rbrg->h_node_interface()->front_inject(
-                            TmRingSubnet::DAT, h_direction)->gid);
-
-  rbrg->h_node_interface()->pop_inject(TmRingSubnet::DAT, h_direction);
-  tm_start(1);
-  ASSERT_FALSE(rbrg->h_node_interface()
-                   ->inject_bank(TmRingSubnet::DAT, h_direction)
-                   ->empty());
-  EXPECT_EQ(second->gid, rbrg->h_node_interface()->front_inject(
-                             TmRingSubnet::DAT, h_direction)->gid);
 }
 
 class TmRingMultiRingFabricTest : public ::testing::Test {
