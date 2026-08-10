@@ -31,7 +31,8 @@ uint64_t private_span(const TmRingPerfCase& perf_case) {
 uint64_t base_address(const TmRingPerfCase& perf_case, uint32_t master,
                       bool write) {
   const uint64_t base = write ? perf_case.write_base : perf_case.read_base;
-  if (perf_case.pattern == TmRingPerfPattern::SEQUENTIAL_SHARED) {
+  if (perf_case.pattern == TmRingPerfPattern::SEQUENTIAL_SHARED ||
+      perf_case.pattern == TmRingPerfPattern::SAME_LINE_SCATTER) {
     return base;
   }
   return base + static_cast<uint64_t>(master) * private_span(perf_case);
@@ -40,8 +41,19 @@ uint64_t base_address(const TmRingPerfCase& perf_case, uint32_t master,
 uint64_t address_for(const TmRingPerfCase& perf_case, uint32_t master,
                      uint64_t ordinal, bool write) {
   const uint64_t base = base_address(perf_case, master, write);
-  if (perf_case.pattern == TmRingPerfPattern::STRIDED_PRIVATE) {
+  if (perf_case.pattern == TmRingPerfPattern::STRIDED_PRIVATE ||
+      perf_case.pattern == TmRingPerfPattern::SEQUENTIAL_SHARED) {
     return base + ordinal * perf_case.stride_bytes;
+  }
+  if (perf_case.pattern == TmRingPerfPattern::SAME_LINE_SCATTER) {
+    const uint32_t requests_per_line = 512 / perf_case.burst_bytes;
+    const uint32_t lines_per_wave =
+        (perf_case.active_masters + requests_per_line - 1) /
+        requests_per_line;
+    const uint32_t line_group = master / requests_per_line;
+    const uint32_t slot = master % requests_per_line;
+    return base + (ordinal * lines_per_wave + line_group) * 512 +
+           slot * perf_case.burst_bytes;
   }
   return base + ordinal * perf_case.burst_bytes;
 }
@@ -322,9 +334,20 @@ std::vector<TmRingPerfTxn> tm_ring_build_perf_trace(
       perf_case.bytes_per_master % perf_case.burst_bytes != 0) {
     throw std::invalid_argument("bytes_per_master must be burst aligned");
   }
-  if (perf_case.pattern == TmRingPerfPattern::SEQUENTIAL_SHARED &&
+  if ((perf_case.pattern == TmRingPerfPattern::SEQUENTIAL_SHARED ||
+       perf_case.pattern == TmRingPerfPattern::SAME_LINE_SCATTER) &&
       perf_case.op != TmRingPerfOp::READ) {
-    throw std::invalid_argument("shared write traffic is not supported");
+    throw std::invalid_argument(
+        "shared and same-line scatter traffic must be read-only");
+  }
+  if (perf_case.pattern == TmRingPerfPattern::SEQUENTIAL_SHARED &&
+      perf_case.stride_bytes == 0) {
+    throw std::invalid_argument("shared read stride must be nonzero");
+  }
+  if (perf_case.pattern == TmRingPerfPattern::SAME_LINE_SCATTER &&
+      perf_case.burst_bytes != 128 && perf_case.burst_bytes != 256) {
+    throw std::invalid_argument(
+        "same-line scatter supports 128B or 256B reads");
   }
 
   const uint64_t transaction_count =

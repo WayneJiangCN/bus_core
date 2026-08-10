@@ -19,6 +19,7 @@ enum class TmRingPerfOp {
 enum class TmRingPerfPattern {
   SEQUENTIAL_PRIVATE,
   SEQUENTIAL_SHARED,
+  SAME_LINE_SCATTER,
   STRIDED_PRIVATE,
   SINGLE_TARGET
 };

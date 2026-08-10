@@ -122,6 +122,103 @@ TEST(TmRingPerfTraceTest, BuildsPrivateAndSharedFiniteReadTraces) {
   }
 }
 
+TEST(TmRingPerfTraceTest, BuildsSameLineScatterReadTraces) {
+  tm_init();
+  TmRingTopology topology;
+  auto cfg = make_perf_cfg(5, 2);
+  topology.config(cfg);
+
+  const uint32_t request_sizes[] = {128, 256};
+  for (const uint32_t request_bytes : request_sizes) {
+    TmRingPerfCase perf_case;
+    perf_case.active_masters = 5;
+    perf_case.bytes_per_master = 2 * request_bytes;
+    perf_case.burst_bytes = request_bytes;
+    perf_case.pattern = TmRingPerfPattern::SAME_LINE_SCATTER;
+    perf_case.read_base = 64ull * 1024 * 1024;
+
+    const std::vector<TmRingPerfTxn> trace =
+        tm_ring_build_perf_trace(perf_case, 5, topology);
+    ASSERT_EQ(size_t(10), trace.size());
+    const uint32_t requests_per_line = 512 / request_bytes;
+    const uint32_t lines_per_wave =
+        (perf_case.active_masters + requests_per_line - 1) /
+        requests_per_line;
+    for (uint32_t master = 0; master < perf_case.active_masters; ++master) {
+      const uint32_t line_group = master / requests_per_line;
+      const uint32_t slot = master % requests_per_line;
+      for (uint64_t wave = 0; wave < 2; ++wave) {
+        const TmRingPerfTxn& txn = trace[master * 2 + wave];
+        const uint64_t expected_addr =
+            perf_case.read_base +
+            (wave * lines_per_wave + line_group) * 512 +
+            slot * request_bytes;
+        EXPECT_EQ(master, txn.master_port);
+        EXPECT_EQ(PldCmd::RD, txn.cmd);
+        EXPECT_EQ(request_bytes, txn.size);
+        EXPECT_EQ(expected_addr, txn.addr);
+      }
+    }
+  }
+}
+
+TEST(TmRingPerfTraceTest, SharedReadsUseConfiguredLineStride) {
+  tm_init();
+  TmRingTopology topology;
+  auto cfg = make_perf_cfg(3, 2);
+  topology.config(cfg);
+
+  const uint32_t request_sizes[] = {128, 256, 512};
+  for (const uint32_t request_bytes : request_sizes) {
+    TmRingPerfCase perf_case;
+    perf_case.active_masters = 3;
+    perf_case.bytes_per_master = 2 * request_bytes;
+    perf_case.burst_bytes = request_bytes;
+    perf_case.pattern = TmRingPerfPattern::SEQUENTIAL_SHARED;
+    perf_case.read_base = 64ull * 1024 * 1024;
+    perf_case.stride_bytes = 512;
+
+    const std::vector<TmRingPerfTxn> trace =
+        tm_ring_build_perf_trace(perf_case, 3, topology);
+    ASSERT_EQ(size_t(6), trace.size());
+    for (uint32_t master = 0; master < perf_case.active_masters; ++master) {
+      for (uint64_t wave = 0; wave < 2; ++wave) {
+        const TmRingPerfTxn& txn = trace[master * 2 + wave];
+        EXPECT_EQ(master, txn.master_port);
+        EXPECT_EQ(request_bytes, txn.size);
+        EXPECT_EQ(perf_case.read_base + wave * 512, txn.addr);
+      }
+    }
+  }
+}
+
+TEST(TmRingPerfTraceTest, KeepsCrossLineSharedReadAsOne1024ByteRequest) {
+  tm_init();
+  TmRingTopology topology;
+  auto cfg = make_perf_cfg(2, 2);
+  topology.config(cfg);
+
+  TmRingPerfCase perf_case;
+  perf_case.active_masters = 2;
+  perf_case.bytes_per_master = 2 * 1024;
+  perf_case.burst_bytes = 1024;
+  perf_case.pattern = TmRingPerfPattern::SEQUENTIAL_SHARED;
+  perf_case.read_base = 64ull * 1024 * 1024;
+  perf_case.stride_bytes = 1024;
+
+  const std::vector<TmRingPerfTxn> trace =
+      tm_ring_build_perf_trace(perf_case, 2, topology);
+  ASSERT_EQ(size_t(4), trace.size());
+  for (uint32_t master = 0; master < perf_case.active_masters; ++master) {
+    for (uint64_t wave = 0; wave < 2; ++wave) {
+      const TmRingPerfTxn& txn = trace[master * 2 + wave];
+      EXPECT_EQ(uint32_t(1024), txn.size);
+      EXPECT_EQ(perf_case.read_base + wave * 1024, txn.addr);
+      EXPECT_GT(txn.addr % 512 + txn.size, uint64_t(512));
+    }
+  }
+}
+
 TEST(TmRingPerfEstimatorTest, CountsExplicitDomainEdgesAndRbrgPaths) {
   tm_init();
   auto cfg = make_perf_cfg(4, 1);
@@ -372,7 +469,7 @@ TEST(TmRingPerfReportTest, EmitsStableSectionsAndKeys) {
   TmRingPerfResult result;
   result.perf_case.name = "report_test";
   result.perf_case.op = TmRingPerfOp::READ;
-  result.perf_case.pattern = TmRingPerfPattern::SEQUENTIAL_PRIVATE;
+  result.perf_case.pattern = TmRingPerfPattern::SAME_LINE_SCATTER;
   result.completed_packets = 4;
   result.completed_bytes = 512;
   result.drained = true;
@@ -391,6 +488,7 @@ TEST(TmRingPerfReportTest, EmitsStableSectionsAndKeys) {
     EXPECT_NE(std::string::npos, report.find(section));
   }
   EXPECT_NE(std::string::npos, report.find("case=report_test"));
+  EXPECT_NE(std::string::npos, report.find("pattern=same_line_scatter"));
   EXPECT_NE(std::string::npos, report.find("completed_bytes=512"));
   EXPECT_NE(std::string::npos, report.find("status=PASS"));
   EXPECT_NE(std::string::npos, report.find("hottest_cycles=2"));
@@ -516,6 +614,7 @@ struct PerfSmokeResult {
 
 struct PerfOverrides {
   uint32_t max_aicore_per_vring = 0;
+  uint32_t home_agent_waiters_per_entry = 0;
 };
 
 std::string perf_config_path() {
@@ -549,6 +648,10 @@ PerfSmokeResult run_perf_smoke(const TmRingPerfCase& perf_case,
   ring_cfg->num_masters = perf_case.active_masters;
   if (overrides.max_aicore_per_vring != 0) {
     ring_cfg->max_aicore_per_vring = overrides.max_aicore_per_vring;
+  }
+  if (overrides.home_agent_waiters_per_entry != 0) {
+    ring_cfg->home_agent_waiters_per_entry =
+        overrides.home_agent_waiters_per_entry;
   }
   auto biu_cfg = cfg->get_cfg_tab("BIU");
 
@@ -687,6 +790,53 @@ uint64_t rbrg_packets(const TmRingRbrgStats& stats) {
   return packets;
 }
 
+enum class PerfAggregationExpectation {
+  SCATTER,
+  MULTICAST
+};
+
+void run_multi_vring_aggregated_read_benchmark(
+    const std::string& name, TmRingPerfPattern pattern, uint32_t masters,
+    uint32_t max_aicore_per_vring, uint32_t request_bytes,
+    uint64_t address_stride, PerfAggregationExpectation expectation) {
+  ASSERT_GT(max_aicore_per_vring, uint32_t(0));
+  const uint32_t expected_vrings =
+      (masters + max_aicore_per_vring - 1) / max_aicore_per_vring;
+  ASSERT_GT(expected_vrings, uint32_t(1));
+
+  TmRingPerfCase perf_case = make_128kb_case(
+      name, TmRingPerfOp::READ, pattern, masters, request_bytes);
+  if (address_stride != 0) {
+    perf_case.stride_bytes = address_stride;
+  }
+  PerfOverrides overrides;
+  overrides.max_aicore_per_vring = max_aicore_per_vring;
+  overrides.home_agent_waiters_per_entry = masters;
+  const PerfSmokeResult result = run_perf_smoke(perf_case, overrides);
+
+  ASSERT_EQ(static_cast<size_t>(expected_vrings + 1),
+            result.perf_result.ring_domain_stats.size());
+  ASSERT_EQ(static_cast<size_t>(expected_vrings),
+            result.perf_result.rbrg_stats.size());
+  for (const TmRingRbrgStats& stats : result.perf_result.rbrg_stats) {
+    ASSERT_GT(rbrg_packets(stats), uint64_t(0));
+  }
+  ASSERT_GT(result.perf_result.home_agent_stats.backend_read_saved,
+            uint64_t(0));
+  if (expectation == PerfAggregationExpectation::SCATTER) {
+    ASSERT_GT(result.perf_result.l2_buffer_stats.h_scatter_carriers,
+              uint64_t(0));
+    ASSERT_EQ(uint64_t(0),
+              result.perf_result.l2_buffer_stats.h_multicast_carriers);
+  } else {
+    ASSERT_GT(result.perf_result.l2_buffer_stats.h_multicast_carriers,
+              uint64_t(0));
+    ASSERT_EQ(uint64_t(0),
+              result.perf_result.l2_buffer_stats.h_scatter_carriers);
+  }
+  expect_perf_block_complete(result, perf_case);
+}
+
 void run_multi_vring_128kb_benchmark(
     const std::string& name, TmRingPerfOp op, TmRingPerfPattern pattern,
     uint32_t masters, uint32_t max_aicore_per_vring, uint32_t burst_bytes) {
@@ -729,10 +879,72 @@ TEST(RingPerfBenchmark, MultiVringIndependentReadWrite128B) {
       TmRingPerfPattern::SEQUENTIAL_PRIVATE, 18, 8, 128);
 }
 
+TEST(RingPerfBenchmark, MultiVringSameLineScatterRead128B) {
+  run_multi_vring_aggregated_read_benchmark(
+      "multi_vring_same_line_scatter_read_128b",
+      TmRingPerfPattern::SAME_LINE_SCATTER, 18, 8, 128, 0,
+      PerfAggregationExpectation::SCATTER);
+}
+
+TEST(RingPerfBenchmark, MultiVringSameLineScatterRead256B) {
+  run_multi_vring_aggregated_read_benchmark(
+      "multi_vring_same_line_scatter_read_256b",
+      TmRingPerfPattern::SAME_LINE_SCATTER, 18, 8, 256, 0,
+      PerfAggregationExpectation::SCATTER);
+}
+
 TEST(RingPerfBenchmark, MultiVringSharedRead128B) {
-  run_multi_vring_128kb_benchmark(
-      "multi_vring_shared_read_128b", TmRingPerfOp::READ,
-      TmRingPerfPattern::SEQUENTIAL_SHARED, 18, 8, 128);
+  run_multi_vring_aggregated_read_benchmark(
+      "multi_vring_shared_read_128b", TmRingPerfPattern::SEQUENTIAL_SHARED,
+      18, 8, 128, 512,
+      PerfAggregationExpectation::MULTICAST);
+}
+
+TEST(RingPerfBenchmark, MultiVringSharedRead256B) {
+  run_multi_vring_aggregated_read_benchmark(
+      "multi_vring_shared_read_256b", TmRingPerfPattern::SEQUENTIAL_SHARED,
+      18, 8, 256, 512, PerfAggregationExpectation::MULTICAST);
+}
+
+TEST(RingPerfBenchmark, MultiVringSharedRead512B) {
+  run_multi_vring_aggregated_read_benchmark(
+      "multi_vring_shared_read_512b", TmRingPerfPattern::SEQUENTIAL_SHARED,
+      18, 8, 512, 512, PerfAggregationExpectation::MULTICAST);
+}
+
+TEST(RingPerfBenchmark, MultiVringCrossLineNonMergedRead1024B) {
+  const uint32_t masters = 18;
+  const uint32_t max_aicore_per_vring = 8;
+  const uint32_t expected_vrings =
+      (masters + max_aicore_per_vring - 1) / max_aicore_per_vring;
+  TmRingPerfCase perf_case = make_128kb_case(
+      "multi_vring_cross_line_non_merged_read_1024b", TmRingPerfOp::READ,
+      TmRingPerfPattern::SEQUENTIAL_SHARED, masters, 1024);
+  perf_case.stride_bytes = 1024;
+  PerfOverrides overrides;
+  overrides.max_aicore_per_vring = max_aicore_per_vring;
+  overrides.home_agent_waiters_per_entry = masters;
+  const PerfSmokeResult result = run_perf_smoke(perf_case, overrides);
+
+  ASSERT_EQ(static_cast<size_t>(expected_vrings + 1),
+            result.perf_result.ring_domain_stats.size());
+  ASSERT_EQ(static_cast<size_t>(expected_vrings),
+            result.perf_result.rbrg_stats.size());
+  for (const TmRingRbrgStats& stats : result.perf_result.rbrg_stats) {
+    ASSERT_GT(rbrg_packets(stats), uint64_t(0));
+  }
+  ASSERT_EQ(uint64_t(0), result.perf_result.home_agent_stats.rd_requests);
+  ASSERT_EQ(uint64_t(0),
+            result.perf_result.home_agent_stats.backend_read_saved);
+  ASSERT_EQ(uint64_t(0),
+            result.perf_result.l2_buffer_stats.h_multicast_carriers);
+  ASSERT_EQ(uint64_t(0),
+            result.perf_result.l2_buffer_stats.h_scatter_carriers);
+  ASSERT_EQ(result.perf_result.completed_packets,
+            result.perf_result.l2_buffer_stats.h_unicast_carriers);
+  ASSERT_EQ(result.perf_result.completed_packets,
+            result.perf_result.l2_buffer_stats.injected_carrier_other);
+  expect_perf_block_complete(result, perf_case);
 }
 
 TEST(TmRingPerfSmokeTest, ReadWrite4KB) {

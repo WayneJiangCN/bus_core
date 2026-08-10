@@ -23,6 +23,8 @@ const char* perf_pattern_name(TmRingPerfPattern pattern) {
       return "sequential_private";
     case TmRingPerfPattern::SEQUENTIAL_SHARED:
       return "sequential_shared";
+    case TmRingPerfPattern::SAME_LINE_SCATTER:
+      return "same_line_scatter";
     case TmRingPerfPattern::STRIDED_PRIVATE:
       return "strided_private";
     case TmRingPerfPattern::SINGLE_TARGET:
