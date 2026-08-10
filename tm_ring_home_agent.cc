@@ -348,9 +348,17 @@ void TmRingHomeAgent::commit_l2_response(
 
   transaction.next_response_waiter++;
 
-  response_rr_cursor_ = std::next(transaction_it);
-  if (response_rr_cursor_ == entries_.end()) {
-    response_rr_cursor_ = entries_.begin();
+  // Once an L2 fanout group is open, feed its remaining waiters contiguously.
+  // Rotating after every waiter can let response_latency expire before the
+  // transaction is selected again, freezing a one-recipient "multicast".
+  if (result.is_group() &&
+      transaction.next_response_waiter < transaction.waiters.size()) {
+    response_rr_cursor_ = transaction_it;
+  } else {
+    response_rr_cursor_ = std::next(transaction_it);
+    if (response_rr_cursor_ == entries_.end()) {
+      response_rr_cursor_ = entries_.begin();
+    }
   }
   transaction.l2_candidate = TmRingL2ResponseCandidate();
   response_candidate_ = entries_.end();
