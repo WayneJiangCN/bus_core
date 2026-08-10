@@ -515,12 +515,7 @@ struct PerfSmokeResult {
 };
 
 struct PerfOverrides {
-  uint32_t ring_link_width_bytes = 0;
-  uint32_t l2_issue_interval = UINT32_MAX;
-  uint32_t l2_hit_rate_pct = UINT32_MAX;
-  uint32_t ddr_bandwidth_limit = 0;
-  uint32_t ddr_max_acc_credit = 0;
-  std::string interleave;
+  uint32_t max_aicore_per_vring = 0;
 };
 
 std::string perf_config_path() {
@@ -552,36 +547,14 @@ PerfSmokeResult run_perf_smoke(const TmRingPerfCase& perf_case,
   cfg::p_cfg_t cfg = scenario_cfg;
   auto ring_cfg = tm_make_ring_cfg("perf_smoke_ring", cfg);
   ring_cfg->num_masters = perf_case.active_masters;
-  if (overrides.ring_link_width_bytes != 0) {
-    ring_cfg->ring_link_width_bytes = overrides.ring_link_width_bytes;
-  }
-  if (overrides.l2_issue_interval != UINT32_MAX) {
-    ring_cfg->l2_traffic.issue_interval = overrides.l2_issue_interval;
-  }
-  if (overrides.l2_hit_rate_pct != UINT32_MAX) {
-    ring_cfg->l2_traffic.hit_rate_pct = overrides.l2_hit_rate_pct;
-  }
-  if (!overrides.interleave.empty()) {
-    const tm_bus_interleave_type_t type =
-        overrides.interleave == "xor"
-            ? tm_bus_interleave_type_t::XOR_HASH
-            : tm_bus_interleave_type_t::LINEAR;
-    for (auto& target : ring_cfg->targets) {
-      target->interleave_type = type;
-    }
+  if (overrides.max_aicore_per_vring != 0) {
+    ring_cfg->max_aicore_per_vring = overrides.max_aicore_per_vring;
   }
   auto biu_cfg = cfg->get_cfg_tab("BIU");
 
   std::vector<p_tm_mem_t> memories;
   for (uint32_t target = 0; target < ring_cfg->targets.size(); ++target) {
     auto mem_cfg = tm_make_mem_cfg(ring_cfg->targets[target]->name, cfg);
-    if (overrides.ddr_bandwidth_limit != 0) {
-      mem_cfg->ddr->acc_bw_limit = overrides.ddr_bandwidth_limit;
-      mem_cfg->ddr->acc_crdt_update = overrides.ddr_bandwidth_limit;
-    }
-    if (overrides.ddr_max_acc_credit != 0) {
-      mem_cfg->ddr->max_acc_crdt = overrides.ddr_max_acc_credit;
-    }
     memories.push_back(tm_make_mem(clk, mem_cfg));
   }
 
@@ -706,114 +679,60 @@ TmRingPerfCase make_128kb_case(const std::string& name, TmRingPerfOp op,
   return perf_case;
 }
 
-TEST(RingPerfBenchmark, DISABLED_SingleMasterPrivateRead128B) {
-  const TmRingPerfCase perf_case = make_128kb_case(
-      "single_master_private_read_128b", TmRingPerfOp::READ,
-      TmRingPerfPattern::SEQUENTIAL_PRIVATE, 1, 128);
-  expect_perf_block_complete(run_perf_smoke(perf_case), perf_case);
+uint64_t rbrg_packets(const TmRingRbrgStats& stats) {
+  uint64_t packets = 0;
+  for (const TmRingRbrgPathStats& path : stats.paths) {
+    packets += path.packets;
+  }
+  return packets;
 }
 
-TEST(RingPerfBenchmark, DISABLED_EightMasterPrivateRead128B) {
-  const TmRingPerfCase perf_case = make_128kb_case(
-      "eight_master_private_read_128b", TmRingPerfOp::READ,
-      TmRingPerfPattern::SEQUENTIAL_PRIVATE, 8, 128);
-  expect_perf_block_complete(run_perf_smoke(perf_case), perf_case);
-}
+void run_multi_vring_128kb_benchmark(
+    const std::string& name, TmRingPerfOp op, TmRingPerfPattern pattern,
+    uint32_t masters, uint32_t max_aicore_per_vring, uint32_t burst_bytes) {
+  ASSERT_GT(max_aicore_per_vring, uint32_t(0));
+  const uint32_t expected_vrings =
+      (masters + max_aicore_per_vring - 1) / max_aicore_per_vring;
+  ASSERT_GT(expected_vrings, uint32_t(1));
 
-TEST(RingPerfBenchmark, DISABLED_EightMasterPrivateWrite128B) {
-  const TmRingPerfCase perf_case = make_128kb_case(
-      "eight_master_private_write_128b", TmRingPerfOp::WRITE,
-      TmRingPerfPattern::SEQUENTIAL_PRIVATE, 8, 128);
-  expect_perf_block_complete(run_perf_smoke(perf_case), perf_case);
-}
-
-TEST(RingPerfBenchmark, DISABLED_EightMasterIndependentReadWrite128B) {
-  const TmRingPerfCase perf_case = make_128kb_case(
-      "eight_master_independent_read_write_128b", TmRingPerfOp::READ_WRITE,
-      TmRingPerfPattern::SEQUENTIAL_PRIVATE, 8, 128);
-  expect_perf_block_complete(run_perf_smoke(perf_case), perf_case);
-}
-
-TEST(RingPerfBenchmark, DISABLED_EightMasterSharedRead16B) {
-  const TmRingPerfCase perf_case = make_128kb_case(
-      "eight_master_shared_read_16b", TmRingPerfOp::READ,
-      TmRingPerfPattern::SEQUENTIAL_SHARED, 8, 16);
-  expect_perf_block_complete(run_perf_smoke(perf_case), perf_case);
-}
-
-TEST(RingPerfBenchmark, DISABLED_EightMasterSharedRead128B) {
-  const TmRingPerfCase perf_case = make_128kb_case(
-      "eight_master_shared_read_128b", TmRingPerfOp::READ,
-      TmRingPerfPattern::SEQUENTIAL_SHARED, 8, 128);
-  expect_perf_block_complete(run_perf_smoke(perf_case), perf_case);
-}
-
-TEST(RingPerfBenchmark, DISABLED_EightMasterSharedRead256B) {
-  const TmRingPerfCase perf_case = make_128kb_case(
-      "eight_master_shared_read_256b", TmRingPerfOp::READ,
-      TmRingPerfPattern::SEQUENTIAL_SHARED, 8, 256);
-  expect_perf_block_complete(run_perf_smoke(perf_case), perf_case);
-}
-
-TEST(RingPerfBenchmark, DISABLED_EightMasterSharedRead512B) {
-  const TmRingPerfCase perf_case = make_128kb_case(
-      "eight_master_shared_read_512b", TmRingPerfOp::READ,
-      TmRingPerfPattern::SEQUENTIAL_SHARED, 8, 512);
-  expect_perf_block_complete(run_perf_smoke(perf_case), perf_case);
-}
-
-TEST(RingPerfBenchmark, DISABLED_BottleneckRingWidth) {
-  const TmRingPerfCase perf_case = make_128kb_case(
-      "bottleneck_ring_width", TmRingPerfOp::READ,
-      TmRingPerfPattern::SEQUENTIAL_PRIVATE, 8, 128);
+  const TmRingPerfCase perf_case =
+      make_128kb_case(name, op, pattern, masters, burst_bytes);
   PerfOverrides overrides;
-  overrides.ring_link_width_bytes = 16;
-  expect_perf_block_complete(run_perf_smoke(perf_case, overrides), perf_case);
+  overrides.max_aicore_per_vring = max_aicore_per_vring;
+  const PerfSmokeResult result = run_perf_smoke(perf_case, overrides);
+
+  ASSERT_EQ(static_cast<size_t>(expected_vrings + 1),
+            result.perf_result.ring_domain_stats.size());
+  ASSERT_EQ(static_cast<size_t>(expected_vrings),
+            result.perf_result.rbrg_stats.size());
+  for (const TmRingRbrgStats& stats : result.perf_result.rbrg_stats) {
+    ASSERT_GT(rbrg_packets(stats), uint64_t(0));
+  }
+  expect_perf_block_complete(result, perf_case);
 }
 
-TEST(RingPerfBenchmark, DISABLED_BottleneckL2IssueInterval) {
-  const TmRingPerfCase perf_case = make_128kb_case(
-      "bottleneck_l2_issue_interval", TmRingPerfOp::READ,
-      TmRingPerfPattern::SEQUENTIAL_PRIVATE, 8, 128);
-  PerfOverrides overrides;
-  overrides.l2_issue_interval = 4;
-  expect_perf_block_complete(run_perf_smoke(perf_case, overrides), perf_case);
+TEST(RingPerfBenchmark, MultiVringPrivateRead128B) {
+  run_multi_vring_128kb_benchmark(
+      "multi_vring_private_read_128b", TmRingPerfOp::READ,
+      TmRingPerfPattern::SEQUENTIAL_PRIVATE, 18, 8, 128);
 }
 
-TEST(RingPerfBenchmark, DISABLED_BottleneckL2HitRate) {
-  const TmRingPerfCase perf_case = make_128kb_case(
-      "bottleneck_l2_hit_rate", TmRingPerfOp::READ,
-      TmRingPerfPattern::SEQUENTIAL_PRIVATE, 8, 128);
-  PerfOverrides overrides;
-  overrides.l2_hit_rate_pct = 0;
-  expect_perf_block_complete(run_perf_smoke(perf_case, overrides), perf_case);
+TEST(RingPerfBenchmark, MultiVringPrivateWrite128B) {
+  run_multi_vring_128kb_benchmark(
+      "multi_vring_private_write_128b", TmRingPerfOp::WRITE,
+      TmRingPerfPattern::SEQUENTIAL_PRIVATE, 18, 8, 128);
 }
 
-TEST(RingPerfBenchmark, DISABLED_BottleneckDdrBandwidth) {
-  const TmRingPerfCase perf_case = make_128kb_case(
-      "bottleneck_ddr_bandwidth", TmRingPerfOp::READ,
-      TmRingPerfPattern::SEQUENTIAL_PRIVATE, 8, 128);
-  PerfOverrides overrides;
-  overrides.ddr_bandwidth_limit = 16;
-  expect_perf_block_complete(run_perf_smoke(perf_case, overrides), perf_case);
+TEST(RingPerfBenchmark, MultiVringIndependentReadWrite128B) {
+  run_multi_vring_128kb_benchmark(
+      "multi_vring_independent_read_write_128b", TmRingPerfOp::READ_WRITE,
+      TmRingPerfPattern::SEQUENTIAL_PRIVATE, 18, 8, 128);
 }
 
-TEST(RingPerfBenchmark, DISABLED_BottleneckDdrCredit) {
-  const TmRingPerfCase perf_case = make_128kb_case(
-      "bottleneck_ddr_credit", TmRingPerfOp::READ,
-      TmRingPerfPattern::SEQUENTIAL_PRIVATE, 8, 128);
-  PerfOverrides overrides;
-  overrides.ddr_max_acc_credit = 256;
-  expect_perf_block_complete(run_perf_smoke(perf_case, overrides), perf_case);
-}
-
-TEST(RingPerfBenchmark, DISABLED_InterleaveXor) {
-  const TmRingPerfCase perf_case = make_128kb_case(
-      "interleave_xor", TmRingPerfOp::READ,
-      TmRingPerfPattern::SEQUENTIAL_PRIVATE, 8, 128);
-  PerfOverrides overrides;
-  overrides.interleave = "xor";
-  expect_perf_block_complete(run_perf_smoke(perf_case, overrides), perf_case);
+TEST(RingPerfBenchmark, MultiVringSharedRead128B) {
+  run_multi_vring_128kb_benchmark(
+      "multi_vring_shared_read_128b", TmRingPerfOp::READ,
+      TmRingPerfPattern::SEQUENTIAL_SHARED, 18, 8, 128);
 }
 
 TEST(TmRingPerfSmokeTest, ReadWrite4KB) {
