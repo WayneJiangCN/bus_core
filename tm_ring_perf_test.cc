@@ -9,6 +9,7 @@
 #include <vector>
 
 #include "tm_ring.h"
+#include "tm_ring_home_agent.h"
 #include "tm_ring_perf.h"
 #include "tm_ring_perf_master.h"
 #include "tm_ring_perf_report.h"
@@ -30,52 +31,6 @@ void set_conn_stats(TmRingConnStats* stats, uint64_t packets,
   stats->send_reject_stall = send_reject_stalls;
 }
 
-void set_rbrg_path_stats(TmRingRbrgPathStats* stats, uint64_t packets,
-                         uint64_t bytes, uint64_t queue_peak,
-                         uint64_t queue_full_stalls,
-                         uint64_t destination_inject_stalls) {
-  stats->packets = packets;
-  stats->bytes = bytes;
-  stats->queue_occupancy_peak = queue_peak;
-  stats->queue_full_stalls = queue_full_stalls;
-  stats->destination_inject_stalls = destination_inject_stalls;
-}
-
-void expect_report_direction(const std::string& report, const char* prefix,
-                             const TmRingConnStats& stats) {
-  std::ostringstream expected;
-  expected << prefix << "_packets=" << stats.packets;
-  EXPECT_NE(std::string::npos, report.find(expected.str()));
-  expected.str("");
-  expected << prefix << "_bytes=" << stats.bytes;
-  EXPECT_NE(std::string::npos, report.find(expected.str()));
-  expected.str("");
-  expected << prefix << "_busy_cycles=" << stats.busy_cycles;
-  EXPECT_NE(std::string::npos, report.find(expected.str()));
-  expected.str("");
-  expected << prefix << "_stalls=" << tm_ring_conn_total_stalls(stats);
-  EXPECT_NE(std::string::npos, report.find(expected.str()));
-}
-
-void expect_report_rbrg_path(const std::string& report, const char* prefix,
-                             const TmRingRbrgPathStats& stats) {
-  std::ostringstream expected;
-  expected << prefix << "_packets=" << stats.packets;
-  EXPECT_NE(std::string::npos, report.find(expected.str()));
-  expected.str("");
-  expected << prefix << "_bytes=" << stats.bytes;
-  EXPECT_NE(std::string::npos, report.find(expected.str()));
-  expected.str("");
-  expected << prefix << "_queue_peak=" << stats.queue_occupancy_peak;
-  EXPECT_NE(std::string::npos, report.find(expected.str()));
-  expected.str("");
-  expected << prefix << "_queue_full_stalls=" << stats.queue_full_stalls;
-  EXPECT_NE(std::string::npos, report.find(expected.str()));
-  expected.str("");
-  expected << prefix << "_inject_stalls=" << stats.destination_inject_stalls;
-  EXPECT_NE(std::string::npos, report.find(expected.str()));
-}
-
 p_tm_ring_cfg_t make_perf_cfg(uint32_t masters, uint32_t targets) {
   auto cfg = tm_make_ring_cfg("perf_trace_test");
   cfg->num_masters = masters;
@@ -86,6 +41,73 @@ p_tm_ring_cfg_t make_perf_cfg(uint32_t masters, uint32_t targets) {
         6, 0, 32, 2));
   }
   return cfg;
+}
+
+TEST(TmRingHomeAgentTest, SingleWaiterGroupAcceptsLaterSameLineWaiter) {
+  tm_init();
+  TmRingHomeAgentConfig cfg;
+  cfg.line_size = 512;
+  cfg.entry_limit = 4;
+  cfg.waiters_per_entry = 4;
+  cfg.hit_rate_pct = 100;
+  TmRingHomeAgent home_agent(cfg);
+
+  p_tm_pld_t first = tm_make_pld(PldCmd::RD, 0x04000000, 128);
+  first->mst_id = 0;
+  first->gid = 1;
+  ASSERT_EQ(TmHaAcceptResult::ACCEPTED, home_agent.accept_read(first));
+  ASSERT_NE(nullptr, home_agent.front_functional_read());
+  home_agent.commit_functional_read(PldRsp::OK);
+
+  const TmRingL2ResponseCandidate first_candidate =
+      home_agent.front_l2_response();
+  ASSERT_NE(nullptr, first_candidate.response);
+  EXPECT_TRUE(first_candidate.fanout_eligible);
+  EXPECT_EQ(uint64_t(0), first_candidate.open_group_token);
+
+  TmRingL2AcceptResult new_group;
+  new_group.status = TmRingL2AcceptStatus::ACCEPTED_NEW_GROUP;
+  new_group.group_token = 7;
+  home_agent.commit_l2_response(new_group);
+  EXPECT_FALSE(home_agent.idle());
+
+  p_tm_pld_t second = tm_make_pld(PldCmd::RD, 0x04000080, 128);
+  second->mst_id = 1;
+  second->gid = 2;
+  ASSERT_EQ(TmHaAcceptResult::MERGED, home_agent.accept_read(second));
+  const TmRingL2ResponseCandidate second_candidate =
+      home_agent.front_l2_response();
+  ASSERT_NE(nullptr, second_candidate.response);
+  EXPECT_TRUE(second_candidate.fanout_eligible);
+  EXPECT_EQ(uint64_t(7), second_candidate.open_group_token);
+
+  TmRingL2AcceptResult merged_group;
+  merged_group.status = TmRingL2AcceptStatus::MERGED_GROUP;
+  merged_group.group_token = 7;
+  home_agent.commit_l2_response(merged_group);
+
+  TmRingL2GroupSummary summary;
+  summary.group_token = 7;
+  summary.mode = TmRingFanoutMode::SCATTER;
+  summary.recipient_count = 2;
+  EXPECT_TRUE(home_agent.consume_l2_group_summary(summary));
+  EXPECT_TRUE(home_agent.idle());
+}
+
+TEST(TmRingHomeAgentTest, CrossLineReadBypassesProvisionalGroup) {
+  tm_init();
+  TmRingHomeAgentConfig cfg;
+  cfg.line_size = 512;
+  cfg.entry_limit = 4;
+  cfg.waiters_per_entry = 4;
+  cfg.hit_rate_pct = 100;
+  TmRingHomeAgent home_agent(cfg);
+
+  p_tm_pld_t request = tm_make_pld(PldCmd::RD, 0x04000000, 1024);
+  request->mst_id = 0;
+  request->gid = 1;
+  EXPECT_EQ(TmHaAcceptResult::BYPASS, home_agent.accept_read(request));
+  EXPECT_TRUE(home_agent.idle());
 }
 
 TEST(TmRingPerfTraceTest, BuildsPrivateAndSharedFiniteReadTraces) {
@@ -576,13 +598,17 @@ TEST(TmRingPerfCollectorTest, AggregatesLatencyFairnessAndMemoryStats) {
   const std::vector<TmMemStats> memories = {memory0, memory1};
   TmRingPerfEstimate estimate;
   const TmRingPerfResult result = tm_ring_collect_perf_result(
-      perf_case, masters, *ring, memories, estimate, estimate, true);
+      perf_case, masters, *ring, memories, estimate, estimate, 32, true);
 
   EXPECT_EQ(uint64_t(384), result.completed_bytes);
   EXPECT_EQ(uint64_t(4), result.completed_packets);
   EXPECT_EQ(uint64_t(10), result.first_request_time);
   EXPECT_EQ(uint64_t(32), result.last_response_time);
   EXPECT_EQ(uint64_t(23), result.transfer_cycles);
+  EXPECT_EQ(uint64_t(10), result.measurement_start_time);
+  EXPECT_EQ(uint64_t(32), result.measurement_end_time);
+  EXPECT_EQ(uint64_t(23), result.measurement_cycles);
+  EXPECT_TRUE(result.measurement_valid);
   EXPECT_EQ(uint64_t(15), result.latency_p50);
   EXPECT_EQ(uint64_t(25), result.latency_max);
   EXPECT_EQ(uint64_t(256), result.memory_stats.accepted_read_bytes);
@@ -590,6 +616,25 @@ TEST(TmRingPerfCollectorTest, AggregatesLatencyFairnessAndMemoryStats) {
   EXPECT_EQ(uint64_t(7), result.memory_stats.outstanding_peak);
   EXPECT_TRUE(result.drained);
   EXPECT_GT(result.jain_fairness, 0.0);
+}
+
+TEST(TmRingPerfCollectorTest, LeavesMeasurementInvalidWithoutRequests) {
+  tm_init();
+  auto clk = tm_make_clk();
+  auto cfg = make_perf_cfg(1, 1);
+  auto ring = tm_make_ring(clk, cfg);
+
+  TmRingPerfCase perf_case;
+  const std::vector<TmRingPerfMasterStats> masters;
+  const std::vector<TmMemStats> memories;
+  TmRingPerfEstimate estimate;
+  const TmRingPerfResult result = tm_ring_collect_perf_result(
+      perf_case, masters, *ring, memories, estimate, estimate, 42, true);
+
+  EXPECT_EQ(uint64_t(0), result.measurement_start_time);
+  EXPECT_EQ(uint64_t(42), result.measurement_end_time);
+  EXPECT_EQ(uint64_t(0), result.measurement_cycles);
+  EXPECT_FALSE(result.measurement_valid);
 }
 
 TEST(TmRingPerfReportTest, EmitsStableSectionsAndKeys) {
@@ -623,8 +668,6 @@ TEST(TmRingPerfReportTest, EmitsStableSectionsAndKeys) {
   EXPECT_NE(std::string::npos, report.find("pattern=same_line_scatter"));
   EXPECT_NE(std::string::npos, report.find("completed_bytes=512"));
   EXPECT_NE(std::string::npos, report.find("status=PASS"));
-  EXPECT_NE(std::string::npos, report.find("hottest_cycles=2"));
-  EXPECT_NE(std::string::npos, report.find("hottest_edge_cycles=2"));
   EXPECT_NE(std::string::npos, report.find("fabric_min_cycles=4"));
   EXPECT_NE(std::string::npos,
             report.find("hottest_ring_edge_cycles=2"));
@@ -646,108 +689,107 @@ TEST(TmRingPerfReportTest, EmitsStableSectionsAndKeys) {
                         "physical_packets=4"));
 }
 
-TEST(TmRingPerfReportTest, EmitsMultiRingSnapshotRecords) {
+TEST(TmRingPerfReportTest, EmitsMeasuredChannelAndBufferRecords) {
   TmRingPerfResult result;
-  result.perf_case.name = "multi_ring_report";
+  result.perf_case.name = "measured_channel_report";
   result.drained = true;
+  result.measurement_start_time = 10;
+  result.measurement_end_time = 109;
+  result.measurement_cycles = 100;
+  result.measurement_valid = true;
+  result.ring_link_width_bytes = 128;
+  result.rbrg_width_bytes = 128;
 
   TmRingDomainStats h_domain;
   h_domain.type = TmRingDomainType::H_RING;
-  set_conn_stats(&h_domain.cw[static_cast<uint32_t>(TmRingSubnet::REQ)], 11,
-                 111, 211, 1, 2, 3, 4);
-  set_conn_stats(&h_domain.ccw[static_cast<uint32_t>(TmRingSubnet::REQ)], 12,
-                 112, 212, 2, 3, 4, 5);
-  set_conn_stats(&h_domain.cw[static_cast<uint32_t>(TmRingSubnet::RSP)], 13,
-                 113, 213, 3, 4, 5, 6);
-  set_conn_stats(&h_domain.ccw[static_cast<uint32_t>(TmRingSubnet::RSP)], 14,
-                 114, 214, 4, 5, 6, 7);
-  set_conn_stats(&h_domain.cw[static_cast<uint32_t>(TmRingSubnet::DAT)], 15,
-                 115, 215, 5, 6, 7, 8);
-  set_conn_stats(&h_domain.ccw[static_cast<uint32_t>(TmRingSubnet::DAT)], 16,
-                 116, 216, 6, 7, 8, 9);
-  h_domain.hottest.src_station = 1;
-  h_domain.hottest.src_dir = TmRingPortDir::CW;
-  h_domain.hottest.dst_station = 2;
-  h_domain.hottest.dst_dir = TmRingPortDir::CCW;
-  h_domain.hottest.subnet = TmRingSubnet::REQ;
-  h_domain.hottest.busy_cycles = 211;
-  h_domain.hottest.total_stalls = tm_ring_conn_total_stalls(
-      h_domain.cw[static_cast<uint32_t>(TmRingSubnet::REQ)]);
+  h_domain.directed_edge_count = 1;
+  set_conn_stats(&h_domain.cw[static_cast<uint32_t>(TmRingSubnet::REQ)], 1,
+                 16, 1, 0, 0, 0, 0);
+  set_conn_stats(&h_domain.cw[static_cast<uint32_t>(TmRingSubnet::DAT)], 5,
+                 6400, 80, 0, 0, 0, 0);
+  h_domain.cross_station.deflection[static_cast<uint32_t>(TmRingSubnet::DAT)]
+      .events = 3;
+  h_domain.cross_station.deflection[static_cast<uint32_t>(TmRingSubnet::DAT)]
+      .unique_packets = 2;
+  h_domain.cross_station.deflection[static_cast<uint32_t>(TmRingSubnet::DAT)]
+      .eligible_unicast_packets = 4;
+  h_domain.cross_station.deflection[static_cast<uint32_t>(TmRingSubnet::DAT)]
+      .completed_packets = 2;
+  h_domain.cross_station.deflection[static_cast<uint32_t>(TmRingSubnet::DAT)]
+      .rounds_sum = 3;
+  h_domain.cross_station.deflection[static_cast<uint32_t>(TmRingSubnet::DAT)]
+      .rounds_max = 2;
+  h_domain.cross_station.deflection[static_cast<uint32_t>(TmRingSubnet::DAT)]
+      .delay_cycles_sum = 30;
+  h_domain.cross_station.deflection[static_cast<uint32_t>(TmRingSubnet::DAT)]
+      .delay_cycles_max = 20;
+  h_domain.cross_station.deflection[static_cast<uint32_t>(TmRingSubnet::DAT)]
+      .fanout_recipient_retry_events = 1;
 
-  TmRingDomainStats v_domain0;
-  v_domain0.type = TmRingDomainType::V_RING;
-  v_domain0.ring_id = 0;
-  v_domain0.ccw[static_cast<uint32_t>(TmRingSubnet::DAT)].packets = 3;
-  v_domain0.ccw[static_cast<uint32_t>(TmRingSubnet::DAT)].bytes = 384;
-  v_domain0.ccw[static_cast<uint32_t>(TmRingSubnet::DAT)].busy_cycles = 6;
+  TmRingConnHotspot edge;
+  edge.src_station = 0;
+  edge.src_dir = TmRingPortDir::CW;
+  edge.dst_station = 1;
+  edge.dst_dir = TmRingPortDir::CW;
+  edge.subnet = TmRingSubnet::DAT;
+  edge.packets = 5;
+  edge.bytes = 6400;
+  edge.busy_cycles = 80;
+  h_domain.edges.push_back(edge);
+  result.ring_domain_stats.push_back(h_domain);
 
-  TmRingDomainStats v_domain1;
-  v_domain1.type = TmRingDomainType::V_RING;
-  v_domain1.ring_id = 1;
-  v_domain1.cw[static_cast<uint32_t>(TmRingSubnet::RSP)].packets = 2;
-  v_domain1.cw[static_cast<uint32_t>(TmRingSubnet::RSP)].bytes = 16;
-  v_domain1.cw[static_cast<uint32_t>(TmRingSubnet::RSP)].busy_cycles = 5;
-
-  result.ring_domain_stats = {h_domain, v_domain0, v_domain1};
+  TmRingEndpointQueueStats endpoint;
+  endpoint.node_type = TmRingNodeType::MASTER;
+  endpoint.queue.subnet = TmRingSubnet::DAT;
+  endpoint.queue.side = TmRingQueueSide::EJECT;
+  endpoint.queue.direction = TmRingPortDir::CW;
+  endpoint.queue.depth = 8;
+  endpoint.queue.occupancy = 2;
+  endpoint.queue.occupancy_peak = 5;
+  endpoint.queue.counters.pushes = 7;
+  endpoint.queue.counters.pops = 5;
+  endpoint.queue.counters.push_rejects = 1;
+  endpoint.queue.counters.occupancy_area = 200;
+  endpoint.queue.counters.full_cycles = 10;
+  result.endpoint_queue_stats.push_back(endpoint);
 
   TmRingRbrgStats rbrg0;
-  set_rbrg_path_stats(
-      &rbrg0.paths[static_cast<uint32_t>(TmRingRbrgPath::V_TO_H_REQ)], 21,
-      210, 31, 41, 51);
-  set_rbrg_path_stats(
-      &rbrg0.paths[static_cast<uint32_t>(TmRingRbrgPath::V_TO_H_DAT)], 22,
-      220, 32, 42, 52);
-  set_rbrg_path_stats(
-      &rbrg0.paths[static_cast<uint32_t>(TmRingRbrgPath::H_TO_V_RSP)], 23,
-      230, 33, 43, 53);
-  set_rbrg_path_stats(
-      &rbrg0.paths[static_cast<uint32_t>(TmRingRbrgPath::H_TO_V_DAT)], 2,
-      256, 34, 44, 54);
-  TmRingRbrgStats rbrg1;
-  rbrg1.paths[static_cast<uint32_t>(TmRingRbrgPath::H_TO_V_DAT)].packets = 1;
-  result.rbrg_stats = {rbrg0, rbrg1};
-  result.l2_buffer_stats.h_carrier_recipients = 10;
-  result.l2_buffer_stats.h_carriers = 4;
+  TmRingRbrgPathStats& rbrg_path =
+      rbrg0.paths[static_cast<uint32_t>(TmRingRbrgPath::V_TO_H_DAT)];
+  rbrg_path.packets = 5;
+  rbrg_path.bytes = 6400;
+  rbrg_path.busy_cycles = 50;
+  rbrg_path.queue_occupancy_peak = 3;
+  rbrg_path.queue_full_stalls = 4;
+  rbrg_path.destination_inject_stalls = 5;
+  result.rbrg_stats.push_back(rbrg0);
 
   const std::string report = tm_ring_format_perf_result(result);
 
-  EXPECT_NE(std::string::npos, report.find("PERF_RING"));
-  EXPECT_NE(std::string::npos, report.find("PERF_RING_DOMAIN type=h id=0"));
-  EXPECT_NE(std::string::npos, report.find("PERF_RING_DOMAIN type=v id=0"));
-  EXPECT_NE(std::string::npos, report.find("PERF_RING_DOMAIN type=v id=1"));
-  expect_report_direction(
-      report, "req_cw", h_domain.cw[static_cast<uint32_t>(TmRingSubnet::REQ)]);
-  expect_report_direction(
-      report, "req_ccw", h_domain.ccw[static_cast<uint32_t>(TmRingSubnet::REQ)]);
-  expect_report_direction(
-      report, "rsp_cw", h_domain.cw[static_cast<uint32_t>(TmRingSubnet::RSP)]);
-  expect_report_direction(
-      report, "rsp_ccw", h_domain.ccw[static_cast<uint32_t>(TmRingSubnet::RSP)]);
-  expect_report_direction(
-      report, "dat_cw", h_domain.cw[static_cast<uint32_t>(TmRingSubnet::DAT)]);
-  expect_report_direction(
-      report, "dat_ccw", h_domain.ccw[static_cast<uint32_t>(TmRingSubnet::DAT)]);
-  EXPECT_NE(std::string::npos, report.find("hottest_dst_station=2"));
-  EXPECT_NE(std::string::npos, report.find("hottest_stalls=10"));
-  EXPECT_NE(std::string::npos, report.find("PERF_RBRG id=0"));
-  EXPECT_NE(std::string::npos, report.find("PERF_RBRG id=1"));
-  expect_report_rbrg_path(
-      report, "v_to_h_req",
-      rbrg0.paths[static_cast<uint32_t>(TmRingRbrgPath::V_TO_H_REQ)]);
-  expect_report_rbrg_path(
-      report, "v_to_h_dat",
-      rbrg0.paths[static_cast<uint32_t>(TmRingRbrgPath::V_TO_H_DAT)]);
-  expect_report_rbrg_path(
-      report, "h_to_v_rsp",
-      rbrg0.paths[static_cast<uint32_t>(TmRingRbrgPath::H_TO_V_RSP)]);
-  expect_report_rbrg_path(
-      report, "h_to_v_dat",
-      rbrg0.paths[static_cast<uint32_t>(TmRingRbrgPath::H_TO_V_DAT)]);
-  EXPECT_NE(std::string::npos, report.find("PERF_FANOUT_CROSS_RING"));
-  EXPECT_NE(std::string::npos, report.find("logical_recipients=10"));
-  EXPECT_NE(std::string::npos, report.find("h_ring_carriers=4"));
-  EXPECT_NE(std::string::npos, report.find("v_ring_carriers=3"));
-  EXPECT_NE(std::string::npos, report.find("total_segment_packets_saved=13"));
+  EXPECT_NE(std::string::npos,
+            report.find("PERF_MEASUREMENT start_cycle=10 end_cycle=109 "
+                        "window_cycles=100 measurement_valid=1"));
+  EXPECT_NE(std::string::npos, report.find("PERF_RING_BUFFER"));
+  EXPECT_NE(std::string::npos,
+            report.find("node_type=master node=0 subnet=dat side=eject "
+                        "direction=cw depth=8"));
+  EXPECT_NE(std::string::npos,
+            report.find("PERF_DEFLECTION domain=h ring=0 subnet=dat"));
+  EXPECT_NE(std::string::npos,
+            report.find("PERF_HW_CHANNEL domain=h ring=0 subnet=dat "
+                        "direction=cw"));
+  EXPECT_NE(std::string::npos,
+            report.find("PERF_RING_EDGE domain=h ring=0 subnet=dat "
+                        "direction=cw src_station=0 dst_station=1"));
+  EXPECT_NE(std::string::npos,
+            report.find("PERF_RBRG_CHANNEL id=0 path=v_to_h_dat"));
+  EXPECT_NE(std::string::npos, report.find("cycle_util_pct=80.000000"));
+  EXPECT_NE(std::string::npos,
+            report.find("payload_util_pct=50.000000"));
+  EXPECT_NE(std::string::npos,
+            report.find("serialization_efficiency_pct=62.500000"));
+  EXPECT_NE(std::string::npos,
+            report.find("serialization_efficiency_pct=12.500000"));
 }
 
 struct PerfSmokeResult {
@@ -913,7 +955,7 @@ PerfSmokeResult run_perf_smoke(const TmRingPerfCase& perf_case,
   }
   result.perf_result = tm_ring_collect_perf_result(
       effective_case, result.master_stats, *ring, result.memory_stats,
-      estimate, no_merge_estimate, result.idle);
+      estimate, no_merge_estimate, clk->time(), result.idle);
   return result;
 }
 
@@ -1168,6 +1210,16 @@ void run_aggregation_wave_test(
   ASSERT_GT(ha.backend_read_saved, uint64_t(0));
   ASSERT_LT(l2.h_carriers, no_merge.h_carriers);
   ASSERT_LT(actual_v_carriers, no_merge.v_carriers);
+  ASSERT_LE(ideal.h_carriers, no_merge.h_carriers);
+  ASSERT_LE(ideal.v_carriers, no_merge.v_carriers);
+  const uint64_t h_near_ideal_limit =
+      ideal.h_carriers + (no_merge.h_carriers - ideal.h_carriers + 3) / 4;
+  const uint64_t v_near_ideal_limit =
+      ideal.v_carriers + (no_merge.v_carriers - ideal.v_carriers + 3) / 4;
+  ASSERT_LE(l2.h_carriers, h_near_ideal_limit);
+  ASSERT_LE(actual_v_carriers, v_near_ideal_limit);
+  ASSERT_GE(ha.backend_read_saved,
+            (ideal.backend_read_saved * 3 + 3) / 4);
   ASSERT_EQ(no_merge.h_carrier_recipients, l2.h_carrier_recipients);
   ASSERT_EQ(uint64_t(0), ha.table_full_stall_cycles);
   ASSERT_EQ(uint64_t(0), ha.waiter_full_stall_cycles);

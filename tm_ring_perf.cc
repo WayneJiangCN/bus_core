@@ -589,25 +589,18 @@ TmRingPerfResult tm_ring_collect_perf_result(
     const TmRingFabric& fabric,
     const std::vector<TmMemStats>& memory_stats,
     const TmRingPerfEstimate& estimate,
-    bool drained) {
-  return tm_ring_collect_perf_result(perf_case, master_stats, fabric,
-                                     memory_stats, estimate, estimate,
-                                     drained);
-}
-
-TmRingPerfResult tm_ring_collect_perf_result(
-    const TmRingPerfCase& perf_case,
-    const std::vector<TmRingPerfMasterStats>& master_stats,
-    const TmRingFabric& fabric,
-    const std::vector<TmMemStats>& memory_stats,
-    const TmRingPerfEstimate& estimate,
     const TmRingPerfEstimate& no_merge_estimate,
+    uint64_t measurement_end_cycle,
     bool drained) {
   TmRingPerfResult result;
   result.perf_case = perf_case;
   result.estimate = estimate;
   result.no_merge_estimate = no_merge_estimate;
   result.drained = drained;
+  result.measurement_end_time = measurement_end_cycle;
+  result.ring_link_width_bytes = fabric.ring_link_width_bytes();
+  result.rbrg_width_bytes = fabric.rbrg_width_bytes();
+  result.endpoint_queue_stats = fabric.ring_queue_stats(measurement_end_cycle);
   result.ring_domain_stats = fabric.ring_domain_stats();
   result.rbrg_stats = fabric.rbrg_stats();
 
@@ -640,6 +633,15 @@ TmRingPerfResult tm_ring_collect_perf_result(
       result.last_response_time = stats.last_response_cycle;
       has_response = true;
     }
+  }
+
+  if (has_request) {
+    result.measurement_start_time = result.first_request_time;
+    if (measurement_end_cycle >= result.measurement_start_time) {
+      result.measurement_cycles = measurement_end_cycle -
+                                  result.measurement_start_time + 1;
+    }
+    result.measurement_valid = drained && result.measurement_cycles != 0;
   }
 
   if (has_request && has_response &&

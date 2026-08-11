@@ -21,7 +21,7 @@ class TmRingL2BufferNode : public tm_engine::TmModule {
  public:
   TmRingL2BufferNode(const std::string& name, tm_engine::p_tm_clk_t clk,
                      const TmRingL2TrafficConfig& cfg,
-                     uint32_t inject_depth, uint32_t eject_depth);
+                     const TmRingEndpointQueueDepths& queue_depths);
 
   void attach(uint32_t target_id,
               std::shared_ptr<TmRingTopology> topology);
@@ -85,10 +85,10 @@ using p_tm_ring_l2_buffer_node_t = std::shared_ptr<tm_ring_l2_buffer_node_t>;
 
 inline p_tm_ring_l2_buffer_node_t tm_make_ring_l2_buffer_node(
     const std::string& name, tm_engine::p_tm_clk_t clk,
-    const TmRingL2TrafficConfig& cfg, uint32_t inject_depth,
-    uint32_t eject_depth) {
+    const TmRingL2TrafficConfig& cfg,
+    const TmRingEndpointQueueDepths& queue_depths) {
   return std::make_shared<TmRingL2BufferNode>(
-      name, clk, cfg, inject_depth, eject_depth);
+      name, clk, cfg, queue_depths);
 }
 
 #endif  // _TM_RING_L2_BUFFER_NODE_H_

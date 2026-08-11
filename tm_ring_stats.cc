@@ -2,6 +2,16 @@
 
 #include <algorithm>
 
+void TmRingQueueCounters::clear() { *this = TmRingQueueCounters(); }
+
+void TmRingQueueCounters::merge_from(const TmRingQueueCounters& other) {
+  pushes += other.pushes;
+  pops += other.pops;
+  push_rejects += other.push_rejects;
+  occupancy_area += other.occupancy_area;
+  full_cycles += other.full_cycles;
+}
+
 void TmRingConnStats::clear() { *this = TmRingConnStats(); }
 
 void TmRingConnStats::merge_from(const TmRingConnStats& other) {
@@ -20,6 +30,7 @@ void TmRingRbrgPathStats::clear() { *this = TmRingRbrgPathStats(); }
 void TmRingRbrgPathStats::merge_from(const TmRingRbrgPathStats& other) {
   packets += other.packets;
   bytes += other.bytes;
+  busy_cycles += other.busy_cycles;
   queue_occupancy_peak =
       std::max(queue_occupancy_peak, other.queue_occupancy_peak);
   queue_full_stalls += other.queue_full_stalls;
@@ -83,6 +94,20 @@ void TmRingHomeAgentStats::merge_from(const TmRingHomeAgentStats& other) {
   }
 }
 
+void TmRingDeflectionStats::clear() { *this = TmRingDeflectionStats(); }
+
+void TmRingDeflectionStats::merge_from(const TmRingDeflectionStats& other) {
+  events += other.events;
+  unique_packets += other.unique_packets;
+  eligible_unicast_packets += other.eligible_unicast_packets;
+  completed_packets += other.completed_packets;
+  rounds_sum += other.rounds_sum;
+  rounds_max = std::max(rounds_max, other.rounds_max);
+  delay_cycles_sum += other.delay_cycles_sum;
+  delay_cycles_max = std::max(delay_cycles_max, other.delay_cycles_max);
+  fanout_recipient_retry_events += other.fanout_recipient_retry_events;
+}
+
 void TmRingCrossStationStats::clear() { *this = TmRingCrossStationStats(); }
 
 void TmRingCrossStationStats::merge_from(
@@ -93,7 +118,9 @@ void TmRingCrossStationStats::merge_from(
   inject_queue_full_stalls += other.inject_queue_full_stalls;
   eject_queue_full_stalls += other.eject_queue_full_stalls;
   slot_pool_full_stalls += other.slot_pool_full_stalls;
-  deflected_packets += other.deflected_packets;
+  for (uint32_t i = 0; i < deflection.size(); ++i) {
+    deflection[i].merge_from(other.deflection[i]);
+  }
   i_tag_sets += other.i_tag_sets;
   i_tag_claims += other.i_tag_claims;
   e_tag_sets += other.e_tag_sets;

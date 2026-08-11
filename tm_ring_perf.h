@@ -137,6 +137,12 @@ struct TmRingPerfResult {
   uint64_t first_response_time = 0;
   uint64_t last_response_time = 0;
   uint64_t transfer_cycles = 0;
+  uint64_t measurement_start_time = 0;
+  uint64_t measurement_end_time = 0;
+  uint64_t measurement_cycles = 0;
+  bool measurement_valid = false;
+  uint32_t ring_link_width_bytes = 0;
+  uint32_t rbrg_width_bytes = 0;
   uint64_t completed_packets = 0;
   uint64_t completed_bytes = 0;
   uint64_t protocol_errors = 0;
@@ -159,6 +165,7 @@ struct TmRingPerfResult {
   TmMemStats memory_stats;
   std::vector<TmRingDomainStats> ring_domain_stats;
   std::vector<TmRingRbrgStats> rbrg_stats;
+  std::vector<TmRingEndpointQueueStats> endpoint_queue_stats;
 };
 
 std::vector<TmRingPerfTxn> tm_ring_build_perf_trace(
@@ -179,15 +186,8 @@ TmRingPerfResult tm_ring_collect_perf_result(
     const TmRingFabric& fabric,
     const std::vector<TmMemStats>& memory_stats,
     const TmRingPerfEstimate& estimate,
-    bool drained);
-
-TmRingPerfResult tm_ring_collect_perf_result(
-    const TmRingPerfCase& perf_case,
-    const std::vector<TmRingPerfMasterStats>& master_stats,
-    const TmRingFabric& fabric,
-    const std::vector<TmMemStats>& memory_stats,
-    const TmRingPerfEstimate& estimate,
     const TmRingPerfEstimate& no_merge_estimate,
+    uint64_t measurement_end_cycle,
     bool drained);
 
 double tm_ring_scaling_efficiency(const TmRingPerfResult& multi,

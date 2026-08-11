@@ -8,23 +8,24 @@
 using namespace tm_engine;
 
 TmRingRbrgL1::TmRingRbrgL1(const std::string& name, p_tm_clk_t clk,
-                           uint32_t v_ring_id, const TmRingCfg& cfg,
+                           uint32_t v_ring_id, uint32_t queue_depth,
+                           uint32_t latency, uint32_t width_bytes,
+                           const TmRingEndpointQueueDepths& v_queue_depths,
+                           const TmRingEndpointQueueDepths& h_queue_depths,
                            std::shared_ptr<TmRingTopology> topology)
     : TmModule(name),
       v_ring_id_(v_ring_id),
-      rbrg_width_bytes_(cfg.rbrg_width_bytes),
+      rbrg_width_bytes_(width_bytes),
       topology_(topology) {
   v_niu_ = tm_make_ring_node_interface(
-      clk, name + "_v_node_interface", cfg.ring_inject_queue_depth,
-      cfg.ring_eject_queue_depth);
+      clk, name + "_v_node_interface", v_queue_depths);
   h_niu_ = tm_make_ring_node_interface(
-      clk, name + "_h_node_interface", cfg.ring_inject_queue_depth,
-      cfg.ring_eject_queue_depth);
+      clk, name + "_h_node_interface", h_queue_depths);
 
   for (uint32_t path = 0; path < paths_.size(); ++path) {
     paths_[path].transfer_q = tm_make_que<p_tm_pld_t>(
         clk, name + "_path_" + std::to_string(path) + "_transfer_q",
-        cfg.rbrg_queue_depth, cfg.rbrg_latency);
+        queue_depth, latency);
     paths_[path].bandwidth_ready_event = tm_make_event(
         name + "_path_" + std::to_string(path) + "_bandwidth_ready");
   }
@@ -193,6 +194,7 @@ void TmRingRbrgL1::receive(TmRingRbrgPath path, TmRingSubnet subnet,
 
   const uint32_t serialization_cycles = tm_ring_serialization_cycles(
       tm_ring_packet_bytes(pld), rbrg_width_bytes_);
+  stats.busy_cycles += serialization_cycles;
   state.bandwidth_available = false;
   state.bandwidth_event_pending = true;
   state.bandwidth_ready_event->notify_after(serialization_cycles);
@@ -285,7 +287,7 @@ void TmRingRbrgL1::clear_ring_local_state(p_tm_pld_t pld) {
   pld->ring_slot_empty = false;
   pld->ring_i_tag_owner = tm_ring_invalid_tag_owner();
   pld->ring_e_tag_owner = tm_ring_invalid_tag_owner();
-  pld->ring_deflection_count = 0;
+  pld->reset_ring_deflection_state();
 }
 
 uint32_t TmRingRbrgL1::path_index(TmRingRbrgPath path) const {

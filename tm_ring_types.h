@@ -53,6 +53,38 @@ enum class TmRingSubnet : uint32_t {
   DAT = 2,
 };
 
+enum class TmRingNodeType : uint32_t {
+  MASTER = 0,
+  HOME_AGENT,
+  L2_BUFFER,
+  RBRG_V,
+  RBRG_H,
+  COUNT,
+};
+
+enum class TmRingQueueSide : uint32_t { INJECT = 0, EJECT = 1 };
+
+struct TmRingQueueStats {
+  TmRingSubnet subnet = TmRingSubnet::REQ;
+  TmRingQueueSide side = TmRingQueueSide::INJECT;
+  TmRingPortDir direction = TmRingPortDir::LOCAL;
+  uint32_t depth = 0;
+  uint32_t occupancy = 0;
+  uint32_t occupancy_peak = 0;
+  TmRingQueueCounters counters;
+};
+
+struct TmRingEndpointQueueStats {
+  TmRingNodeType node_type = TmRingNodeType::MASTER;
+  uint32_t node_id = 0;
+  TmRingQueueStats queue;
+};
+
+struct TmRingEndpointQueueDepths {
+  std::array<uint32_t, 3> inject = {{2, 2, 2}};
+  std::array<uint32_t, 3> eject = {{2, 2, 2}};
+};
+
 inline constexpr uint32_t tm_ring_port_count() { return 3; }
 
 inline constexpr uint32_t tm_ring_subnet_count() { return 3; }
@@ -163,8 +195,9 @@ struct TmRingCfg {
   // Bytes serialized by each physical link per cycle.
   uint32_t ring_link_width_bytes = 16;
   // Endpoint queues; transit registers always have depth one.
-  uint32_t ring_inject_queue_depth = 2;
-  uint32_t ring_eject_queue_depth = 2;
+  std::array<TmRingEndpointQueueDepths,
+             static_cast<uint32_t>(TmRingNodeType::COUNT)>
+      endpoint_queue_depths;
   uint32_t max_aicore_per_vring = 8;
   uint32_t rbrg_queue_depth = 4;
   uint32_t rbrg_latency = 1;

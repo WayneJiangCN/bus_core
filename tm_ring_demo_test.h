@@ -442,8 +442,6 @@ inline int print_demo_performance(
             << " link_latency=" << ring_cfg->ring_link_latency
             << " slot_pipeline_depth=" << (ring_cfg->ring_link_latency + 1)
             << " link_width=" << ring_cfg->ring_link_width_bytes
-            << " inject_queue_depth=" << ring_cfg->ring_inject_queue_depth
-            << " eject_queue_depth=" << ring_cfg->ring_eject_queue_depth
             << " v_ring_count="
             << (ring_cfg->num_masters + ring_cfg->max_aicore_per_vring - 1) /
                    ring_cfg->max_aicore_per_vring
@@ -475,8 +473,6 @@ inline int print_demo_performance(
             << " 链路延迟周期=" << ring_cfg->ring_link_latency
             << " slot流水深度=" << (ring_cfg->ring_link_latency + 1)
             << " 链路宽度字节=" << ring_cfg->ring_link_width_bytes
-            << " InjectQueue深度=" << ring_cfg->ring_inject_queue_depth
-            << " EjectQueue深度=" << ring_cfg->ring_eject_queue_depth
             << " 物理subnet=req,rsp,dat"
             << " 每个subnet物理lane数=1"
             << " 逻辑RD_RSP通道数=" << ring_cfg->rd_rsp_port_num
@@ -1000,7 +996,6 @@ inline int print_demo_performance(
             << " ejected_packets=" << csstats.ejected_packets
             << " slot_pool_full_stalls="
             << csstats.slot_pool_full_stalls
-            << " deflected_packets=" << csstats.deflected_packets
             << " i_tag_sets=" << csstats.i_tag_sets
             << " i_tag_claims=" << csstats.i_tag_claims
             << " e_tag_sets=" << csstats.e_tag_sets

@@ -4,6 +4,17 @@
 #include <array>
 #include <stdint.h>
 
+struct TmRingQueueCounters {
+  uint64_t pushes = 0;
+  uint64_t pops = 0;
+  uint64_t push_rejects = 0;
+  uint64_t occupancy_area = 0;
+  uint64_t full_cycles = 0;
+
+  void clear();
+  void merge_from(const TmRingQueueCounters& other);
+};
+
 struct TmRingConnStats {
   uint64_t packets = 0;
   uint64_t bytes = 0;
@@ -27,6 +38,7 @@ inline uint64_t tm_ring_conn_total_stalls(const TmRingConnStats& stats) {
 struct TmRingRbrgPathStats {
   uint64_t packets = 0;
   uint64_t bytes = 0;
+  uint64_t busy_cycles = 0;
   uint64_t queue_occupancy_peak = 0;
   uint64_t queue_full_stalls = 0;
   uint64_t destination_inject_stalls = 0;
@@ -89,6 +101,21 @@ struct TmRingHomeAgentStats {
   void merge_from(const TmRingHomeAgentStats& other);
 };
 
+struct TmRingDeflectionStats {
+  uint64_t events = 0;
+  uint64_t unique_packets = 0;
+  uint64_t eligible_unicast_packets = 0;
+  uint64_t completed_packets = 0;
+  uint64_t rounds_sum = 0;
+  uint64_t rounds_max = 0;
+  uint64_t delay_cycles_sum = 0;
+  uint64_t delay_cycles_max = 0;
+  uint64_t fanout_recipient_retry_events = 0;
+
+  void clear();
+  void merge_from(const TmRingDeflectionStats& other);
+};
+
 struct TmRingCrossStationStats {
   uint64_t transit_slots = 0;
   uint64_t injected_packets = 0;
@@ -96,7 +123,7 @@ struct TmRingCrossStationStats {
   uint64_t inject_queue_full_stalls = 0;
   uint64_t eject_queue_full_stalls = 0;
   uint64_t slot_pool_full_stalls = 0;
-  uint64_t deflected_packets = 0;
+  std::array<TmRingDeflectionStats, 3> deflection;
   uint64_t i_tag_sets = 0;
   uint64_t i_tag_claims = 0;
   uint64_t e_tag_sets = 0;

@@ -11,3 +11,12 @@ TEST(TmRingStatsTest, ConnTotalStallsIncludesSendReject) {
 
   EXPECT_EQ(uint64_t(17), tm_ring_conn_total_stalls(stats));
 }
+
+TEST(TmRingStatsTest, RbrgBusyCyclesMergeBySum) {
+  TmRingRbrgPathStats left;
+  TmRingRbrgPathStats right;
+  left.busy_cycles = 3;
+  right.busy_cycles = 5;
+  left.merge_from(right);
+  EXPECT_EQ(uint64_t(8), left.busy_cycles);
+}

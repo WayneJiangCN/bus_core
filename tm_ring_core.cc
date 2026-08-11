@@ -53,9 +53,18 @@ void validate_ring_config(const p_tm_ring_cfg_t& cfg) {
   if (h_ring_stations > 64) {
     throw std::invalid_argument("H-Ring station count must not exceed 64");
   }
-  if (cfg->ring_inject_queue_depth == 0 ||
-      cfg->ring_eject_queue_depth == 0) {
-    throw std::invalid_argument("Ring endpoint queue depths must be nonzero");
+  for (uint32_t node_type = 0;
+       node_type < static_cast<uint32_t>(TmRingNodeType::COUNT);
+       ++node_type) {
+    const TmRingEndpointQueueDepths& queue_depths =
+        cfg->endpoint_queue_depths[node_type];
+    for (uint32_t subnet = 0; subnet < tm_ring_subnet_count(); ++subnet) {
+      if (queue_depths.inject[subnet] == 0 ||
+          queue_depths.eject[subnet] == 0) {
+        throw std::invalid_argument(
+            "Ring endpoint queue depths must be nonzero");
+      }
+    }
   }
   if (cfg->l2_traffic.buffer_depth == 0) {
     throw std::invalid_argument("L2 Buffer depth must be nonzero");
@@ -232,35 +241,50 @@ p_tm_ring_conn_t TmRingFabric::output_conn(
 }
 
 void TmRingFabric::create_master_nius() {
+  const TmRingEndpointQueueDepths& queue_depths =
+      cfg_->endpoint_queue_depths[static_cast<uint32_t>(
+          TmRingNodeType::MASTER)];
   for (uint32_t i = 0; i < cfg_->num_masters; ++i) {
     master_nius_.push_back(tm_make_ring_master_niu(
         this->name() + "_master_niu" + std::to_string(i), clk_, i,
-        cfg_->ring_inject_queue_depth, cfg_->ring_eject_queue_depth));
+        queue_depths));
   }
 }
 
 void TmRingFabric::create_mem_ports() {
+  const TmRingEndpointQueueDepths& queue_depths =
+      cfg_->endpoint_queue_depths[static_cast<uint32_t>(
+          TmRingNodeType::HOME_AGENT)];
   for (uint32_t i = 0; i < cfg_->targets.size(); ++i) {
     mem_ports_.push_back(tm_make_ring_mem_port(
         this->name() + "_mem_port_" + std::to_string(i), clk_,
-        *cfg_->targets[i], *cfg_));
+        *cfg_->targets[i], *cfg_, queue_depths));
   }
 }
 
 void TmRingFabric::create_l2_buffer_nodes() {
+  const TmRingEndpointQueueDepths& queue_depths =
+      cfg_->endpoint_queue_depths[static_cast<uint32_t>(
+          TmRingNodeType::L2_BUFFER)];
   for (uint32_t target = 0; target < cfg_->targets.size(); ++target) {
     l2_buffer_nodes_.push_back(tm_make_ring_l2_buffer_node(
         this->name() + "_l2_buffer_" + std::to_string(target), clk_,
-        cfg_->l2_traffic, cfg_->ring_inject_queue_depth,
-        cfg_->ring_eject_queue_depth));
+        cfg_->l2_traffic, queue_depths));
   }
 }
 
 void TmRingFabric::create_rbrgs() {
+  const TmRingEndpointQueueDepths& v_queue_depths =
+      cfg_->endpoint_queue_depths[static_cast<uint32_t>(
+          TmRingNodeType::RBRG_V)];
+  const TmRingEndpointQueueDepths& h_queue_depths =
+      cfg_->endpoint_queue_depths[static_cast<uint32_t>(
+          TmRingNodeType::RBRG_H)];
   for (uint32_t ring = 0; ring < topology_->v_ring_count(); ++ring) {
     rbrgs_.push_back(tm_make_ring_rbrg_l1(
-        this->name() + "_rbrg_" + std::to_string(ring), clk_, ring, *cfg_,
-        topology_));
+        this->name() + "_rbrg_" + std::to_string(ring), clk_, ring,
+        cfg_->rbrg_queue_depth, cfg_->rbrg_latency, cfg_->rbrg_width_bytes,
+        v_queue_depths, h_queue_depths, topology_));
   }
 }
 
@@ -348,6 +372,7 @@ void TmRingFabric::reset() {
 }
 
 void TmRingFabric::clear_stats() {
+  const uint64_t now = clk_->time();
   for (const p_tm_ring_cs_t& ring_station : h_ring_.stations) {
     ring_station->clear_stats();
   }
@@ -364,12 +389,19 @@ void TmRingFabric::clear_stats() {
   }
   for (const p_tm_ring_rbrg_l1_t& rbrg : rbrgs_) {
     rbrg->clear_stats();
+    rbrg->v_node_interface()->clear_stats(now);
+    rbrg->h_node_interface()->clear_stats(now);
+  }
+  for (const auto& master_niu : master_nius_) {
+    master_niu->node_interface()->clear_stats(now);
   }
   for (const auto& mem_port : mem_ports_) {
     mem_port->clear_stats();
+    mem_port->node_interface()->clear_stats(now);
   }
   for (const auto& l2_buffer : l2_buffer_nodes_) {
     l2_buffer->clear_stats();
+    l2_buffer->node_interface()->clear_stats(now);
   }
 }
 
@@ -436,6 +468,48 @@ TmRingFabric::ring_conn_stall_breakdown() const {
   return stalls;
 }
 
+std::vector<TmRingEndpointQueueStats> TmRingFabric::ring_queue_stats(
+    uint64_t snapshot_cycle) const {
+  std::vector<TmRingEndpointQueueStats> result;
+  result.reserve((master_nius_.size() + mem_ports_.size() +
+                  l2_buffer_nodes_.size() + 2 * rbrgs_.size()) *
+                 9);
+
+  const auto append_endpoint = [&result, snapshot_cycle](
+                                   TmRingNodeType node_type, uint32_t node_id,
+                                   const p_tm_ring_node_interface_t& niu) {
+    const std::vector<TmRingQueueStats> queue_stats =
+        niu->queue_stats(snapshot_cycle);
+    for (const TmRingQueueStats& queue : queue_stats) {
+      TmRingEndpointQueueStats endpoint_stats;
+      endpoint_stats.node_type = node_type;
+      endpoint_stats.node_id = node_id;
+      endpoint_stats.queue = queue;
+      result.push_back(endpoint_stats);
+    }
+  };
+
+  for (uint32_t i = 0; i < master_nius_.size(); ++i) {
+    append_endpoint(TmRingNodeType::MASTER, i,
+                    master_nius_[i]->node_interface());
+  }
+  for (uint32_t i = 0; i < mem_ports_.size(); ++i) {
+    append_endpoint(TmRingNodeType::HOME_AGENT, i,
+                    mem_ports_[i]->node_interface());
+  }
+  for (uint32_t i = 0; i < l2_buffer_nodes_.size(); ++i) {
+    append_endpoint(TmRingNodeType::L2_BUFFER, i,
+                    l2_buffer_nodes_[i]->node_interface());
+  }
+  for (uint32_t i = 0; i < rbrgs_.size(); ++i) {
+    append_endpoint(TmRingNodeType::RBRG_V, i,
+                    rbrgs_[i]->v_node_interface());
+    append_endpoint(TmRingNodeType::RBRG_H, i,
+                    rbrgs_[i]->h_node_interface());
+  }
+  return result;
+}
+
 std::vector<TmRingDomainStats> TmRingFabric::ring_domain_stats() const {
   std::vector<TmRingDomainStats> result;
   result.reserve(1 + v_rings_.size());
@@ -444,6 +518,11 @@ std::vector<TmRingDomainStats> TmRingFabric::ring_domain_stats() const {
     TmRingDomainStats domain_stats;
     domain_stats.type = domain.type;
     domain_stats.ring_id = domain.ring_id;
+    domain_stats.directed_edge_count =
+        static_cast<uint32_t>(domain.connections.size() / 2);
+    for (const p_tm_ring_cs_t& station : domain.stations) {
+      domain_stats.cross_station.merge_from(station->stats());
+    }
     bool has_hottest = false;
 
     for (uint32_t index = 0; index < domain.connections.size(); ++index) {
@@ -472,6 +551,7 @@ std::vector<TmRingDomainStats> TmRingFabric::ring_domain_stats() const {
             stats.serialization_busy_stall;
         candidate.total_stalls = tm_ring_conn_total_stalls(stats);
         candidate.inflight_peak = stats.inflight_peak;
+        domain_stats.edges.push_back(candidate);
 
         const TmRingConnHotspot& hottest = domain_stats.hottest;
         const bool is_hotter =
@@ -508,6 +588,14 @@ std::vector<TmRingRbrgStats> TmRingFabric::rbrg_stats() const {
     result.push_back(rbrg->stats());
   }
   return result;
+}
+
+uint32_t TmRingFabric::ring_link_width_bytes() const {
+  return cfg_->ring_link_width_bytes;
+}
+
+uint32_t TmRingFabric::rbrg_width_bytes() const {
+  return cfg_->rbrg_width_bytes;
 }
 
 TmRingConnStats TmRingFabric::conn_stats(TmRingSubnet subnet) const {

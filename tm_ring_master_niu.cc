@@ -6,14 +6,13 @@ using namespace tm_engine;
 using namespace std;
 TmRingMasterNiu::TmRingMasterNiu(const std::string& name, p_tm_clk_t clk,
                                   uint32_t master_port,
-                                  uint32_t inject_depth,
-                                  uint32_t eject_depth)
+                                  const TmRingEndpointQueueDepths& queue_depths)
     : TmModule(name), master_port_(master_port) {
-  config(clk, inject_depth, eject_depth);
+  config(clk, queue_depths);
 }
 
-void TmRingMasterNiu::config(p_tm_clk_t clk, uint32_t inject_depth,
-                             uint32_t eject_depth) {
+void TmRingMasterNiu::config(
+    p_tm_clk_t clk, const TmRingEndpointQueueDepths& queue_depths) {
   // The BIU-side interface keeps its local request/response channel layout.
   // Ring-side queues belong to the Node Interface and are consumed by the
   // attached Cross Station.
@@ -23,7 +22,7 @@ void TmRingMasterNiu::config(p_tm_clk_t clk, uint32_t inject_depth,
   biu_inf_->set_chan_num(biu_channel_count);
 
   node_interface_ = tm_make_ring_node_interface(
-      clk, this->name() + "_node_interface", inject_depth, eject_depth);
+      clk, this->name() + "_node_interface", queue_depths);
 
   tm_sensitive(TM_MAKE_CPROC(&TmRingMasterNiu::recv_biu_request),
                biu_inf_->vld);

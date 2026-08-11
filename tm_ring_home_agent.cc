@@ -414,14 +414,16 @@ bool TmRingHomeAgent::in_one_line(p_tm_pld_t pld) const {
 
 bool TmRingHomeAgent::fanout_waiter_set_supported(
     const TmHaReadTxn& transaction) const {
-  if (transaction.waiters.size() < 2) {
+  if (transaction.waiters.empty()) {
     return false;
   }
   for (size_t first = 0; first < transaction.waiters.size(); ++first) {
+    if (transaction.waiters[first].pld == nullptr) {
+      return false;
+    }
     for (size_t second = first + 1; second < transaction.waiters.size();
          ++second) {
-      if (transaction.waiters[first].pld == nullptr ||
-          transaction.waiters[second].pld == nullptr ||
+      if (transaction.waiters[second].pld == nullptr ||
           transaction.waiters[first].pld->mst_id ==
               transaction.waiters[second].pld->mst_id) {
         return false;
@@ -620,7 +622,7 @@ TmRingL2ResponseCandidate TmRingHomeAgent::make_l2_candidate(
   candidate.response->ring_slot_empty = false;
   candidate.response->ring_i_tag_owner = tm_ring_invalid_tag_owner();
   candidate.response->ring_e_tag_owner = tm_ring_invalid_tag_owner();
-  candidate.response->ring_deflection_count = 0;
+  candidate.response->reset_ring_deflection_state();
 
   candidate.line_base = transaction.line_base;
   candidate.completion_data = transaction.completion_data;

@@ -12,12 +12,11 @@ using namespace tm_engine;
 TmRingL2BufferNode::TmRingL2BufferNode(const std::string& name,
                                        p_tm_clk_t clk,
                                        const TmRingL2TrafficConfig& cfg,
-                                       uint32_t inject_depth,
-                                       uint32_t eject_depth)
+                                       const TmRingEndpointQueueDepths& queue_depths)
     : TmModule(name),
       cfg_(cfg) {
   node_interface_ = tm_make_ring_node_interface(
-      clk, name + "_node_interface", inject_depth, eject_depth);
+      clk, name + "_node_interface", queue_depths);
   response_q_ = tm_make_que<p_tm_pld_t>(
       clk, name + "_response_q", cfg_.buffer_depth, cfg_.response_latency);
   issue_ready_event_ = tm_make_event(name + "_issue_ready");
@@ -201,7 +200,7 @@ p_tm_pld_t TmRingL2BufferNode::make_unicast_response(
   response->ring_slot_empty = false;
   response->ring_i_tag_owner = tm_ring_invalid_tag_owner();
   response->ring_e_tag_owner = tm_ring_invalid_tag_owner();
-  response->ring_deflection_count = 0;
+  response->reset_ring_deflection_state();
   return response;
 }
 
@@ -229,7 +228,7 @@ p_tm_pld_t TmRingL2BufferNode::make_fanout_envelope(
   envelope->ring_slot_empty = false;
   envelope->ring_i_tag_owner = tm_ring_invalid_tag_owner();
   envelope->ring_e_tag_owner = tm_ring_invalid_tag_owner();
-  envelope->ring_deflection_count = 0;
+  envelope->reset_ring_deflection_state();
   return envelope;
 }
 
@@ -266,7 +265,7 @@ bool TmRingL2BufferNode::append_fanout_recipient(
   recipient.response_template->ring_slot_empty = false;
   recipient.response_template->ring_i_tag_owner = tm_ring_invalid_tag_owner();
   recipient.response_template->ring_e_tag_owner = tm_ring_invalid_tag_owner();
-  recipient.response_template->ring_deflection_count = 0;
+  recipient.response_template->reset_ring_deflection_state();
 
   if (!envelope->ring_fanout->recipients.empty()) {
     const TmRingFanoutRecipient& first =

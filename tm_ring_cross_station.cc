@@ -216,7 +216,14 @@ void TmRingCrossStation::process_transit(TmRingPortDir in_dir,
 
   if (is_destination(slot)) {
     stats_.eject_queue_full_stalls++;
-    stats_.deflected_packets++;
+    TmRingDeflectionStats& stats =
+        stats_.deflection[tm_ring_subnet_index(subnet)];
+    if (!slot->ring_deflection_started) {
+      slot->ring_deflection_started = true;
+      slot->ring_first_deflection_cycle = time();
+      ++stats.unique_packets;
+    }
+    ++stats.events;
     slot->ring_deflection_count++;
     if (set_e_tag) {
       e_tag_reserved_[subnet_idx] = true;
@@ -263,8 +270,8 @@ void TmRingCrossStation::process_fanout_transit(
     }
 
     stats_.eject_queue_full_stalls++;
-    stats_.deflected_packets++;
-    envelope->ring_deflection_count++;
+    ++stats_.deflection[tm_ring_subnet_index(subnet)]
+          .fanout_recipient_retry_events;
     if (set_e_tag) {
       e_tag_reserved_[subnet_idx] = true;
       e_tag_txn_keys_[subnet_idx] = tm_ring_packet_txn_key(envelope);
@@ -449,6 +456,19 @@ void TmRingCrossStation::commit_eject(p_tm_pld_t slot, TmRingSubnet subnet) {
   claim_e_tag(slot, subnet);
   node_interface_->push_eject(subnet, slot);
   stats_.ejected_packets++;
+
+  TmRingDeflectionStats& stats =
+      stats_.deflection[tm_ring_subnet_index(subnet)];
+  ++stats.eligible_unicast_packets;
+  if (slot->ring_deflection_started) {
+    const uint64_t rounds = slot->ring_deflection_count;
+    const uint64_t delay = time() - slot->ring_first_deflection_cycle;
+    ++stats.completed_packets;
+    stats.rounds_sum += rounds;
+    stats.rounds_max = std::max(stats.rounds_max, rounds);
+    stats.delay_cycles_sum += delay;
+    stats.delay_cycles_max = std::max(stats.delay_cycles_max, delay);
+  }
 }
 
 void TmRingCrossStation::commit_fanout_eject(p_tm_pld_t envelope,
@@ -535,7 +555,7 @@ p_tm_pld_t TmRingCrossStation::make_fanout_response(
   response->ring_slot_empty = false;
   response->ring_i_tag_owner = tm_ring_invalid_tag_owner();
   response->ring_e_tag_owner = tm_ring_invalid_tag_owner();
-  response->ring_deflection_count = 0;
+  response->reset_ring_deflection_state();
   return response;
 }
 

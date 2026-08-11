@@ -24,7 +24,10 @@ enum class TmRingRbrgPath : uint32_t {
 class TmRingRbrgL1 : public tm_engine::TmModule {
  public:
   TmRingRbrgL1(const std::string& name, tm_engine::p_tm_clk_t clk,
-               uint32_t v_ring_id, const TmRingCfg& cfg,
+               uint32_t v_ring_id, uint32_t queue_depth,
+               uint32_t latency, uint32_t width_bytes,
+               const TmRingEndpointQueueDepths& v_queue_depths,
+               const TmRingEndpointQueueDepths& h_queue_depths,
                std::shared_ptr<TmRingTopology> topology);
 
   void reset() override;
@@ -85,9 +88,14 @@ using p_tm_ring_rbrg_l1_t = std::shared_ptr<tm_ring_rbrg_l1_t>;
 
 inline p_tm_ring_rbrg_l1_t tm_make_ring_rbrg_l1(
     const std::string& name, tm_engine::p_tm_clk_t clk, uint32_t v_ring_id,
-    const TmRingCfg& cfg, std::shared_ptr<TmRingTopology> topology) {
+    uint32_t queue_depth, uint32_t latency, uint32_t width_bytes,
+    const TmRingEndpointQueueDepths& v_queue_depths,
+    const TmRingEndpointQueueDepths& h_queue_depths,
+    std::shared_ptr<TmRingTopology> topology) {
   return std::shared_ptr<TmRingRbrgL1>(
-      new TmRingRbrgL1(name, clk, v_ring_id, cfg, topology));
+      new TmRingRbrgL1(name, clk, v_ring_id, queue_depth, latency,
+                       width_bytes, v_queue_depths, h_queue_depths,
+                       topology));
 }
 
 #endif  // _TM_RING_RBRG_L1_H_

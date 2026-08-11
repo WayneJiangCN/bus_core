@@ -22,8 +22,8 @@ using p_tm_ring_topology_t = std::shared_ptr<tm_ring_topology_t>;
 class TmRingMasterNiu : public tm_engine::TmModule {
  public:
   TmRingMasterNiu(const std::string& name, tm_engine::p_tm_clk_t clk,
-                  uint32_t master_port, uint32_t inject_depth,
-                  uint32_t eject_depth);
+                  uint32_t master_port,
+                  const TmRingEndpointQueueDepths& queue_depths);
   void reset();
   bool idle() const;
 
@@ -33,8 +33,8 @@ class TmRingMasterNiu : public tm_engine::TmModule {
   p_tm_ring_node_interface_t node_interface() const;
 
  private:
-  void config(tm_engine::p_tm_clk_t clk, uint32_t inject_depth,
-              uint32_t eject_depth);
+  void config(tm_engine::p_tm_clk_t clk,
+              const TmRingEndpointQueueDepths& queue_depths);
   void recv_biu_request();
   void recv_biu_data();
   void recv_rsp();
@@ -58,9 +58,9 @@ using p_tm_ring_m_niu_t = std::shared_ptr<tm_ring_m_niu_t>;
 
 inline p_tm_ring_m_niu_t tm_make_ring_master_niu(
     const std::string& name, tm_engine::p_tm_clk_t clk, uint32_t master_port,
-    uint32_t inject_depth, uint32_t eject_depth) {
-  return std::make_shared<TmRingMasterNiu>(
-      name, clk, master_port, inject_depth, eject_depth);
+    const TmRingEndpointQueueDepths& queue_depths) {
+  return std::make_shared<TmRingMasterNiu>(name, clk, master_port,
+                                            queue_depths);
 }
 
 #endif  // _TM_RING_MASTER_NIU_H_

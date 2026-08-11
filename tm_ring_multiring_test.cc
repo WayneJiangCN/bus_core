@@ -238,7 +238,7 @@ class TmRingMultiRingFabricTest : public ::testing::Test {
     std::vector<TmMemStats> memory_stats(1, memory->stats());
     result.perf_result = tm_ring_collect_perf_result(
         perf_case, result.master_stats, *fabric, memory_stats,
-        TmRingPerfEstimate(), result.idle);
+        TmRingPerfEstimate(), TmRingPerfEstimate(), clk->time(), result.idle);
     return result;
   }
 };
@@ -255,8 +255,19 @@ TEST_F(TmRingMultiRingFabricTest, UnicastReadWriteCrossesOneBridge) {
   EXPECT_EQ(uint64_t(0), result.perf_result.protocol_errors);
   EXPECT_TRUE(result.idle);
   EXPECT_TRUE(result.fabric->idle());
+  EXPECT_TRUE(result.perf_result.measurement_valid);
+  EXPECT_FALSE(result.perf_result.endpoint_queue_stats.empty());
+  ASSERT_FALSE(result.perf_result.ring_domain_stats.empty());
+  EXPECT_GT(result.perf_result.ring_domain_stats[0].directed_edge_count,
+            uint32_t(0));
 
   for (uint32_t ring = 0; ring < 2; ++ring) {
+    const TmRingRbrgPath paths[] = {
+        TmRingRbrgPath::V_TO_H_REQ,
+        TmRingRbrgPath::V_TO_H_DAT,
+        TmRingRbrgPath::H_TO_V_RSP,
+        TmRingRbrgPath::H_TO_V_DAT,
+    };
     const uint64_t v_to_h_packets =
         result.fabric
             ->rbrg_path_stats(ring, TmRingRbrgPath::V_TO_H_REQ)
@@ -273,6 +284,13 @@ TEST_F(TmRingMultiRingFabricTest, UnicastReadWriteCrossesOneBridge) {
             .packets;
     EXPECT_GT(v_to_h_packets, uint64_t(0));
     EXPECT_GT(h_to_v_packets, uint64_t(0));
+    for (TmRingRbrgPath path : paths) {
+      const TmRingRbrgPathStats& path_stats =
+          result.fabric->rbrg_path_stats(ring, path);
+      if (path_stats.packets != 0) {
+        EXPECT_GT(path_stats.busy_cycles, uint64_t(0));
+      }
+    }
   }
 }
 

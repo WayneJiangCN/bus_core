@@ -71,6 +71,33 @@ const char* domain_type_name(TmRingDomainType type) {
   return type == TmRingDomainType::H_RING ? "h" : "v";
 }
 
+const char* node_type_name(TmRingNodeType type) {
+  switch (type) {
+    case TmRingNodeType::MASTER:
+      return "master";
+    case TmRingNodeType::HOME_AGENT:
+      return "home_agent";
+    case TmRingNodeType::L2_BUFFER:
+      return "l2_buffer";
+    case TmRingNodeType::RBRG_V:
+      return "rbrg_v";
+    case TmRingNodeType::RBRG_H:
+      return "rbrg_h";
+    case TmRingNodeType::COUNT:
+      break;
+  }
+  return "unknown";
+}
+
+const char* queue_side_name(TmRingQueueSide side) {
+  return side == TmRingQueueSide::INJECT ? "inject" : "eject";
+}
+
+const char* queue_direction_name(TmRingPortDir direction) {
+  return direction == TmRingPortDir::LOCAL ? "shared"
+                                           : direction_name(direction);
+}
+
 const char* rbrg_path_name(TmRingRbrgPath path) {
   switch (path) {
     case TmRingRbrgPath::V_TO_H_REQ:
@@ -85,49 +112,42 @@ const char* rbrg_path_name(TmRingRbrgPath path) {
   return "unknown";
 }
 
-struct DirectionCycles {
-  DirectionCycles() : cw(0), ccw(0) {}
-
-  uint64_t cw;
-  uint64_t ccw;
-};
-
-DirectionCycles collect_direction_cycles(const TmRingPerfEstimate& estimate,
-                                         TmRingSubnet subnet) {
-  DirectionCycles total;
-  for (const auto& edge : estimate.edge_cycles) {
-    if (edge.first.subnet != subnet) {
-      continue;
-    }
-    if (edge.first.direction == TmRingPortDir::CW) {
-      total.cw += edge.second;
-    } else if (edge.first.direction == TmRingPortDir::CCW) {
-      total.ccw += edge.second;
-    }
-  }
-  return total;
+double percentage(uint64_t numerator, uint64_t denominator) {
+  return denominator == 0
+             ? 0.0
+             : 100.0 * static_cast<double>(numerator) /
+                   static_cast<double>(denominator);
 }
 
-double direction_imbalance_pct(const DirectionCycles& cycles) {
-  const uint64_t total = cycles.cw + cycles.ccw;
-  if (total == 0) {
-    return 0.0;
-  }
-  const uint64_t difference = cycles.cw > cycles.ccw
-                                  ? cycles.cw - cycles.ccw
-                                  : cycles.ccw - cycles.cw;
-  return 100.0 * static_cast<double>(difference) /
-         static_cast<double>(total);
+double average(uint64_t sum, uint64_t count) {
+  return count == 0 ? 0.0
+                    : static_cast<double>(sum) / static_cast<double>(count);
 }
 
-void append_domain_direction(std::ostringstream* out, const char* subnet,
-                             const char* direction,
-                             const TmRingConnStats& stats) {
-  const std::string prefix = std::string(subnet) + "_" + direction;
-  *out << ' ' << prefix << "_packets=" << stats.packets << ' ' << prefix
-       << "_bytes=" << stats.bytes << ' ' << prefix
-       << "_busy_cycles=" << stats.busy_cycles << ' ' << prefix
-       << "_stalls=" << tm_ring_conn_total_stalls(stats);
+double cycle_util_pct(uint64_t busy_cycles, uint64_t measurement_cycles,
+                      uint32_t edge_count) {
+  return percentage(busy_cycles,
+                    measurement_cycles * static_cast<uint64_t>(edge_count));
+}
+
+double payload_util_pct(uint64_t bytes, uint64_t measurement_cycles,
+                        uint32_t width_bytes, uint32_t edge_count) {
+  return percentage(bytes, measurement_cycles * width_bytes *
+                               static_cast<uint64_t>(edge_count));
+}
+
+double serialization_efficiency_pct(uint64_t bytes, uint64_t busy_cycles,
+                                    uint32_t width_bytes) {
+  return percentage(bytes, busy_cycles * static_cast<uint64_t>(width_bytes));
+}
+
+double subnet_imbalance_pct(const TmRingConnStats& cw,
+                            const TmRingConnStats& ccw) {
+  const uint64_t total = cw.busy_cycles + ccw.busy_cycles;
+  const uint64_t difference = cw.busy_cycles > ccw.busy_cycles
+                                  ? cw.busy_cycles - ccw.busy_cycles
+                                  : ccw.busy_cycles - cw.busy_cycles;
+  return percentage(difference, total);
 }
 
 uint64_t saturating_subtract(uint64_t left, uint64_t right) {
@@ -165,10 +185,6 @@ void append_theory(std::ostringstream* out, const char* section,
 }  // namespace
 
 std::string tm_ring_format_perf_result(const TmRingPerfResult& result) {
-  const DirectionCycles req_direction_cycles =
-      collect_direction_cycles(result.estimate, TmRingSubnet::REQ);
-  const DirectionCycles dat_direction_cycles =
-      collect_direction_cycles(result.estimate, TmRingSubnet::DAT);
   std::ostringstream out;
   out << std::fixed << std::setprecision(6);
   out << "PERF_CONFIG case=" << result.perf_case.name
@@ -184,6 +200,12 @@ std::string tm_ring_format_perf_result(const TmRingPerfResult& result) {
       << result.perf_case.home_agent_waiters_per_entry
       << " l2_response_latency="
       << result.perf_case.l2_response_latency << '\n';
+
+  out << "PERF_MEASUREMENT start_cycle=" << result.measurement_start_time
+      << " end_cycle=" << result.measurement_end_time
+      << " window_cycles=" << result.measurement_cycles
+      << " measurement_valid=" << (result.measurement_valid ? 1 : 0)
+      << '\n';
 
   out << "PERF_COUNTS completed_packets=" << result.completed_packets
       << " completed_bytes=" << result.completed_bytes
@@ -220,67 +242,155 @@ std::string tm_ring_format_perf_result(const TmRingPerfResult& result) {
   out << " cross_station_injected="
       << result.cross_station_stats.injected_packets
       << " cross_station_ejected="
-      << result.cross_station_stats.ejected_packets
-      << " cross_station_deflected="
-      << result.cross_station_stats.deflected_packets
-      << " hottest_subnet="
-      << subnet_name(result.estimate.hottest_edge.subnet)
-      << " hottest_src_station=" << result.estimate.hottest_edge.src_station
-      << " hottest_direction="
-      << direction_name(result.estimate.hottest_edge.direction)
-      << " hottest_cycles=" << result.estimate.hottest_ring_edge_cycles
-      << " req_cw_cycles=" << req_direction_cycles.cw
-      << " req_ccw_cycles=" << req_direction_cycles.ccw
-      << " req_imbalance_pct="
-      << direction_imbalance_pct(req_direction_cycles)
-      << " dat_cw_cycles=" << dat_direction_cycles.cw
-      << " dat_ccw_cycles=" << dat_direction_cycles.ccw
-      << " dat_imbalance_pct="
-      << direction_imbalance_pct(dat_direction_cycles)
-       << " hottest_edge_cycles="
-       << result.estimate.hottest_ring_edge_cycles << '\n';
+      << result.cross_station_stats.ejected_packets << '\n';
+
+  for (const TmRingEndpointQueueStats& endpoint :
+       result.endpoint_queue_stats) {
+    const TmRingQueueStats& queue = endpoint.queue;
+    out << "PERF_RING_BUFFER node_type=" << node_type_name(endpoint.node_type)
+        << " node=" << endpoint.node_id
+        << " subnet=" << subnet_name(queue.subnet)
+        << " side=" << queue_side_name(queue.side)
+        << " direction=" << queue_direction_name(queue.direction)
+        << " depth=" << queue.depth
+        << " pushes=" << queue.counters.pushes
+        << " pops=" << queue.counters.pops
+        << " push_rejects=" << queue.counters.push_rejects
+        << " occupancy=" << queue.occupancy
+        << " peak=" << queue.occupancy_peak
+        << " occupancy_area=" << queue.counters.occupancy_area
+        << " avg_occupancy_pct="
+        << percentage(queue.counters.occupancy_area,
+                      result.measurement_cycles * queue.depth)
+        << " full_cycles=" << queue.counters.full_cycles
+        << " full_pct="
+        << percentage(queue.counters.full_cycles, result.measurement_cycles)
+        << '\n';
+  }
 
   for (const TmRingDomainStats& domain : result.ring_domain_stats) {
-    out << "PERF_RING_DOMAIN type=" << domain_type_name(domain.type)
-        << " id=" << domain.ring_id;
     for (uint32_t subnet = 0; subnet < 3; ++subnet) {
-      const char* name = subnet_name(static_cast<TmRingSubnet>(subnet));
-      append_domain_direction(&out, name, "cw", domain.cw[subnet]);
-      append_domain_direction(&out, name, "ccw", domain.ccw[subnet]);
+      const TmRingSubnet subnet_type = static_cast<TmRingSubnet>(subnet);
+      const TmRingDeflectionStats& deflection =
+          domain.cross_station.deflection[subnet];
+      out << "PERF_DEFLECTION domain=" << domain_type_name(domain.type)
+          << " ring=" << domain.ring_id
+          << " subnet=" << subnet_name(subnet_type)
+          << " events=" << deflection.events
+          << " unique_packets=" << deflection.unique_packets
+          << " eligible_unicast_packets="
+          << deflection.eligible_unicast_packets
+          << " completed_packets=" << deflection.completed_packets
+          << " deflection_rate_pct="
+          << percentage(deflection.unique_packets,
+                        deflection.eligible_unicast_packets)
+          << " rounds_sum=" << deflection.rounds_sum
+          << " avg_rounds="
+          << average(deflection.rounds_sum, deflection.completed_packets)
+          << " max_rounds=" << deflection.rounds_max
+          << " delay_cycles_sum=" << deflection.delay_cycles_sum
+          << " avg_delay_cycles="
+          << average(deflection.delay_cycles_sum, deflection.completed_packets)
+          << " max_delay_cycles=" << deflection.delay_cycles_max
+          << " fanout_recipient_retry_events="
+          << deflection.fanout_recipient_retry_events << '\n';
+
+      const TmRingConnStats* directions[] = {&domain.cw[subnet],
+                                              &domain.ccw[subnet]};
+      const char* direction_names[] = {"cw", "ccw"};
+      for (uint32_t direction = 0; direction < 2; ++direction) {
+        const TmRingConnStats& stats = *directions[direction];
+        out << "PERF_HW_CHANNEL domain=" << domain_type_name(domain.type)
+            << " ring=" << domain.ring_id
+            << " subnet=" << subnet_name(subnet_type)
+            << " direction=" << direction_names[direction]
+            << " window_cycles=" << result.measurement_cycles
+            << " edge_count=" << domain.directed_edge_count
+            << " width_bytes=" << result.ring_link_width_bytes
+            << " packets=" << stats.packets
+            << " bytes=" << stats.bytes
+            << " busy_cycles=" << stats.busy_cycles
+            << " downstream_register_full_stalls="
+            << stats.downstream_register_full_stall
+            << " serialization_busy_stalls=" << stats.serialization_busy_stall
+            << " pipeline_full_stalls=" << stats.pipeline_full_stall
+            << " send_reject_stalls=" << stats.send_reject_stall
+            << " stalls=" << tm_ring_conn_total_stalls(stats)
+            << " cycle_util_pct="
+            << cycle_util_pct(stats.busy_cycles, result.measurement_cycles,
+                              domain.directed_edge_count)
+            << " payload_util_pct="
+            << payload_util_pct(stats.bytes, result.measurement_cycles,
+                                result.ring_link_width_bytes,
+                                domain.directed_edge_count)
+            << " serialization_efficiency_pct="
+            << serialization_efficiency_pct(stats.bytes, stats.busy_cycles,
+                                            result.ring_link_width_bytes)
+            << " cw_busy_cycles=" << domain.cw[subnet].busy_cycles
+            << " ccw_busy_cycles=" << domain.ccw[subnet].busy_cycles
+            << " subnet_imbalance_pct="
+            << subnet_imbalance_pct(domain.cw[subnet], domain.ccw[subnet])
+            << '\n';
+      }
     }
-    const TmRingConnHotspot& hottest = domain.hottest;
-    out << " hottest_subnet=" << subnet_name(hottest.subnet)
-        << " hottest_src_station=" << hottest.src_station
-        << " hottest_src_direction=" << direction_name(hottest.src_dir)
-        << " hottest_dst_station=" << hottest.dst_station
-        << " hottest_dst_direction=" << direction_name(hottest.dst_dir)
-        << " hottest_packets=" << hottest.packets
-        << " hottest_bytes=" << hottest.bytes
-        << " hottest_busy_cycles=" << hottest.busy_cycles
-        << " hottest_serialization_busy_stall="
-        << hottest.serialization_busy_stall
-        << " hottest_stalls=" << hottest.total_stalls
-        << " hottest_inflight_peak=" << hottest.inflight_peak << '\n';
+
+    for (const TmRingConnHotspot& edge : domain.edges) {
+      out << "PERF_RING_EDGE domain=" << domain_type_name(domain.type)
+          << " ring=" << domain.ring_id
+          << " subnet=" << subnet_name(edge.subnet)
+          << " direction=" << direction_name(edge.src_dir)
+          << " src_station=" << edge.src_station
+          << " dst_station=" << edge.dst_station
+          << " window_cycles=" << result.measurement_cycles
+          << " width_bytes=" << result.ring_link_width_bytes
+          << " packets=" << edge.packets
+          << " bytes=" << edge.bytes
+          << " busy_cycles=" << edge.busy_cycles
+          << " serialization_busy_stalls="
+          << edge.serialization_busy_stall
+          << " stalls=" << edge.total_stalls
+          << " inflight_peak=" << edge.inflight_peak
+          << " cycle_util_pct="
+          << cycle_util_pct(edge.busy_cycles, result.measurement_cycles, 1)
+          << " payload_util_pct="
+          << payload_util_pct(edge.bytes, result.measurement_cycles,
+                              result.ring_link_width_bytes, 1)
+          << " serialization_efficiency_pct="
+          << serialization_efficiency_pct(edge.bytes, edge.busy_cycles,
+                                          result.ring_link_width_bytes)
+          << '\n';
+    }
   }
 
   uint64_t v_ring_carriers = 0;
   for (uint32_t rbrg_id = 0; rbrg_id < result.rbrg_stats.size(); ++rbrg_id) {
     const TmRingRbrgStats& rbrg = result.rbrg_stats[rbrg_id];
-    out << "PERF_RBRG id=" << rbrg_id;
     for (uint32_t path_index = 0; path_index < rbrg.paths.size();
          ++path_index) {
       const TmRingRbrgPath path = static_cast<TmRingRbrgPath>(path_index);
       const TmRingRbrgPathStats& stats = rbrg.paths[path_index];
-      const char* path_name = rbrg_path_name(path);
-      out << ' ' << path_name << "_packets=" << stats.packets << ' '
-          << path_name << "_bytes=" << stats.bytes << ' ' << path_name
-          << "_queue_peak=" << stats.queue_occupancy_peak << ' ' << path_name
-          << "_queue_full_stalls=" << stats.queue_full_stalls << ' '
-          << path_name << "_inject_stalls=" << stats.destination_inject_stalls;
+      out << "PERF_RBRG_CHANNEL id=" << rbrg_id
+          << " path=" << rbrg_path_name(path)
+          << " window_cycles=" << result.measurement_cycles
+          << " width_bytes=" << result.rbrg_width_bytes
+          << " packets=" << stats.packets
+          << " bytes=" << stats.bytes
+          << " busy_cycles=" << stats.busy_cycles
+          << " cycle_util_pct="
+          << cycle_util_pct(stats.busy_cycles, result.measurement_cycles, 1)
+          << " payload_util_pct="
+          << payload_util_pct(stats.bytes, result.measurement_cycles,
+                              result.rbrg_width_bytes, 1)
+          << " serialization_efficiency_pct="
+          << serialization_efficiency_pct(stats.bytes, stats.busy_cycles,
+                                          result.rbrg_width_bytes)
+          << " queue_peak=" << stats.queue_occupancy_peak
+          << " queue_full_stalls=" << stats.queue_full_stalls
+          << " destination_inject_stalls="
+          << stats.destination_inject_stalls << '\n';
     }
     v_ring_carriers += rbrg.paths[static_cast<uint32_t>(
         TmRingRbrgPath::H_TO_V_DAT)].packets;
-    out << '\n';
   }
 
   const uint64_t logical_recipients =

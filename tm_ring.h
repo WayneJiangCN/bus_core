@@ -74,6 +74,9 @@ struct TmRingDomainStats {
   std::array<TmRingConnStats, 3> cw;
   std::array<TmRingConnStats, 3> ccw;
   TmRingConnHotspot hottest;
+  uint32_t directed_edge_count = 0;
+  std::vector<TmRingConnHotspot> edges;
+  TmRingCrossStationStats cross_station;
 };
 
 /*
@@ -96,9 +99,13 @@ class TmRingFabric : public tm_engine::TmModule {
   void attach_target(uint32_t idx, p_tm_mem_t mem);
 
   void clear_stats();
+  std::vector<TmRingEndpointQueueStats> ring_queue_stats(
+      uint64_t snapshot_cycle) const;
   TmRingConnStallBreakdown ring_conn_stall_breakdown() const;
   std::vector<TmRingDomainStats> ring_domain_stats() const;
   std::vector<TmRingRbrgStats> rbrg_stats() const;
+  uint32_t ring_link_width_bytes() const;
+  uint32_t rbrg_width_bytes() const;
   TmRingConnStats conn_stats(TmRingSubnet subnet) const;
   std::vector<TmRingConnHotspot> ring_top_busy_conns(
       TmRingSubnet subnet, uint32_t limit) const;
@@ -207,6 +214,16 @@ inline p_tm_ring_cfg_t tm_make_ring_cfg(std::string name) {
   return ring_cfg;
 }
 
+inline uint32_t tm_ring_endpoint_queue_depth(cfg::p_cfg_t cfg,
+                                             const std::string& key) {
+  const int value = cfg->get_cfg<int>(key);
+  if (value < 0) {
+    throw std::invalid_argument(
+        "Ring endpoint queue depth must be nonnegative");
+  }
+  return static_cast<uint32_t>(value);
+}
+
 inline p_tm_ring_cfg_t tm_make_ring_cfg(std::string name, cfg::p_cfg_t cfg) {
   auto ring_cfg = tm_make_ring_cfg(name);
   if (cfg == nullptr) {
@@ -264,10 +281,24 @@ inline p_tm_ring_cfg_t tm_make_ring_cfg(std::string name, cfg::p_cfg_t cfg) {
       static_cast<uint32_t>(cfg->get_cfg<int>("RING.ring_link_latency"));
   ring_cfg->ring_link_width_bytes =
       static_cast<uint32_t>(cfg->get_cfg<int>("RING.ring_link_width_bytes"));
-  ring_cfg->ring_inject_queue_depth = static_cast<uint32_t>(
-      cfg->get_cfg<int>("RING.ring_inject_queue_depth"));
-  ring_cfg->ring_eject_queue_depth = static_cast<uint32_t>(
-      cfg->get_cfg<int>("RING.ring_eject_queue_depth"));
+  const char* endpoint_names[] = {"master", "home_agent", "l2_buffer",
+                                  "rbrg_v", "rbrg_h"};
+  const char* subnet_names[] = {"req", "rsp", "dat"};
+  for (uint32_t node_type = 0;
+       node_type < static_cast<uint32_t>(TmRingNodeType::COUNT);
+       ++node_type) {
+    TmRingEndpointQueueDepths& queue_depths =
+        ring_cfg->endpoint_queue_depths[node_type];
+    for (uint32_t subnet = 0; subnet < tm_ring_subnet_count(); ++subnet) {
+      const std::string field_prefix =
+          std::string("RING.") + endpoint_names[node_type] + "_" +
+          subnet_names[subnet] + "_";
+      queue_depths.inject[subnet] = tm_ring_endpoint_queue_depth(
+          cfg, field_prefix + "inject_depth");
+      queue_depths.eject[subnet] = tm_ring_endpoint_queue_depth(
+          cfg, field_prefix + "eject_depth");
+    }
+  }
   const int max_aicore_per_vring =
       cfg->get_cfg<int>("RING.max_aicore_per_vring");
   if (max_aicore_per_vring <= 0) {
