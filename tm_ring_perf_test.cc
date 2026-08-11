@@ -1088,8 +1088,10 @@ void run_multi_vring_no_merge_read_benchmark(
 void run_aggregation_wave_test(
     const std::string& name, TmRingPerfPattern pattern, uint32_t masters,
     uint32_t max_aicore_per_vring, uint32_t request_bytes,
-    uint64_t address_stride, PerfAggregationExpectation expectation) {
+    uint64_t address_stride, uint32_t l2_response_latency,
+    PerfAggregationExpectation expectation) {
   ASSERT_GT(max_aicore_per_vring, uint32_t(0));
+  ASSERT_GT(l2_response_latency, uint32_t(0));
   const uint32_t expected_vrings =
       (masters + max_aicore_per_vring - 1) / max_aicore_per_vring;
   ASSERT_GT(expected_vrings, uint32_t(1));
@@ -1109,9 +1111,34 @@ void run_aggregation_wave_test(
   PerfOverrides overrides;
   overrides.max_aicore_per_vring = max_aicore_per_vring;
   overrides.home_agent_waiters_per_entry = masters;
-  overrides.l2_response_latency = 256;
+  overrides.l2_response_latency = l2_response_latency;
   const PerfSmokeResult result = run_perf_smoke(perf_case, overrides);
   const TmRingPerfEstimate& ideal = result.perf_result.estimate;
+  const TmRingHomeAgentStats& ha = result.perf_result.home_agent_stats;
+  const TmRingL2BufferStats& l2 = result.perf_result.l2_buffer_stats;
+
+  std::ostringstream diagnostic;
+  diagnostic << "l2_response_latency=" << l2_response_latency
+             << " backend_reads(expected/actual)=" << ideal.backend_reads
+             << "/" << ha.rd_entries_allocated
+             << " backend_saved(expected/actual)="
+             << ideal.backend_read_saved << "/" << ha.backend_read_saved
+             << " merged(pending/inflight/responding)="
+             << ha.rd_merged_pending << "/" << ha.rd_merged_inflight << "/"
+             << ha.rd_merged_responding
+             << " admission_stalls(table/waiter/closed)="
+             << ha.table_full_stall_cycles << "/" << ha.waiter_full_stall_cycles
+             << "/" << ha.aggregation_closed_stall_cycles
+             << " h_carriers(expected/actual)=" << ideal.h_carriers << "/"
+             << l2.h_carriers << " h_multicast(expected/actual)="
+             << ideal.h_multicast_carriers << "/" << l2.h_multicast_carriers
+             << " h_scatter(expected/actual)=" << ideal.h_scatter_carriers
+             << "/" << l2.h_scatter_carriers
+             << " h_recipients(expected/actual)="
+             << ideal.h_carrier_recipients << "/" << l2.h_carrier_recipients
+             << " v_carriers(expected/actual)=" << ideal.v_carriers << "/"
+             << v_ring_dat_carriers(result.perf_result);
+  SCOPED_TRACE(diagnostic.str());
 
   ASSERT_TRUE(result.idle);
   ASSERT_TRUE(result.perf_result.drained);
@@ -1268,33 +1295,33 @@ TEST(RingPerfBenchmark, MultiVringNoMergeRead512B) {
 TEST(RingAggregationWaveTest, SameLineScatterRead128B) {
   run_aggregation_wave_test(
       "wave_same_line_scatter_read_128b",
-      TmRingPerfPattern::SAME_LINE_SCATTER, 18, 8, 128, 0,
+      TmRingPerfPattern::SAME_LINE_SCATTER, 18, 8, 128, 0, 4096,
       PerfAggregationExpectation::SCATTER);
 }
 
 TEST(RingAggregationWaveTest, SameLineScatterRead256B) {
   run_aggregation_wave_test(
       "wave_same_line_scatter_read_256b",
-      TmRingPerfPattern::SAME_LINE_SCATTER, 18, 8, 256, 0,
+      TmRingPerfPattern::SAME_LINE_SCATTER, 18, 8, 256, 0, 4096,
       PerfAggregationExpectation::SCATTER);
 }
 
 TEST(RingAggregationWaveTest, SharedRead128B) {
   run_aggregation_wave_test(
       "wave_shared_read_128b", TmRingPerfPattern::SEQUENTIAL_SHARED, 18, 8,
-      128, 512, PerfAggregationExpectation::MULTICAST);
+      128, 512, 4096, PerfAggregationExpectation::MULTICAST);
 }
 
 TEST(RingAggregationWaveTest, SharedRead256B) {
   run_aggregation_wave_test(
       "wave_shared_read_256b", TmRingPerfPattern::SEQUENTIAL_SHARED, 18, 8,
-      256, 512, PerfAggregationExpectation::MULTICAST);
+      256, 512, 4096, PerfAggregationExpectation::MULTICAST);
 }
 
 TEST(RingAggregationWaveTest, SharedRead512B) {
   run_aggregation_wave_test(
       "wave_shared_read_512b", TmRingPerfPattern::SEQUENTIAL_SHARED, 18, 8,
-      512, 512, PerfAggregationExpectation::MULTICAST);
+      512, 512, 4096, PerfAggregationExpectation::MULTICAST);
 }
 
 TEST(TmRingPerfSmokeTest, ReadWrite4KB) {
