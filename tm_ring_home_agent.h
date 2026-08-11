@@ -50,8 +50,8 @@ enum class TmHaTxnState {
  * 每个活跃表项直接对应一个 line 读事务。首个请求立即可向后端发射；同 line
  * 后续请求仅在 waiter admission 尚未关闭时追加。完成后首个有效 waiter 即可
  * 建立 provisional fanout group，并在 L2 response latency 内继续追加 waiter；
- * 单 recipient group 最终退化为 unicast。HA 不拥有 endpoint FIFO 或 interface，
- * 也不负责 Ring 路由、TmMem credit 或完整 coherence。
+ * 单 recipient group 最终只发一个 DAT carrier，并按 unicast 统计。HA 不拥有
+ * endpoint FIFO 或 interface，也不负责 Ring 路由、TmMem credit 或完整 coherence。
  */
 class TmRingHomeAgent {
  public:

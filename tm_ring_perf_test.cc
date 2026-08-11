@@ -62,7 +62,7 @@ TEST(TmRingHomeAgentTest, SingleWaiterGroupAcceptsLaterSameLineWaiter) {
   const TmRingL2ResponseCandidate first_candidate =
       home_agent.front_l2_response();
   ASSERT_NE(nullptr, first_candidate.response);
-  EXPECT_TRUE(first_candidate.fanout_eligible);
+  ASSERT_TRUE(first_candidate.fanout_eligible);
   EXPECT_EQ(uint64_t(0), first_candidate.open_group_token);
 
   TmRingL2AcceptResult new_group;
@@ -78,7 +78,7 @@ TEST(TmRingHomeAgentTest, SingleWaiterGroupAcceptsLaterSameLineWaiter) {
   const TmRingL2ResponseCandidate second_candidate =
       home_agent.front_l2_response();
   ASSERT_NE(nullptr, second_candidate.response);
-  EXPECT_TRUE(second_candidate.fanout_eligible);
+  ASSERT_TRUE(second_candidate.fanout_eligible);
   EXPECT_EQ(uint64_t(7), second_candidate.open_group_token);
 
   TmRingL2AcceptResult merged_group;
