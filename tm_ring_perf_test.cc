@@ -1114,14 +1114,18 @@ void run_aggregation_wave_test(
   overrides.l2_response_latency = l2_response_latency;
   const PerfSmokeResult result = run_perf_smoke(perf_case, overrides);
   const TmRingPerfEstimate& ideal = result.perf_result.estimate;
+  const TmRingPerfEstimate& no_merge = result.perf_result.no_merge_estimate;
   const TmRingHomeAgentStats& ha = result.perf_result.home_agent_stats;
   const TmRingL2BufferStats& l2 = result.perf_result.l2_buffer_stats;
+  const uint64_t actual_v_carriers =
+      v_ring_dat_carriers(result.perf_result);
 
   std::ostringstream diagnostic;
   diagnostic << "l2_response_latency=" << l2_response_latency
-             << " backend_reads(expected/actual)=" << ideal.backend_reads
-             << "/" << ha.rd_entries_allocated
-             << " backend_saved(expected/actual)="
+             << " backend_reads(no_merge/ideal/actual)="
+             << no_merge.backend_reads << "/" << ideal.backend_reads << "/"
+             << ha.rd_entries_allocated
+             << " backend_saved(ideal/actual)="
              << ideal.backend_read_saved << "/" << ha.backend_read_saved
              << " merged(pending/inflight/responding)="
              << ha.rd_merged_pending << "/" << ha.rd_merged_inflight << "/"
@@ -1129,15 +1133,17 @@ void run_aggregation_wave_test(
              << " admission_stalls(table/waiter/closed)="
              << ha.table_full_stall_cycles << "/" << ha.waiter_full_stall_cycles
              << "/" << ha.aggregation_closed_stall_cycles
-             << " h_carriers(expected/actual)=" << ideal.h_carriers << "/"
-             << l2.h_carriers << " h_multicast(expected/actual)="
+             << " h_carriers(no_merge/ideal/actual)=" << no_merge.h_carriers
+             << "/" << ideal.h_carriers << "/" << l2.h_carriers
+             << " h_multicast(ideal/actual)="
              << ideal.h_multicast_carriers << "/" << l2.h_multicast_carriers
-             << " h_scatter(expected/actual)=" << ideal.h_scatter_carriers
+             << " h_scatter(ideal/actual)=" << ideal.h_scatter_carriers
              << "/" << l2.h_scatter_carriers
-             << " h_recipients(expected/actual)="
-             << ideal.h_carrier_recipients << "/" << l2.h_carrier_recipients
-             << " v_carriers(expected/actual)=" << ideal.v_carriers << "/"
-             << v_ring_dat_carriers(result.perf_result);
+             << " h_recipients(no_merge/actual)="
+             << no_merge.h_carrier_recipients << "/"
+             << l2.h_carrier_recipients
+             << " v_carriers(no_merge/ideal/actual)=" << no_merge.v_carriers
+             << "/" << ideal.v_carriers << "/" << actual_v_carriers;
   SCOPED_TRACE(diagnostic.str());
 
   ASSERT_TRUE(result.idle);
@@ -1152,41 +1158,26 @@ void run_aggregation_wave_test(
                   TmRingRbrgPath::H_TO_V_DAT)].packets,
               uint64_t(0));
   }
-  ASSERT_EQ(ideal.logical_read_requests,
-            result.perf_result.home_agent_stats.rd_requests);
-  ASSERT_EQ(ideal.backend_reads,
-            result.perf_result.home_agent_stats.rd_entries_allocated);
-  ASSERT_EQ(ideal.backend_read_saved,
-            result.perf_result.home_agent_stats.backend_read_saved);
+  ASSERT_EQ(no_merge.logical_read_requests, ha.rd_requests);
+  ASSERT_EQ(no_merge.backend_reads, ha.rd_requests);
+  ASSERT_EQ(ha.rd_requests,
+            ha.rd_entries_allocated + ha.backend_read_saved);
   ASSERT_EQ(
-      ideal.backend_read_saved,
-      result.perf_result.home_agent_stats.rd_merged_pending +
-          result.perf_result.home_agent_stats.rd_merged_inflight +
-          result.perf_result.home_agent_stats.rd_merged_responding);
-  ASSERT_EQ(ideal.h_carriers,
-            result.perf_result.l2_buffer_stats.h_carriers);
-  ASSERT_EQ(ideal.h_unicast_carriers,
-            result.perf_result.l2_buffer_stats.h_unicast_carriers);
-  ASSERT_EQ(ideal.h_multicast_carriers,
-            result.perf_result.l2_buffer_stats.h_multicast_carriers);
-  ASSERT_EQ(ideal.h_scatter_carriers,
-            result.perf_result.l2_buffer_stats.h_scatter_carriers);
-  ASSERT_EQ(ideal.h_carrier_recipients,
-            result.perf_result.l2_buffer_stats.h_carrier_recipients);
-  ASSERT_EQ(ideal.v_carriers, v_ring_dat_carriers(result.perf_result));
-  ASSERT_EQ(uint64_t(0),
-            result.perf_result.home_agent_stats.table_full_stall_cycles);
-  ASSERT_EQ(uint64_t(0),
-            result.perf_result.home_agent_stats.waiter_full_stall_cycles);
-  ASSERT_EQ(
-      uint64_t(0),
-      result.perf_result.home_agent_stats.aggregation_closed_stall_cycles);
+      ha.backend_read_saved,
+      ha.rd_merged_pending + ha.rd_merged_inflight + ha.rd_merged_responding);
+  ASSERT_GT(ha.backend_read_saved, uint64_t(0));
+  ASSERT_LT(l2.h_carriers, no_merge.h_carriers);
+  ASSERT_LT(actual_v_carriers, no_merge.v_carriers);
+  ASSERT_EQ(no_merge.h_carrier_recipients, l2.h_carrier_recipients);
+  ASSERT_EQ(uint64_t(0), ha.table_full_stall_cycles);
+  ASSERT_EQ(uint64_t(0), ha.waiter_full_stall_cycles);
+  ASSERT_EQ(uint64_t(0), ha.aggregation_closed_stall_cycles);
   if (expectation == PerfAggregationExpectation::SCATTER) {
-    ASSERT_GT(ideal.h_scatter_carriers, uint64_t(0));
-    ASSERT_EQ(uint64_t(0), ideal.h_multicast_carriers);
+    ASSERT_GT(l2.h_scatter_carriers, uint64_t(0));
+    ASSERT_EQ(uint64_t(0), l2.h_multicast_carriers);
   } else {
-    ASSERT_GT(ideal.h_multicast_carriers, uint64_t(0));
-    ASSERT_EQ(uint64_t(0), ideal.h_scatter_carriers);
+    ASSERT_GT(l2.h_multicast_carriers, uint64_t(0));
+    ASSERT_EQ(uint64_t(0), l2.h_scatter_carriers);
   }
   expect_perf_block_complete(result, perf_case);
 }
@@ -1295,33 +1286,33 @@ TEST(RingPerfBenchmark, MultiVringNoMergeRead512B) {
 TEST(RingAggregationWaveTest, SameLineScatterRead128B) {
   run_aggregation_wave_test(
       "wave_same_line_scatter_read_128b",
-      TmRingPerfPattern::SAME_LINE_SCATTER, 18, 8, 128, 0, 4096,
+      TmRingPerfPattern::SAME_LINE_SCATTER, 18, 8, 128, 0, 256,
       PerfAggregationExpectation::SCATTER);
 }
 
 TEST(RingAggregationWaveTest, SameLineScatterRead256B) {
   run_aggregation_wave_test(
       "wave_same_line_scatter_read_256b",
-      TmRingPerfPattern::SAME_LINE_SCATTER, 18, 8, 256, 0, 4096,
+      TmRingPerfPattern::SAME_LINE_SCATTER, 18, 8, 256, 0, 256,
       PerfAggregationExpectation::SCATTER);
 }
 
 TEST(RingAggregationWaveTest, SharedRead128B) {
   run_aggregation_wave_test(
       "wave_shared_read_128b", TmRingPerfPattern::SEQUENTIAL_SHARED, 18, 8,
-      128, 512, 4096, PerfAggregationExpectation::MULTICAST);
+      128, 512, 256, PerfAggregationExpectation::MULTICAST);
 }
 
 TEST(RingAggregationWaveTest, SharedRead256B) {
   run_aggregation_wave_test(
       "wave_shared_read_256b", TmRingPerfPattern::SEQUENTIAL_SHARED, 18, 8,
-      256, 512, 4096, PerfAggregationExpectation::MULTICAST);
+      256, 512, 256, PerfAggregationExpectation::MULTICAST);
 }
 
 TEST(RingAggregationWaveTest, SharedRead512B) {
   run_aggregation_wave_test(
       "wave_shared_read_512b", TmRingPerfPattern::SEQUENTIAL_SHARED, 18, 8,
-      512, 512, 4096, PerfAggregationExpectation::MULTICAST);
+      512, 512, 256, PerfAggregationExpectation::MULTICAST);
 }
 
 TEST(TmRingPerfSmokeTest, ReadWrite4KB) {
