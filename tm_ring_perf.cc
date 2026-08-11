@@ -73,6 +73,7 @@ void append_transaction(std::vector<TmRingPerfTxn>* trace,
 struct ReadGroupKey {
   uint32_t target_id = 0;
   uint64_t line_base = 0;
+  uint64_t ordinal = 0;
 
   bool operator<(const ReadGroupKey& other) const {
     if (target_id != other.target_id) {
@@ -81,7 +82,7 @@ struct ReadGroupKey {
     if (line_base != other.line_base) {
       return line_base < other.line_base;
     }
-    return false;
+    return ordinal < other.ordinal;
   }
 };
 
@@ -206,6 +207,20 @@ void add_h_to_v_packet(TmRingPerfEstimate* estimate, PldCmd cmd,
                   master, topology, ring_cfg.ring_link_width_bytes);
 }
 
+void add_unicast_read_response(TmRingPerfEstimate* estimate,
+                               const TmRingPerfTxn& request,
+                               const TmRingLocation& source,
+                               const TmRingTopology& topology,
+                               const TmRingCfg& ring_cfg) {
+  add_h_to_v_packet(estimate, PldCmd::RD_RSP, request.size, source,
+                    topology.master_location(request.master_port),
+                    TmRingRbrgPath::H_TO_V_DAT, topology, ring_cfg);
+  ++estimate->h_carriers;
+  ++estimate->h_unicast_carriers;
+  ++estimate->h_carrier_recipients;
+  ++estimate->v_carriers;
+}
+
 bool power_of_two(uint32_t value) {
   return value != 0 && (value & (value - 1)) == 0;
 }
@@ -241,6 +256,17 @@ bool fanout_candidate_valid(const TmRingPerfTxn& request,
          power_of_two(request.size / sector_size) &&
          request.addr % sector_size == 0 &&
          request.size <= line_size - payload_offset;
+}
+
+bool request_in_one_line(const TmRingPerfTxn& request,
+                         uint64_t line_base,
+                         const TmRingCfg& ring_cfg) {
+  const uint32_t line_size = ring_cfg.l2_traffic.line_size;
+  if (line_size == 0 || request.addr < line_base) {
+    return false;
+  }
+  const uint64_t offset = request.addr - line_base;
+  return offset < line_size && request.size <= line_size - offset;
 }
 
 uint32_t fanout_carrier_size(
@@ -340,6 +366,11 @@ std::vector<TmRingPerfTxn> tm_ring_build_perf_trace(
     throw std::invalid_argument(
         "shared and same-line scatter traffic must be read-only");
   }
+  if (perf_case.run_mode == TmRingPerfRunMode::AGGREGATION_WAVE &&
+      perf_case.op != TmRingPerfOp::READ) {
+    throw std::invalid_argument(
+        "aggregation wave traffic must be read-only");
+  }
   if (perf_case.pattern == TmRingPerfPattern::SEQUENTIAL_SHARED &&
       perf_case.stride_bytes == 0) {
     throw std::invalid_argument("shared read stride must be nonzero");
@@ -397,7 +428,8 @@ std::vector<TmRingPerfTxn> tm_ring_build_perf_trace(
 TmRingPerfEstimate tm_ring_estimate_fabric(
     const std::vector<TmRingPerfTxn>& trace,
     const TmRingTopology& topology,
-    const TmRingCfg& ring_cfg) {
+    const TmRingCfg& ring_cfg,
+    TmRingPerfAggregationModel aggregation_model) {
   TmRingPerfEstimate estimate;
   std::map<ReadGroupKey, std::vector<const TmRingPerfTxn*> > read_groups;
 
@@ -409,12 +441,23 @@ TmRingPerfEstimate tm_ring_estimate_fabric(
     const TmRingLocation ha = topology.ha_location(target_id);
 
     if (txn.cmd == PldCmd::RD) {
+      ++estimate.logical_read_requests;
       add_v_to_h_packet(&estimate, PldCmd::RD, txn.size, master, ha,
                         TmRingRbrgPath::V_TO_H_REQ, topology, ring_cfg);
       const uint64_t line_size = ring_cfg.l2_traffic.line_size;
       ReadGroupKey key;
       key.target_id = target_id;
       key.line_base = (txn.addr / line_size) * line_size;
+      key.ordinal = txn.ordinal;
+      if (aggregation_model == TmRingPerfAggregationModel::NO_MERGE) {
+        if (request_in_one_line(txn, key.line_base, ring_cfg)) {
+          ++estimate.backend_reads;
+        }
+        add_unicast_read_response(&estimate, txn,
+                                  topology.l2_location(target_id), topology,
+                                  ring_cfg);
+        continue;
+      }
       read_groups[key].push_back(&txn);
       continue;
     }
@@ -436,22 +479,30 @@ TmRingPerfEstimate tm_ring_estimate_fabric(
     const std::vector<const TmRingPerfTxn*>& requests = group.second;
     const uint32_t target_id = group.first.target_id;
     const TmRingLocation source = topology.l2_location(target_id);
+    uint64_t ha_requests = 0;
+    for (const TmRingPerfTxn* request : requests) {
+      if (request_in_one_line(*request, group.first.line_base, ring_cfg)) {
+        ++ha_requests;
+      }
+    }
+    if (ha_requests != 0) {
+      ++estimate.backend_reads;
+      estimate.backend_read_saved += ha_requests - 1;
+    }
     std::vector<const TmRingPerfTxn*> fanout_requests;
     if (fanout_waiter_set_supported(requests)) {
       for (const TmRingPerfTxn* request : requests) {
         if (fanout_candidate_valid(*request, group.first.line_base, ring_cfg)) {
           fanout_requests.push_back(request);
         } else {
-          add_h_to_v_packet(&estimate, PldCmd::RD_RSP, request->size, source,
-                            topology.master_location(request->master_port),
-                            TmRingRbrgPath::H_TO_V_DAT, topology, ring_cfg);
+          add_unicast_read_response(&estimate, *request, source, topology,
+                                    ring_cfg);
         }
       }
     } else {
       for (const TmRingPerfTxn* request : requests) {
-        add_h_to_v_packet(&estimate, PldCmd::RD_RSP, request->size, source,
-                          topology.master_location(request->master_port),
-                          TmRingRbrgPath::H_TO_V_DAT, topology, ring_cfg);
+        add_unicast_read_response(&estimate, *request, source, topology,
+                                  ring_cfg);
       }
       continue;
     }
@@ -468,13 +519,32 @@ TmRingPerfEstimate tm_ring_estimate_fabric(
           v_ring_group.second, group.first.line_base, ring_cfg);
       if (carrier_size == 0) {
         for (const TmRingPerfTxn* request : v_ring_group.second) {
-          add_h_to_v_packet(&estimate, PldCmd::RD_RSP, request->size, source,
-                            topology.master_location(request->master_port),
-                            TmRingRbrgPath::H_TO_V_DAT, topology, ring_cfg);
+          add_unicast_read_response(&estimate, *request, source, topology,
+                                    ring_cfg);
         }
         continue;
       }
       ++estimate.physical_packets;
+      ++estimate.h_carriers;
+      ++estimate.v_carriers;
+      estimate.h_carrier_recipients += v_ring_group.second.size();
+      if (v_ring_group.second.size() == 1) {
+        ++estimate.h_unicast_carriers;
+      } else {
+        const TmRingPerfTxn* first = v_ring_group.second.front();
+        bool multicast = true;
+        for (const TmRingPerfTxn* request : v_ring_group.second) {
+          if (request->addr != first->addr || request->size != first->size) {
+            multicast = false;
+            break;
+          }
+        }
+        if (multicast) {
+          ++estimate.h_multicast_carriers;
+        } else {
+          ++estimate.h_scatter_carriers;
+        }
+      }
       add_routed_path(&estimate, PldCmd::RD_RSP, carrier_size,
                       source, topology.rbrg_h_location(rbrg_id), topology,
                       ring_cfg.ring_link_width_bytes);
@@ -520,9 +590,23 @@ TmRingPerfResult tm_ring_collect_perf_result(
     const std::vector<TmMemStats>& memory_stats,
     const TmRingPerfEstimate& estimate,
     bool drained) {
+  return tm_ring_collect_perf_result(perf_case, master_stats, fabric,
+                                     memory_stats, estimate, estimate,
+                                     drained);
+}
+
+TmRingPerfResult tm_ring_collect_perf_result(
+    const TmRingPerfCase& perf_case,
+    const std::vector<TmRingPerfMasterStats>& master_stats,
+    const TmRingFabric& fabric,
+    const std::vector<TmMemStats>& memory_stats,
+    const TmRingPerfEstimate& estimate,
+    const TmRingPerfEstimate& no_merge_estimate,
+    bool drained) {
   TmRingPerfResult result;
   result.perf_case = perf_case;
   result.estimate = estimate;
+  result.no_merge_estimate = no_merge_estimate;
   result.drained = drained;
   result.ring_domain_stats = fabric.ring_domain_stats();
   result.rbrg_stats = fabric.rbrg_stats();

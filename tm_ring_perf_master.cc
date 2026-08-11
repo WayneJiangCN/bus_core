@@ -1,9 +1,48 @@
 #include "tm_ring_perf_master.h"
 
 #include <algorithm>
+#include <limits>
 #include <stdexcept>
 
 using namespace tm_engine;
+
+TmRingPerfWaveCoordinator::TmRingPerfWaveCoordinator(uint32_t masters)
+    : completed_waves_(masters, std::numeric_limits<uint64_t>::max()) {
+  if (masters == 0) {
+    throw std::invalid_argument("wave coordinator requires masters");
+  }
+}
+
+bool TmRingPerfWaveCoordinator::can_issue(uint32_t master,
+                                          uint64_t wave) const {
+  if (master >= completed_waves_.size()) {
+    throw std::out_of_range("wave coordinator master is out of range");
+  }
+  if (wave < current_wave_) {
+    throw std::logic_error("wave issue is behind current wave");
+  }
+  return wave == current_wave_;
+}
+
+void TmRingPerfWaveCoordinator::record_completion(uint32_t master,
+                                                   uint64_t wave) {
+  if (master >= completed_waves_.size()) {
+    throw std::out_of_range("wave coordinator master is out of range");
+  }
+  if (wave != current_wave_) {
+    throw std::logic_error("wave completion does not match current wave");
+  }
+  if (completed_waves_[master] == wave) {
+    throw std::logic_error("duplicate wave completion");
+  }
+  completed_waves_[master] = wave;
+  for (const uint64_t completed : completed_waves_) {
+    if (completed != current_wave_) {
+      return;
+    }
+  }
+  ++current_wave_;
+}
 
 TmRingPerfMaster::TmRingPerfMaster() {}
 
@@ -11,10 +50,12 @@ TmRingPerfMaster::~TmRingPerfMaster() {}
 
 void TmRingPerfMaster::config(
     const std::string& name, p_tm_clk_t clk, uint32_t master_port,
-    const std::vector<TmRingPerfTxn>& transactions) {
+    const std::vector<TmRingPerfTxn>& transactions,
+    const std::shared_ptr<TmRingPerfWaveCoordinator>& wave_coordinator) {
   this->name(name);
   clk_ = clk;
   master_port_ = master_port;
+  wave_coordinator_ = wave_coordinator;
   transactions_ = transactions;
   read_transactions_.clear();
   write_transactions_.clear();
@@ -26,6 +67,19 @@ void TmRingPerfMaster::config(
       read_transactions_.push_back(txn);
     } else {
       write_transactions_.push_back(txn);
+    }
+  }
+  if (wave_coordinator_ != nullptr) {
+    wave_coordinator_->can_issue(master_port_, 0);
+    if (!write_transactions_.empty()) {
+      throw std::invalid_argument(
+          "wave coordinator supports read-only traces");
+    }
+    for (std::size_t index = 0; index < read_transactions_.size(); ++index) {
+      if (read_transactions_[index].ordinal != index) {
+        throw std::invalid_argument(
+            "wave trace ordinals must start at zero and be contiguous");
+      }
     }
   }
 
@@ -53,6 +107,7 @@ void TmRingPerfMaster::reset() {
   pending_write_candidate_.reset();
   issue_cycles_.clear();
   outstanding_sizes_.clear();
+  outstanding_waves_.clear();
   completed_gids_.clear();
   stats_ = TmRingPerfMasterStats();
 }
@@ -62,7 +117,8 @@ bool TmRingPerfMaster::idle() const {
          next_write_transaction_ == write_transactions_.size() &&
          pending_read_candidate_ == nullptr &&
          pending_write_candidate_ == nullptr && issue_cycles_.empty() &&
-         outstanding_sizes_.empty() && read_port_->idle() &&
+         outstanding_sizes_.empty() && outstanding_waves_.empty() &&
+         read_port_->idle() &&
          write_port_->idle();
 }
 
@@ -76,6 +132,10 @@ void TmRingPerfMaster::issue_read() {
     return;
   }
   const TmRingPerfTxn& txn = read_transactions_[next_read_transaction_];
+  if (wave_coordinator_ != nullptr &&
+      !wave_coordinator_->can_issue(master_port_, txn.ordinal)) {
+    return;
+  }
   if (pending_read_candidate_ == nullptr) {
     pending_read_candidate_ = make_candidate(txn);
   }
@@ -90,6 +150,9 @@ void TmRingPerfMaster::issue_read() {
   const uint64_t gid = pending_read_candidate_->gid;
   issue_cycles_[gid] = now;
   outstanding_sizes_[gid] = pending_read_candidate_->size;
+  if (wave_coordinator_ != nullptr) {
+    outstanding_waves_[gid] = txn.ordinal;
+  }
   ++stats_.accepted_packets;
   if (!stats_.has_first_request) {
     stats_.first_request_cycle = now;
@@ -186,6 +249,11 @@ void TmRingPerfMaster::receive_response(p_tm_com_inf_t port) {
   ++stats_.completed_packets;
   stats_.latency_cycles.push_back(now - issue->second);
   stats_.completed_bytes += outstanding_sizes_[gid];
+  const auto wave = outstanding_waves_.find(gid);
+  if (wave != outstanding_waves_.end()) {
+    wave_coordinator_->record_completion(master_port_, wave->second);
+    outstanding_waves_.erase(wave);
+  }
   completed_gids_.insert(gid);
   issue_cycles_.erase(issue);
   outstanding_sizes_.erase(gid);

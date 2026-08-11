@@ -24,6 +24,16 @@ enum class TmRingPerfPattern {
   SINGLE_TARGET
 };
 
+enum class TmRingPerfRunMode {
+  FREE_RUNNING,
+  AGGREGATION_WAVE
+};
+
+enum class TmRingPerfAggregationModel {
+  NO_MERGE,
+  IDEAL_TRACE_MERGE
+};
+
 struct TmRingPerfCase {
   std::string name;
   TmRingPerfOp op = TmRingPerfOp::READ;
@@ -36,6 +46,10 @@ struct TmRingPerfCase {
   uint64_t stride_bytes = 128;
   uint32_t target_id = 0;
   uint64_t drain_cycle_limit = 200000;
+  TmRingPerfRunMode run_mode = TmRingPerfRunMode::FREE_RUNNING;
+  uint32_t max_aicore_per_vring = 0;
+  uint32_t home_agent_waiters_per_entry = 0;
+  uint32_t l2_response_latency = 0;
 };
 
 struct TmRingPerfTxn {
@@ -99,6 +113,15 @@ struct TmRingPerfRbrgKey {
 struct TmRingPerfEstimate {
   uint64_t total_useful_bytes = 0;
   uint64_t physical_packets = 0;
+  uint64_t logical_read_requests = 0;
+  uint64_t backend_reads = 0;
+  uint64_t backend_read_saved = 0;
+  uint64_t h_carriers = 0;
+  uint64_t h_unicast_carriers = 0;
+  uint64_t h_multicast_carriers = 0;
+  uint64_t h_scatter_carriers = 0;
+  uint64_t h_carrier_recipients = 0;
+  uint64_t v_carriers = 0;
   uint64_t fabric_min_cycles = 0;
   double fabric_model_ceiling_bpc = 0.0;
   TmRingPerfEdgeKey hottest_edge;
@@ -120,6 +143,7 @@ struct TmRingPerfResult {
   double end_to_end_bandwidth_bpc = 0.0;
   double steady_response_bandwidth_bpc = 0.0;
   double scaling_efficiency = 0.0;
+  bool scaling_efficiency_available = false;
   double jain_fairness = 0.0;
   uint64_t latency_p50 = 0;
   uint64_t latency_p95 = 0;
@@ -127,6 +151,7 @@ struct TmRingPerfResult {
   uint64_t latency_max = 0;
   bool drained = false;
   TmRingPerfEstimate estimate;
+  TmRingPerfEstimate no_merge_estimate;
   std::array<TmRingConnStats, 3> conn_stats;
   TmRingCrossStationStats cross_station_stats;
   TmRingHomeAgentStats home_agent_stats;
@@ -144,7 +169,9 @@ std::vector<TmRingPerfTxn> tm_ring_build_perf_trace(
 TmRingPerfEstimate tm_ring_estimate_fabric(
     const std::vector<TmRingPerfTxn>& trace,
     const TmRingTopology& topology,
-    const TmRingCfg& ring_cfg);
+    const TmRingCfg& ring_cfg,
+    TmRingPerfAggregationModel aggregation_model =
+        TmRingPerfAggregationModel::IDEAL_TRACE_MERGE);
 
 TmRingPerfResult tm_ring_collect_perf_result(
     const TmRingPerfCase& perf_case,
@@ -152,6 +179,15 @@ TmRingPerfResult tm_ring_collect_perf_result(
     const TmRingFabric& fabric,
     const std::vector<TmMemStats>& memory_stats,
     const TmRingPerfEstimate& estimate,
+    bool drained);
+
+TmRingPerfResult tm_ring_collect_perf_result(
+    const TmRingPerfCase& perf_case,
+    const std::vector<TmRingPerfMasterStats>& master_stats,
+    const TmRingFabric& fabric,
+    const std::vector<TmMemStats>& memory_stats,
+    const TmRingPerfEstimate& estimate,
+    const TmRingPerfEstimate& no_merge_estimate,
     bool drained);
 
 double tm_ring_scaling_efficiency(const TmRingPerfResult& multi,

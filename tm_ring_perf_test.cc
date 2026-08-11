@@ -5,6 +5,7 @@
 #include <memory>
 #include <set>
 #include <sstream>
+#include <stdexcept>
 #include <vector>
 
 #include "tm_ring.h"
@@ -219,6 +220,57 @@ TEST(TmRingPerfTraceTest, KeepsCrossLineSharedReadAsOne1024ByteRequest) {
   }
 }
 
+TEST(TmRingPerfWaveCoordinatorTest, AdvancesOnlyAfterEveryMasterCompletes) {
+  TmRingPerfWaveCoordinator coordinator(3);
+
+  EXPECT_EQ(uint64_t(0), coordinator.current_wave());
+  EXPECT_TRUE(coordinator.can_issue(0, 0));
+  EXPECT_FALSE(coordinator.can_issue(0, 1));
+  coordinator.record_completion(0, 0);
+  coordinator.record_completion(2, 0);
+  EXPECT_EQ(uint64_t(0), coordinator.current_wave());
+  coordinator.record_completion(1, 0);
+  EXPECT_EQ(uint64_t(1), coordinator.current_wave());
+  EXPECT_TRUE(coordinator.can_issue(2, 1));
+  EXPECT_THROW(coordinator.can_issue(0, 0), std::logic_error);
+}
+
+TEST(TmRingPerfWaveCoordinatorTest, RejectsInvalidAndDuplicateCompletions) {
+  EXPECT_THROW(TmRingPerfWaveCoordinator(0), std::invalid_argument);
+  TmRingPerfWaveCoordinator coordinator(2);
+
+  EXPECT_THROW(coordinator.can_issue(2, 0), std::out_of_range);
+  EXPECT_THROW(coordinator.record_completion(2, 0), std::out_of_range);
+  EXPECT_THROW(coordinator.record_completion(0, 1), std::logic_error);
+  coordinator.record_completion(0, 0);
+  EXPECT_THROW(coordinator.record_completion(0, 0), std::logic_error);
+  coordinator.record_completion(1, 0);
+  EXPECT_THROW(coordinator.record_completion(1, 0), std::logic_error);
+}
+
+TEST(TmRingPerfWaveCoordinatorTest, MasterRejectsInvalidWaveTraces) {
+  tm_init();
+  auto clk = tm_make_clk();
+  auto coordinator = std::make_shared<TmRingPerfWaveCoordinator>(1);
+
+  std::vector<TmRingPerfTxn> write_trace(1);
+  write_trace[0].cmd = PldCmd::WR;
+  write_trace[0].size = 128;
+  TmRingPerfMaster write_master;
+  EXPECT_THROW(write_master.config("wave_write_master", clk, 0, write_trace,
+                                   coordinator),
+               std::invalid_argument);
+
+  std::vector<TmRingPerfTxn> skipped_wave_trace(1);
+  skipped_wave_trace[0].cmd = PldCmd::RD;
+  skipped_wave_trace[0].size = 128;
+  skipped_wave_trace[0].ordinal = 1;
+  TmRingPerfMaster skipped_wave_master;
+  EXPECT_THROW(skipped_wave_master.config("skipped_wave_master", clk, 0,
+                                          skipped_wave_trace, coordinator),
+               std::invalid_argument);
+}
+
 TEST(TmRingPerfEstimatorTest, CountsExplicitDomainEdgesAndRbrgPaths) {
   tm_init();
   auto cfg = make_perf_cfg(4, 1);
@@ -372,6 +424,81 @@ TEST(TmRingPerfEstimatorTest, SharedSectorReadsSplitCarriersByVRing) {
   EXPECT_EQ(uint64_t(1), estimate.rbrg_path_cycles.at(v1_dat_path));
 }
 
+TEST(TmRingPerfEstimatorTest, SeparatesNoMergeAndIdealAggregationModels) {
+  tm_init();
+  auto cfg = make_perf_cfg(4, 1);
+  cfg->max_aicore_per_vring = 2;
+  cfg->ring_link_width_bytes = 128;
+  cfg->rbrg_width_bytes = 128;
+  TmRingTopology topology;
+  topology.config(cfg);
+
+  std::vector<TmRingPerfTxn> shared_trace;
+  for (uint32_t master = 0; master < 4; ++master) {
+    TmRingPerfTxn txn;
+    txn.master_port = master;
+    txn.cmd = PldCmd::RD;
+    txn.addr = 0;
+    txn.size = 128;
+    txn.ordinal = 0;
+    shared_trace.push_back(txn);
+  }
+
+  const TmRingPerfEstimate no_merge = tm_ring_estimate_fabric(
+      shared_trace, topology, *cfg,
+      TmRingPerfAggregationModel::NO_MERGE);
+  const TmRingPerfEstimate ideal = tm_ring_estimate_fabric(
+      shared_trace, topology, *cfg,
+      TmRingPerfAggregationModel::IDEAL_TRACE_MERGE);
+
+  EXPECT_EQ(uint64_t(4), no_merge.logical_read_requests);
+  EXPECT_EQ(uint64_t(4), no_merge.backend_reads);
+  EXPECT_EQ(uint64_t(0), no_merge.backend_read_saved);
+  EXPECT_EQ(uint64_t(4), no_merge.h_carriers);
+  EXPECT_EQ(uint64_t(4), no_merge.h_unicast_carriers);
+  EXPECT_EQ(uint64_t(0), no_merge.h_multicast_carriers);
+  EXPECT_EQ(uint64_t(4), no_merge.v_carriers);
+
+  EXPECT_EQ(uint64_t(4), ideal.logical_read_requests);
+  EXPECT_EQ(uint64_t(1), ideal.backend_reads);
+  EXPECT_EQ(uint64_t(3), ideal.backend_read_saved);
+  EXPECT_EQ(uint64_t(2), ideal.h_carriers);
+  EXPECT_EQ(uint64_t(0), ideal.h_unicast_carriers);
+  EXPECT_EQ(uint64_t(2), ideal.h_multicast_carriers);
+  EXPECT_EQ(uint64_t(0), ideal.h_scatter_carriers);
+  EXPECT_EQ(uint64_t(4), ideal.h_carrier_recipients);
+  EXPECT_EQ(uint64_t(2), ideal.v_carriers);
+}
+
+TEST(TmRingPerfEstimatorTest, ClassifiesIdealSameLineScatterCarriers) {
+  tm_init();
+  auto cfg = make_perf_cfg(4, 1);
+  cfg->max_aicore_per_vring = 2;
+  TmRingTopology topology;
+  topology.config(cfg);
+
+  std::vector<TmRingPerfTxn> trace;
+  for (uint32_t master = 0; master < 4; ++master) {
+    TmRingPerfTxn txn;
+    txn.master_port = master;
+    txn.cmd = PldCmd::RD;
+    txn.addr = master * 128;
+    txn.size = 128;
+    txn.ordinal = 0;
+    trace.push_back(txn);
+  }
+
+  const TmRingPerfEstimate ideal = tm_ring_estimate_fabric(
+      trace, topology, *cfg,
+      TmRingPerfAggregationModel::IDEAL_TRACE_MERGE);
+  EXPECT_EQ(uint64_t(1), ideal.backend_reads);
+  EXPECT_EQ(uint64_t(3), ideal.backend_read_saved);
+  EXPECT_EQ(uint64_t(2), ideal.h_carriers);
+  EXPECT_EQ(uint64_t(2), ideal.h_scatter_carriers);
+  EXPECT_EQ(uint64_t(0), ideal.h_multicast_carriers);
+  EXPECT_EQ(uint64_t(2), ideal.v_carriers);
+}
+
 class RetryPerfMaster : public TmRingPerfMaster {
  public:
   using TmRingPerfMaster::issue;
@@ -449,7 +576,7 @@ TEST(TmRingPerfCollectorTest, AggregatesLatencyFairnessAndMemoryStats) {
   const std::vector<TmMemStats> memories = {memory0, memory1};
   TmRingPerfEstimate estimate;
   const TmRingPerfResult result = tm_ring_collect_perf_result(
-      perf_case, masters, *ring, memories, estimate, true);
+      perf_case, masters, *ring, memories, estimate, estimate, true);
 
   EXPECT_EQ(uint64_t(384), result.completed_bytes);
   EXPECT_EQ(uint64_t(4), result.completed_packets);
@@ -478,12 +605,17 @@ TEST(TmRingPerfReportTest, EmitsStableSectionsAndKeys) {
   result.estimate.hottest_ring_edge_cycles = 2;
   result.estimate.hottest_rbrg_path_cycles = 4;
   result.estimate.fabric_min_cycles = 4;
+  result.estimate.physical_packets = 4;
+  result.no_merge_estimate.physical_packets = 8;
   const std::string report = tm_ring_format_perf_result(result);
 
-  const char* sections[] = {"PERF_CONFIG", "PERF_COUNTS", "PERF_BANDWIDTH",
-                            "PERF_LATENCY", "PERF_RING", "PERF_HOME_AGENT",
-                            "PERF_L2_BUFFER", "PERF_MEMORY", "PERF_THEORY",
-                            "PERF_RESULT"};
+  const char* sections[] = {
+      "PERF_CONFIG",          "PERF_COUNTS",
+      "PERF_BANDWIDTH",       "PERF_LATENCY",
+      "PERF_RING",            "PERF_HOME_AGENT",
+      "PERF_L2_BUFFER",       "PERF_MEMORY",
+      "PERF_THEORY_NO_MERGE", "PERF_THEORY_IDEAL_MERGE",
+      "PERF_THEORY",          "PERF_RESULT"};
   for (const char* section : sections) {
     EXPECT_NE(std::string::npos, report.find(section));
   }
@@ -498,6 +630,20 @@ TEST(TmRingPerfReportTest, EmitsStableSectionsAndKeys) {
             report.find("hottest_ring_edge_cycles=2"));
   EXPECT_NE(std::string::npos,
             report.find("hottest_rbrg_path_cycles=4"));
+  EXPECT_NE(std::string::npos, report.find("run_mode=free_running"));
+  EXPECT_NE(std::string::npos,
+            report.find("scaling_efficiency_available=0"));
+  EXPECT_NE(std::string::npos, report.find("rd_merged_pending=0"));
+  EXPECT_NE(std::string::npos, report.find("waiter_full_stalls=0"));
+  EXPECT_NE(std::string::npos,
+            report.find("aggregation_closed_stalls=0"));
+  EXPECT_NE(std::string::npos, report.find("carrier_other=0"));
+  EXPECT_NE(std::string::npos,
+            report.find("PERF_THEORY_NO_MERGE total_useful_bytes=0 "
+                        "physical_packets=8"));
+  EXPECT_NE(std::string::npos,
+            report.find("PERF_THEORY_IDEAL_MERGE total_useful_bytes=0 "
+                        "physical_packets=4"));
 }
 
 TEST(TmRingPerfReportTest, EmitsMultiRingSnapshotRecords) {
@@ -615,6 +761,7 @@ struct PerfSmokeResult {
 struct PerfOverrides {
   uint32_t max_aicore_per_vring = 0;
   uint32_t home_agent_waiters_per_entry = 0;
+  uint32_t l2_response_latency = 0;
 };
 
 std::string perf_config_path() {
@@ -653,6 +800,15 @@ PerfSmokeResult run_perf_smoke(const TmRingPerfCase& perf_case,
     ring_cfg->home_agent_waiters_per_entry =
         overrides.home_agent_waiters_per_entry;
   }
+  if (overrides.l2_response_latency != 0) {
+    ring_cfg->l2_traffic.response_latency = overrides.l2_response_latency;
+  }
+  TmRingPerfCase effective_case = perf_case;
+  effective_case.max_aicore_per_vring = ring_cfg->max_aicore_per_vring;
+  effective_case.home_agent_waiters_per_entry =
+      ring_cfg->home_agent_waiters_per_entry;
+  effective_case.l2_response_latency =
+      ring_cfg->l2_traffic.response_latency;
   auto biu_cfg = cfg->get_cfg_tab("BIU");
 
   std::vector<p_tm_mem_t> memories;
@@ -666,9 +822,37 @@ PerfSmokeResult run_perf_smoke(const TmRingPerfCase& perf_case,
   TmRingTopology topology;
   topology.config(ring_cfg);
   const std::vector<TmRingPerfTxn> trace =
-      tm_ring_build_perf_trace(perf_case, ring_cfg->num_masters, topology);
+      tm_ring_build_perf_trace(effective_case, ring_cfg->num_masters,
+                               topology);
   const TmRingPerfEstimate estimate =
-      tm_ring_estimate_fabric(trace, topology, *ring_cfg);
+      tm_ring_estimate_fabric(trace, topology, *ring_cfg,
+                              TmRingPerfAggregationModel::IDEAL_TRACE_MERGE);
+  const TmRingPerfEstimate no_merge_estimate =
+      tm_ring_estimate_fabric(trace, topology, *ring_cfg,
+                              TmRingPerfAggregationModel::NO_MERGE);
+
+  std::vector<std::vector<TmRingPerfTxn> > master_traces(
+      effective_case.active_masters);
+  for (const TmRingPerfTxn& txn : trace) {
+    if (txn.master_port >= master_traces.size()) {
+      ADD_FAILURE() << "trace contains an out-of-range master";
+      return PerfSmokeResult();
+    }
+    master_traces[txn.master_port].push_back(txn);
+  }
+
+  std::shared_ptr<TmRingPerfWaveCoordinator> wave_coordinator;
+  if (effective_case.run_mode == TmRingPerfRunMode::AGGREGATION_WAVE) {
+    const size_t transactions_per_master = master_traces.front().size();
+    for (const std::vector<TmRingPerfTxn>& master_trace : master_traces) {
+      if (master_trace.size() != transactions_per_master) {
+        ADD_FAILURE() << "aggregation wave traces must have equal lengths";
+        return PerfSmokeResult();
+      }
+    }
+    wave_coordinator = std::make_shared<TmRingPerfWaveCoordinator>(
+        effective_case.active_masters);
+  }
 
   std::vector<p_pem_biu_t> bius;
   std::vector<std::shared_ptr<TmRingPerfMaster>> masters;
@@ -682,15 +866,9 @@ PerfSmokeResult run_perf_smoke(const TmRingPerfCase& perf_case,
     ring->attach_master(master_id, biu);
     bius.push_back(biu);
 
-    std::vector<TmRingPerfTxn> master_trace;
-    for (const auto& txn : trace) {
-      if (txn.master_port == master_id) {
-        master_trace.push_back(txn);
-      }
-    }
     auto master = std::make_shared<TmRingPerfMaster>();
     master->config("perf_master" + std::to_string(master_id), clk,
-                   master_id, master_trace);
+                   master_id, master_traces[master_id], wave_coordinator);
     master->attach(biu);
     master->build();
     masters.push_back(master);
@@ -734,8 +912,8 @@ PerfSmokeResult run_perf_smoke(const TmRingPerfCase& perf_case,
     result.memory_stats.push_back(memory->stats());
   }
   result.perf_result = tm_ring_collect_perf_result(
-      perf_case, result.master_stats, *ring, result.memory_stats, estimate,
-      result.idle);
+      effective_case, result.master_stats, *ring, result.memory_stats,
+      estimate, no_merge_estimate, result.idle);
   return result;
 }
 
@@ -788,6 +966,15 @@ uint64_t rbrg_packets(const TmRingRbrgStats& stats) {
     packets += path.packets;
   }
   return packets;
+}
+
+uint64_t v_ring_dat_carriers(const TmRingPerfResult& result) {
+  uint64_t carriers = 0;
+  for (const TmRingRbrgStats& stats : result.rbrg_stats) {
+    carriers += stats.paths[static_cast<uint32_t>(
+        TmRingRbrgPath::H_TO_V_DAT)].packets;
+  }
+  return carriers;
 }
 
 enum class PerfAggregationExpectation {
@@ -857,6 +1044,122 @@ void run_multi_vring_128kb_benchmark(
             result.perf_result.rbrg_stats.size());
   for (const TmRingRbrgStats& stats : result.perf_result.rbrg_stats) {
     ASSERT_GT(rbrg_packets(stats), uint64_t(0));
+  }
+  expect_perf_block_complete(result, perf_case);
+}
+
+void run_multi_vring_no_merge_read_benchmark(
+    const std::string& name, uint32_t masters,
+    uint32_t max_aicore_per_vring, uint32_t request_bytes) {
+  ASSERT_GT(max_aicore_per_vring, uint32_t(0));
+  const uint32_t expected_vrings =
+      (masters + max_aicore_per_vring - 1) / max_aicore_per_vring;
+  ASSERT_GT(expected_vrings, uint32_t(1));
+  TmRingPerfCase perf_case = make_128kb_case(
+      name, TmRingPerfOp::READ, TmRingPerfPattern::STRIDED_PRIVATE, masters,
+      request_bytes);
+  perf_case.stride_bytes = 512;
+  PerfOverrides overrides;
+  overrides.max_aicore_per_vring = max_aicore_per_vring;
+  const PerfSmokeResult result = run_perf_smoke(perf_case, overrides);
+
+  ASSERT_EQ(static_cast<size_t>(expected_vrings + 1),
+            result.perf_result.ring_domain_stats.size());
+  ASSERT_EQ(static_cast<size_t>(expected_vrings),
+            result.perf_result.rbrg_stats.size());
+  for (const TmRingRbrgStats& stats : result.perf_result.rbrg_stats) {
+    ASSERT_GT(rbrg_packets(stats), uint64_t(0));
+  }
+  ASSERT_EQ(uint64_t(0),
+            result.perf_result.home_agent_stats.backend_read_saved);
+  ASSERT_EQ(uint64_t(0),
+            result.perf_result.l2_buffer_stats.h_multicast_carriers);
+  ASSERT_EQ(uint64_t(0),
+            result.perf_result.l2_buffer_stats.h_scatter_carriers);
+  ASSERT_EQ(result.perf_result.completed_packets,
+            result.perf_result.l2_buffer_stats.h_carriers);
+  ASSERT_EQ(result.perf_result.completed_packets,
+            result.perf_result.l2_buffer_stats.h_unicast_carriers);
+  ASSERT_EQ(result.perf_result.completed_packets,
+            v_ring_dat_carriers(result.perf_result));
+  expect_perf_block_complete(result, perf_case);
+}
+
+void run_aggregation_wave_test(
+    const std::string& name, TmRingPerfPattern pattern, uint32_t masters,
+    uint32_t max_aicore_per_vring, uint32_t request_bytes,
+    uint64_t address_stride, PerfAggregationExpectation expectation) {
+  ASSERT_GT(max_aicore_per_vring, uint32_t(0));
+  const uint32_t expected_vrings =
+      (masters + max_aicore_per_vring - 1) / max_aicore_per_vring;
+  ASSERT_GT(expected_vrings, uint32_t(1));
+
+  TmRingPerfCase perf_case;
+  perf_case.name = name;
+  perf_case.op = TmRingPerfOp::READ;
+  perf_case.pattern = pattern;
+  perf_case.active_masters = masters;
+  perf_case.bytes_per_master = 4 * 1024;
+  perf_case.burst_bytes = request_bytes;
+  perf_case.read_base = 64ull * 1024 * 1024;
+  perf_case.stride_bytes = address_stride;
+  perf_case.drain_cycle_limit = 2000000;
+  perf_case.run_mode = TmRingPerfRunMode::AGGREGATION_WAVE;
+
+  PerfOverrides overrides;
+  overrides.max_aicore_per_vring = max_aicore_per_vring;
+  overrides.home_agent_waiters_per_entry = masters;
+  overrides.l2_response_latency = 256;
+  const PerfSmokeResult result = run_perf_smoke(perf_case, overrides);
+  const TmRingPerfEstimate& ideal = result.perf_result.estimate;
+
+  ASSERT_TRUE(result.idle);
+  ASSERT_TRUE(result.perf_result.drained);
+  ASSERT_EQ(uint64_t(0), result.perf_result.protocol_errors);
+  ASSERT_EQ(static_cast<size_t>(expected_vrings + 1),
+            result.perf_result.ring_domain_stats.size());
+  ASSERT_EQ(static_cast<size_t>(expected_vrings),
+            result.perf_result.rbrg_stats.size());
+  for (const TmRingRbrgStats& stats : result.perf_result.rbrg_stats) {
+    ASSERT_GT(stats.paths[static_cast<uint32_t>(
+                  TmRingRbrgPath::H_TO_V_DAT)].packets,
+              uint64_t(0));
+  }
+  ASSERT_EQ(ideal.logical_read_requests,
+            result.perf_result.home_agent_stats.rd_requests);
+  ASSERT_EQ(ideal.backend_reads,
+            result.perf_result.home_agent_stats.rd_entries_allocated);
+  ASSERT_EQ(ideal.backend_read_saved,
+            result.perf_result.home_agent_stats.backend_read_saved);
+  ASSERT_EQ(
+      ideal.backend_read_saved,
+      result.perf_result.home_agent_stats.rd_merged_pending +
+          result.perf_result.home_agent_stats.rd_merged_inflight +
+          result.perf_result.home_agent_stats.rd_merged_responding);
+  ASSERT_EQ(ideal.h_carriers,
+            result.perf_result.l2_buffer_stats.h_carriers);
+  ASSERT_EQ(ideal.h_unicast_carriers,
+            result.perf_result.l2_buffer_stats.h_unicast_carriers);
+  ASSERT_EQ(ideal.h_multicast_carriers,
+            result.perf_result.l2_buffer_stats.h_multicast_carriers);
+  ASSERT_EQ(ideal.h_scatter_carriers,
+            result.perf_result.l2_buffer_stats.h_scatter_carriers);
+  ASSERT_EQ(ideal.h_carrier_recipients,
+            result.perf_result.l2_buffer_stats.h_carrier_recipients);
+  ASSERT_EQ(ideal.v_carriers, v_ring_dat_carriers(result.perf_result));
+  ASSERT_EQ(uint64_t(0),
+            result.perf_result.home_agent_stats.table_full_stall_cycles);
+  ASSERT_EQ(uint64_t(0),
+            result.perf_result.home_agent_stats.waiter_full_stall_cycles);
+  ASSERT_EQ(
+      uint64_t(0),
+      result.perf_result.home_agent_stats.aggregation_closed_stall_cycles);
+  if (expectation == PerfAggregationExpectation::SCATTER) {
+    ASSERT_GT(ideal.h_scatter_carriers, uint64_t(0));
+    ASSERT_EQ(uint64_t(0), ideal.h_multicast_carriers);
+  } else {
+    ASSERT_GT(ideal.h_multicast_carriers, uint64_t(0));
+    ASSERT_EQ(uint64_t(0), ideal.h_scatter_carriers);
   }
   expect_perf_block_complete(result, perf_case);
 }
@@ -945,6 +1248,53 @@ TEST(RingPerfBenchmark, MultiVringCrossLineNonMergedRead1024B) {
   ASSERT_EQ(result.perf_result.completed_packets,
             result.perf_result.l2_buffer_stats.injected_carrier_other);
   expect_perf_block_complete(result, perf_case);
+}
+
+TEST(RingPerfBenchmark, MultiVringNoMergeRead128B) {
+  run_multi_vring_no_merge_read_benchmark(
+      "multi_vring_no_merge_read_128b", 18, 8, 128);
+}
+
+TEST(RingPerfBenchmark, MultiVringNoMergeRead256B) {
+  run_multi_vring_no_merge_read_benchmark(
+      "multi_vring_no_merge_read_256b", 18, 8, 256);
+}
+
+TEST(RingPerfBenchmark, MultiVringNoMergeRead512B) {
+  run_multi_vring_no_merge_read_benchmark(
+      "multi_vring_no_merge_read_512b", 18, 8, 512);
+}
+
+TEST(RingAggregationWaveTest, SameLineScatterRead128B) {
+  run_aggregation_wave_test(
+      "wave_same_line_scatter_read_128b",
+      TmRingPerfPattern::SAME_LINE_SCATTER, 18, 8, 128, 0,
+      PerfAggregationExpectation::SCATTER);
+}
+
+TEST(RingAggregationWaveTest, SameLineScatterRead256B) {
+  run_aggregation_wave_test(
+      "wave_same_line_scatter_read_256b",
+      TmRingPerfPattern::SAME_LINE_SCATTER, 18, 8, 256, 0,
+      PerfAggregationExpectation::SCATTER);
+}
+
+TEST(RingAggregationWaveTest, SharedRead128B) {
+  run_aggregation_wave_test(
+      "wave_shared_read_128b", TmRingPerfPattern::SEQUENTIAL_SHARED, 18, 8,
+      128, 512, PerfAggregationExpectation::MULTICAST);
+}
+
+TEST(RingAggregationWaveTest, SharedRead256B) {
+  run_aggregation_wave_test(
+      "wave_shared_read_256b", TmRingPerfPattern::SEQUENTIAL_SHARED, 18, 8,
+      256, 512, PerfAggregationExpectation::MULTICAST);
+}
+
+TEST(RingAggregationWaveTest, SharedRead512B) {
+  run_aggregation_wave_test(
+      "wave_shared_read_512b", TmRingPerfPattern::SEQUENTIAL_SHARED, 18, 8,
+      512, 512, PerfAggregationExpectation::MULTICAST);
 }
 
 TEST(TmRingPerfSmokeTest, ReadWrite4KB) {

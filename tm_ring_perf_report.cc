@@ -33,6 +33,16 @@ const char* perf_pattern_name(TmRingPerfPattern pattern) {
   return "unknown";
 }
 
+const char* perf_run_mode_name(TmRingPerfRunMode mode) {
+  switch (mode) {
+    case TmRingPerfRunMode::FREE_RUNNING:
+      return "free_running";
+    case TmRingPerfRunMode::AGGREGATION_WAVE:
+      return "aggregation_wave";
+  }
+  return "unknown";
+}
+
 const char* subnet_name(TmRingSubnet subnet) {
   switch (subnet) {
     case TmRingSubnet::REQ:
@@ -124,6 +134,34 @@ uint64_t saturating_subtract(uint64_t left, uint64_t right) {
   return left > right ? left - right : 0;
 }
 
+void append_theory(std::ostringstream* out, const char* section,
+                   const TmRingPerfEstimate& estimate,
+                   double measured_bandwidth) {
+  const double theory_efficiency =
+      estimate.fabric_model_ceiling_bpc == 0.0
+          ? 0.0
+          : measured_bandwidth / estimate.fabric_model_ceiling_bpc;
+  *out << section << " total_useful_bytes=" << estimate.total_useful_bytes
+       << " physical_packets=" << estimate.physical_packets
+       << " logical_read_requests=" << estimate.logical_read_requests
+       << " backend_reads=" << estimate.backend_reads
+       << " backend_read_saved=" << estimate.backend_read_saved
+       << " h_carriers=" << estimate.h_carriers
+       << " h_unicast_carriers=" << estimate.h_unicast_carriers
+       << " h_multicast_carriers=" << estimate.h_multicast_carriers
+       << " h_scatter_carriers=" << estimate.h_scatter_carriers
+       << " h_carrier_recipients=" << estimate.h_carrier_recipients
+       << " v_carriers=" << estimate.v_carriers
+       << " fabric_min_cycles=" << estimate.fabric_min_cycles
+       << " hottest_ring_edge_cycles="
+       << estimate.hottest_ring_edge_cycles
+       << " hottest_rbrg_path_cycles="
+       << estimate.hottest_rbrg_path_cycles
+       << " fabric_ceiling_bpc=" << estimate.fabric_model_ceiling_bpc
+       << " measured_over_fabric_ceiling=" << theory_efficiency
+       << " assumption=finite_trace_packet_slot_upper_bound\n";
+}
+
 }  // namespace
 
 std::string tm_ring_format_perf_result(const TmRingPerfResult& result) {
@@ -138,7 +176,14 @@ std::string tm_ring_format_perf_result(const TmRingPerfResult& result) {
       << " pattern=" << perf_pattern_name(result.perf_case.pattern)
       << " active_masters=" << result.perf_case.active_masters
       << " bytes_per_master=" << result.perf_case.bytes_per_master
-      << " burst_bytes=" << result.perf_case.burst_bytes << '\n';
+      << " burst_bytes=" << result.perf_case.burst_bytes
+      << " run_mode=" << perf_run_mode_name(result.perf_case.run_mode)
+      << " max_aicore_per_vring="
+      << result.perf_case.max_aicore_per_vring
+      << " home_agent_waiters_per_entry="
+      << result.perf_case.home_agent_waiters_per_entry
+      << " l2_response_latency="
+      << result.perf_case.l2_response_latency << '\n';
 
   out << "PERF_COUNTS completed_packets=" << result.completed_packets
       << " completed_bytes=" << result.completed_bytes
@@ -152,6 +197,8 @@ std::string tm_ring_format_perf_result(const TmRingPerfResult& result) {
       << " end_to_end_bpc=" << result.end_to_end_bandwidth_bpc
       << " steady_response_bpc=" << result.steady_response_bandwidth_bpc
       << " scaling_efficiency=" << result.scaling_efficiency
+      << " scaling_efficiency_available="
+      << (result.scaling_efficiency_available ? 1 : 0)
       << " jain_fairness=" << result.jain_fairness << '\n';
 
   out << "PERF_LATENCY p50=" << result.latency_p50
@@ -258,7 +305,17 @@ std::string tm_ring_format_perf_result(const TmRingPerfResult& result) {
       << " l2_hits=" << result.home_agent_stats.l2_hit_transactions
       << " l2_misses=" << result.home_agent_stats.l2_miss_transactions
       << " write_hazard_stalls="
-      << result.home_agent_stats.write_hazard_stall_cycles << '\n';
+      << result.home_agent_stats.write_hazard_stall_cycles
+      << " rd_merged_pending=" << result.home_agent_stats.rd_merged_pending
+      << " rd_merged_inflight=" << result.home_agent_stats.rd_merged_inflight
+      << " rd_merged_responding="
+      << result.home_agent_stats.rd_merged_responding
+      << " table_full_stalls="
+      << result.home_agent_stats.table_full_stall_cycles
+      << " waiter_full_stalls="
+      << result.home_agent_stats.waiter_full_stall_cycles
+      << " aggregation_closed_stalls="
+      << result.home_agent_stats.aggregation_closed_stall_cycles << '\n';
 
   out << "PERF_L2_BUFFER responses_accepted="
       << result.l2_buffer_stats.responses_accepted
@@ -282,6 +339,7 @@ std::string tm_ring_format_perf_result(const TmRingPerfResult& result) {
       << " carrier_128b=" << result.l2_buffer_stats.injected_carrier_128b
       << " carrier_256b=" << result.l2_buffer_stats.injected_carrier_256b
       << " carrier_512b=" << result.l2_buffer_stats.injected_carrier_512b
+      << " carrier_other=" << result.l2_buffer_stats.injected_carrier_other
       << '\n';
 
   out << "PERF_MEMORY accepted_read_bytes="
@@ -293,23 +351,12 @@ std::string tm_ring_format_perf_result(const TmRingPerfResult& result) {
       << result.memory_stats.queue_full_stall_cycles
       << " outstanding_peak=" << result.memory_stats.outstanding_peak << '\n';
 
-  const double theory_efficiency =
-      result.estimate.fabric_model_ceiling_bpc == 0.0
-          ? 0.0
-          : result.end_to_end_bandwidth_bpc /
-                result.estimate.fabric_model_ceiling_bpc;
-  out << "PERF_THEORY total_useful_bytes="
-      << result.estimate.total_useful_bytes
-      << " physical_packets=" << result.estimate.physical_packets
-      << " fabric_min_cycles=" << result.estimate.fabric_min_cycles
-      << " hottest_ring_edge_cycles="
-      << result.estimate.hottest_ring_edge_cycles
-      << " hottest_rbrg_path_cycles="
-      << result.estimate.hottest_rbrg_path_cycles
-      << " fabric_ceiling_bpc="
-      << result.estimate.fabric_model_ceiling_bpc
-      << " measured_over_fabric_ceiling=" << theory_efficiency
-      << " assumption=finite_trace_packet_slot_upper_bound\n";
+  append_theory(&out, "PERF_THEORY_NO_MERGE", result.no_merge_estimate,
+                result.end_to_end_bandwidth_bpc);
+  append_theory(&out, "PERF_THEORY_IDEAL_MERGE", result.estimate,
+                result.end_to_end_bandwidth_bpc);
+  append_theory(&out, "PERF_THEORY", result.estimate,
+                result.end_to_end_bandwidth_bpc);
 
   out << "PERF_RESULT status=" << (result.drained ? "PASS" : "INCOMPLETE")
       << " protocol_errors=" << result.protocol_errors << '\n';
