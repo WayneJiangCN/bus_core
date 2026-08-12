@@ -429,6 +429,18 @@ class RingPerfHtmlTest(unittest.TestCase):
         self.assertIn(">M0</text>", document)
         self.assertNotIn(">M0 · st1</text>", document)
 
+    def test_topology_node_detail_shows_accepted_inject_packets(self):
+        document = render_html(
+            parse_perf_results(fixed_topology_perf_block()), "fixed.txt"
+        )
+
+        self.assertIn("<th>Pushes</th>", document)
+        self.assertIn(
+            "<td>DAT inject</td><td>cw</td><td>8</td><td>4</td>"
+            "<td>64</td><td>2</td>",
+            document,
+        )
+
     def test_details_table_aligns_the_four_latency_columns(self):
         document = render_html(parse_perf_results(SAMPLE_RESULTS), "sample.txt")
 

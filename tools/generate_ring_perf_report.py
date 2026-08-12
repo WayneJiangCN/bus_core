@@ -723,12 +723,13 @@ def _topology_node_details(scenario):
         rows = []
         for record in records:
             rows.append(
-                '<tr><td>{} {}</td><td>{}</td><td>{}</td><td>{}</td><td>{}</td></tr>'.format(
+                '<tr><td>{} {}</td><td>{}</td><td>{}</td><td>{}</td><td>{}</td><td>{}</td></tr>'.format(
                     html_lib.escape(record["subnet"].upper()),
                     html_lib.escape(record["side"]),
                     html_lib.escape(record["direction"]),
                     _format_number(_record_number(record, "peak")),
                     _format_number(_record_number(record, "full_pct")),
+                    _format_number(_record_number(record, "pushes")),
                     _format_number(_record_number(record, "push_rejects")),
                 )
             )
@@ -737,7 +738,7 @@ def _topology_node_details(scenario):
             'data-topology-detail="node-{}" hidden><strong>{}</strong>'
             '<div class="table-wrap"><table><thead><tr><th>Queue</th>'
             '<th>Direction</th><th>Peak</th><th>Full (%)</th>'
-            '<th>Push rejects</th></tr></thead><tbody>{}</tbody></table></div></div>'.format(
+            '<th>Pushes</th><th>Push rejects</th></tr></thead><tbody>{}</tbody></table></div></div>'.format(
                 html_lib.escape(node_id),
                 html_lib.escape(node_id),
                 html_lib.escape(node_id),
