@@ -1,5 +1,7 @@
 #include "pem_trdemo.h"
 
+#include "tm_ring_types.h"
+
 #include <algorithm>
 #include <iostream>
 
@@ -29,6 +31,7 @@ void PemTrDemo::config() {
   // pipe_que_->rdy);
   tm_sensitive(TM_MAKE_CPROC(&PemTrDemo::wr_recv_rsp), write_port_->vld);
   // log
+#if TM_RING_LOG_ENABLE
   std::string log_name = this->name() + ".log";
   log_para_t log_para = log_para_t(log_name);
   log_ = pem_log::create_logger(log_para);
@@ -38,6 +41,7 @@ void PemTrDemo::config() {
   std::string wr_log_name = this->name() + "wr.log";
   log_para_t wr_log_para = log_para_t(wr_log_name);
   wr_log_ = pem_log::create_logger(wr_log_para);
+#endif
 
   // 初始化配对缓冲区
   pair_buffer_.clear();
@@ -135,12 +139,16 @@ void PemTrDemo::read_mem() {
       stats_.first_read_cycle = now;
       stats_.has_first_read_cycle = true;
     }
+#if TM_RING_LOG_ENABLE
     PEM_LOG_INFO(rd_log_,
                  "M2,time:{2:d} ,  发送读请求,UOP[{0:d}], 地址=0x{1:x}",
                  uop->req_id, uop->addr, time());
+#endif
   } else {
     ++stats_.read_send_stalls;
+#if TM_RING_LOG_ENABLE
     PEM_LOG_INFO(rd_log_, "time:{0:d},read_port_->send失败", time());
+#endif
   }
 }
 void PemTrDemo::recv_rsp() {
@@ -162,24 +170,32 @@ bool PemTrDemo::handle_read_response(p_tm_pld_t rd_resp) {
   if (addr < start_addr_ || (addr - start_addr_) % read_stride_bytes_ != 0 ||
       size != read_size_bytes_) {
     ++stats_.protocol_errors;
+#if TM_RING_LOG_ENABLE
     PEM_LOG_ERROR(rd_log_, "Invalid RD response: addr=0x{0:x}, size={1:d}",
                   addr, size);
+#endif
     return false;
   }
   uint32_t req_id = (addr - start_addr_) / read_stride_bytes_;
   if (req_id >= total_uop_count_) {
     ++stats_.protocol_errors;
+#if TM_RING_LOG_ENABLE
     PEM_LOG_ERROR(rd_log_, "RD response req_id out of range: {0:d}", req_id);
+#endif
     return false;
   }
   uint64_t wr_addr = end_addr_ + (req_id / 2) * write_stride_bytes_;
+#if TM_RING_LOG_ENABLE
   PEM_LOG_INFO(log_, "Pair[{0:x}] req_id:{1:d},pair_buffer_.size():{2:d}",
                wr_addr, req_id, pair_buffer_.size());
   PEM_LOG_INFO(rd_log_, "time:{0:d},Pair[{1:x}] 到达 (req_id={2:d})", time(),
                wr_addr, req_id);
+#endif
   if (rd_resp->data == nullptr) {
     ++stats_.protocol_errors;
+#if TM_RING_LOG_ENABLE
     PEM_LOG_ERROR(rd_log_, "RD response data is nullptr, req_id={0:d}", req_id);
+#endif
     return false;
   }
   std::vector<uint8_t> ptr(size);
@@ -189,8 +205,10 @@ bool PemTrDemo::handle_read_response(p_tm_pld_t rd_resp) {
   if (it == pair_buffer_.end()) {
     if (pair_buffer_.size() >= max_pair_entries_) {
       ++stats_.read_response_stalls;
+#if TM_RING_LOG_ENABLE
       PEM_LOG_ERROR(rd_log_, "Pair Buffer 已满，无法处理 req_id={{0:d}}",
                     req_id);
+#endif
       return false;
     }
     PairEntry entry;
@@ -208,7 +226,9 @@ bool PemTrDemo::handle_read_response(p_tm_pld_t rd_resp) {
   }
   PairEntry& entry = it->second;
   if (!entry.has_data) {
+#if TM_RING_LOG_ENABLE
     PEM_LOG_ERROR(rd_log_, "Pair[{0:x}] 状态异常：has_data=false", wr_addr);
+#endif
     return false;
   }
 
@@ -226,9 +246,13 @@ bool PemTrDemo::handle_read_response(p_tm_pld_t rd_resp) {
   if (!pipe_que_->full()) {
     pipe_que_->push_back(result_uop);
     ++stats_.completed_pairs;
+#if TM_RING_LOG_ENABLE
     PEM_LOG_INFO(log_, "Pair[{0:x}] 累加完成, 结果={1:d}", wr_addr, sum);
+#endif
   } else {
+#if TM_RING_LOG_ENABLE
     PEM_LOG_ERROR(log_, "pipe_que_ 已满，Pair[{0:x}] 结果丢失!", wr_addr);
+#endif
     return false;
   }
   pair_buffer_.erase(it);
@@ -261,7 +285,9 @@ void PemTrDemo::pipeline() {
     ++stats_.write_buffer_stalls;
     return;
   }
+#if TM_RING_LOG_ENABLE
   PEM_LOG_INFO(log_, "time:{0:d},pipe_que_", clk_->time());
+#endif
 
   uint32_t value = static_cast<uint32_t>(uop->result);
   uint8_t* write_buf = write_buf_pool_[buf_id];
@@ -275,9 +301,11 @@ void PemTrDemo::pipeline() {
     write_issue_cycles_[wr_pld->gid] = now;
     ++stats_.write_requests;
     stats_.write_bytes += uop->size;
+#if TM_RING_LOG_ENABLE
     PEM_LOG_INFO(wr_log_,
                  "wr_send,time:{3:d},size : {0:d}, 地址=0x{1:x}, 数据={2:x}",
                  wr_pld->size, uop->addr, value, time());
+#endif
   } else {
     ++stats_.write_send_stalls;
     release_write_buf(buf_id);
@@ -319,9 +347,11 @@ void PemTrDemo::wr_recv_rsp() {
   write_buffer_ids_.erase(buffer_it);
   write_issue_cycles_.erase(cycle_it);
   release_write_buf(buf_id);
+#if TM_RING_LOG_ENABLE
   PEM_LOG_INFO(wr_log_, "wr_recv_rsp,time:{3:d},size : {0:d}, 地址=0x{1:x}, 数据={2:x}",
                wr_resp->size, wr_resp->addr,
                wr_resp->data == nullptr ? 0 : wr_resp->data[0], time());
+#endif
 }
 
 uint32_t PemTrDemo::allocate_write_buf() {

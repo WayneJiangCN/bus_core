@@ -12,10 +12,12 @@ TmRingMemPort::TmRingMemPort(const std::string& name, p_tm_clk_t clk,
                               const TmRingEndpointQueueDepths& queue_depths)
     : TmModule(name), rd_rsp_port_num_(ring_cfg.rd_rsp_port_num) {
 
+#if TM_RING_LOG_ENABLE
   log_para_t log_para(name + ".log");
   log_ = pem_log::create_logger(log_para);
   PEM_LOG_INFO(log_, "[{0:d}] config rd_rsp_ports:{1:d}", time(),
                rd_rsp_port_num_);
+#endif
 
   ha_source_stats_.resize(ring_cfg.num_masters);
   for (uint32_t master = 0; master < ring_cfg.num_masters; ++master) {
@@ -99,8 +101,10 @@ void TmRingMemPort::attach(uint32_t target_id,
   for (auto& source : ha_source_stats_) {
     source.ha_id = target_id;
   }
+#if TM_RING_LOG_ENABLE
   PEM_LOG_INFO(log_, "[{0:d}] attach_mem_port target:{1:d}", time(),
                target_id_);
+#endif
 }
 
 bool TmRingMemPort::idle() const {
@@ -115,7 +119,9 @@ bool TmRingMemPort::idle() const {
 // Attach a communication interface to the memory port.
 void TmRingMemPort::attach(p_tm_com_inf_t inf) {
   inf_->connect(inf);
+#if TM_RING_LOG_ENABLE
   PEM_LOG_INFO(log_, "[{0:d}] attach_mem_inf target:{1:d}", time(), target_id_);
+#endif
 }
 
 void TmRingMemPort::attach(p_tm_mem_t mem) {
@@ -206,11 +212,13 @@ void TmRingMemPort::recv_ring_req() {
   } else {
     ++source.wr_packets;
   }
+#if TM_RING_LOG_ENABLE
   PEM_LOG_INFO(log_,
                "[{0:d}] recv_ring_cmd target:{1:d} cmd:{2:d} "
                "gid:{3:d} addr:0x{4:x} size:{5:d}",
                time(), target_id_, static_cast<uint32_t>(cmd), pld->gid,
                pld->addr, pld->size);
+#endif
 }
 
 void TmRingMemPort::recv_ring_dat() {
@@ -226,10 +234,12 @@ void TmRingMemPort::recv_ring_dat() {
   }
   wr_dat_q_->push_back(pld);
   node_interface_->pop_eject(TmRingSubnet::DAT);
+#if TM_RING_LOG_ENABLE
   PEM_LOG_INFO(log_,
                "[{0:d}] recv_ring_dat target:{1:d} gid:{2:d} addr:0x{3:x} "
                "size:{4:d}",
                time(), target_id_, pld->gid, pld->addr, pld->size);
+#endif
 }
 
 void TmRingMemPort::send_rd_cmd() { send_cmd(PldCmd::RD); }
@@ -267,11 +277,13 @@ void TmRingMemPort::send_cmd(PldCmd cmd) {
     if (cmd == PldCmd::RD) {
       pending_rd_rsp_++;
     }
+#if TM_RING_LOG_ENABLE
     PEM_LOG_INFO(log_,
                  "[{0:d}] send_mem_cmd target:{1:d} cmd:{2:d} "
                  "gid:{3:d} addr:0x{4:x}",
                  time(), target_id_, static_cast<uint32_t>(cmd), pld->gid,
                  pld->addr);
+#endif
   }
 }
 
@@ -349,11 +361,13 @@ bool TmRingMemPort::accept_rd_into_home_agent() {
 
   rd_req_q_->pop_front();
   pending_rd_rsp_++;
+#if TM_RING_LOG_ENABLE
   PEM_LOG_INFO(log_,
                "[{0:d}] accept_home_agent_rd target:{1:d} result:{2:d} "
                "gid:{3:d} addr:0x{4:x}",
                time(), target_id_, static_cast<uint32_t>(result), pld->gid,
                pld->addr);
+#endif
   return true;
 }
 
@@ -376,11 +390,13 @@ bool TmRingMemPort::issue_home_agent_backend_read() {
 
   // 仅在 TmMem 接收 candidate 后提交；若失败，HA 保留相同 candidate 到下一拍重试。
   home_agent_->commit_backend_request();
+#if TM_RING_LOG_ENABLE
   PEM_LOG_INFO(log_,
                "[{0:d}] issue_home_agent_backend target:{1:d} gid:{2:d} "
                "addr:0x{3:x} size:{4:d}",
                time(), target_id_, backend_request->gid, backend_request->addr,
                backend_request->size);
+#endif
   return true;
 }
 
@@ -410,10 +426,12 @@ bool TmRingMemPort::capture_home_agent_backend_rsp() {
 
     pop_response(PldCmd::RD, backend_lane);
     next_rd_rsp_lane_ = (backend_lane + 1) % rd_rsp_port_num_;
+#if TM_RING_LOG_ENABLE
     PEM_LOG_INFO(log_,
                  "[{0:d}] capture_home_agent_rsp target:{1:d} gid:{2:d} "
                  "lane:{3:d}",
                  time(), target_id_, backend_rsp->gid, backend_lane);
+#endif
     return true;
   }
   return false;
@@ -451,11 +469,13 @@ bool TmRingMemPort::send_home_agent_l2_rsp() {
   if (pending_rd_rsp_ != 0) {
     pending_rd_rsp_--;
   }
+#if TM_RING_LOG_ENABLE
   PEM_LOG_INFO(log_,
                "[{0:d}] handoff_home_agent_rsp target:{1:d} gid:{2:d} "
                "addr:0x{3:x} size:{4:d}",
                time(), target_id_, candidate.response->gid,
                candidate.response->addr, candidate.response->size);
+#endif
   return true;
 }
 
@@ -534,11 +554,13 @@ bool TmRingMemPort::recv_rd_cmd_rsp() {
     if (pending_rd_rsp_ != 0) {
       pending_rd_rsp_--;
     }
+#if TM_RING_LOG_ENABLE
     PEM_LOG_INFO(log_,
                  "[{0:d}] send_rd_rsp target:{1:d} gid:{2:d} "
                  "backend_lane:{3:d} addr:0x{4:x}",
                  time(), target_id_, backend_rsp->gid, backend_lane,
                  backend_rsp->addr);
+#endif
 
     next_rd_rsp_lane_ = (backend_lane + 1) % rd_rsp_port_num_;
     return true;
@@ -563,8 +585,10 @@ bool TmRingMemPort::recv_wr_cmd_rsp() {
     return false;
   }
   pop_response(PldCmd::WR);
+#if TM_RING_LOG_ENABLE
   PEM_LOG_INFO(log_, "[{0:d}] send_wr_rsp target:{1:d} gid:{2:d} addr:0x{3:x}",
                time(), target_id_, rsp->gid, rsp->addr);
+#endif
 
   return true;
 }
@@ -589,10 +613,12 @@ bool TmRingMemPort::recv_wr_dat_rsp() {
     home_agent_->complete_write(rsp);
   }
   pop_response(PldCmd::WR_DAT);
+#if TM_RING_LOG_ENABLE
   PEM_LOG_INFO(log_,
                "[{0:d}] send_wr_dat_rsp target:{1:d} gid:{2:d} "
                "addr:0x{3:x}",
                time(), target_id_, rsp->gid, rsp->addr);
+#endif
 
   return true;
 }

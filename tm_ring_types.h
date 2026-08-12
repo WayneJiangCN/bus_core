@@ -1,6 +1,8 @@
 #ifndef _TM_RING_TYPES_H_
 #define _TM_RING_TYPES_H_
 
+#define TM_RING_LOG_ENABLE 0
+
 #include <stdint.h>
 
 #include <algorithm>
