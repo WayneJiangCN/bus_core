@@ -9,7 +9,6 @@
 
 #include "tm_clock.h"
 #include "tm_engine.h"
-#include "tm_que.h"
 #include "tm_ring_node_interface.h"
 #include "tm_ring_topology.h"
 #include "tm_ring_types.h"
@@ -39,39 +38,75 @@ class TmRingRbrgL1 : public tm_engine::TmModule {
   const TmRingRbrgPathStats& path_stats(TmRingRbrgPath path) const;
 
  private:
-  struct PathState {
-    p_tm_com_que_t transfer_q = nullptr;
+  struct DirectionState {
     tm_engine::p_tm_event_t bandwidth_ready_event = nullptr;
+    tm_engine::p_tm_event_t serializer_handoff_event = nullptr;
+    p_tm_pld_t serializer_slot = nullptr;
     bool bandwidth_available = true;
     bool bandwidth_event_pending = false;
     bool retired_bandwidth_event_pending = false;
-    uint64_t queue_occupancy = 0;
+    bool serializer_handoff_event_pending = false;
+    bool retired_serializer_handoff_event_pending = false;
+  };
+
+  struct PathState {
+    std::array<DirectionState, 2> directions;
+    TmRingPortDir next_input = TmRingPortDir::CW;
+  };
+
+  struct HeadCandidate {
+    bool valid = false;
+    TmRingPortDir input = TmRingPortDir::CW;
+    TmRingPortDir preferred = TmRingPortDir::CW;
+    bool equal_fanout_span = false;
+    p_tm_pld_t pld = nullptr;
+  };
+
+  struct Assignment {
+    std::array<int32_t, 2> output = {{-1, -1}};
+    uint32_t transfers = 0;
+    uint32_t preferred_transfers = 0;
   };
 
   void recv_v_req();
   void recv_v_dat();
   void recv_h_rsp();
   void recv_h_dat();
-  void send_v_req();
-  void send_v_dat();
-  void send_h_rsp();
-  void send_h_dat();
-  void release_v_req_bandwidth();
-  void release_v_dat_bandwidth();
-  void release_h_rsp_bandwidth();
-  void release_h_dat_bandwidth();
+  void release_v_req_cw_bandwidth();
+  void release_v_req_ccw_bandwidth();
+  void release_v_dat_cw_bandwidth();
+  void release_v_dat_ccw_bandwidth();
+  void release_h_rsp_cw_bandwidth();
+  void release_h_rsp_ccw_bandwidth();
+  void release_h_dat_cw_bandwidth();
+  void release_h_dat_ccw_bandwidth();
+  void handoff_v_req_cw_serializer();
+  void handoff_v_req_ccw_serializer();
+  void handoff_v_dat_cw_serializer();
+  void handoff_v_dat_ccw_serializer();
+  void handoff_h_rsp_cw_serializer();
+  void handoff_h_rsp_ccw_serializer();
+  void handoff_h_dat_cw_serializer();
+  void handoff_h_dat_ccw_serializer();
 
-  void receive(TmRingRbrgPath path, TmRingSubnet subnet,
-               const p_tm_ring_node_interface_t& source);
-  void send(TmRingRbrgPath path, TmRingSubnet subnet,
-            const p_tm_ring_node_interface_t& destination);
-  void release_bandwidth(TmRingRbrgPath path);
-  void prepare_h_segment(p_tm_pld_t pld);
-  void prepare_v_segment(p_tm_pld_t pld);
+  void release_bandwidth(TmRingRbrgPath path, TmRingPortDir direction);
+  void handoff_serializer(TmRingRbrgPath path, TmRingPortDir direction);
+  void schedule_path(TmRingRbrgPath path);
+  void start_serializer(TmRingRbrgPath path,
+                        const HeadCandidate& candidate,
+                        TmRingPortDir output);
+  HeadCandidate head_candidate(TmRingRbrgPath path,
+                               TmRingPortDir input) const;
+  TmRingPortDir preferred_direction(TmRingRbrgPath path, p_tm_pld_t pld,
+                                    bool* equal_fanout_span) const;
+  void prepare_h_segment(p_tm_pld_t pld, TmRingPortDir direction);
+  void prepare_v_segment(p_tm_pld_t pld, TmRingPortDir direction);
   void clear_ring_local_state(p_tm_pld_t pld);
 
   uint32_t path_index(TmRingRbrgPath path) const;
+  uint32_t direction_index(TmRingPortDir direction) const;
   p_tm_ring_node_interface_t source_for(TmRingRbrgPath path) const;
+  p_tm_ring_node_interface_t destination_for(TmRingRbrgPath path) const;
   TmRingSubnet subnet_for(TmRingRbrgPath path) const;
 
   uint32_t v_ring_id_ = 0;
