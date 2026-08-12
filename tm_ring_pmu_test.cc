@@ -310,3 +310,29 @@ TEST(TmRingPmuTest, EventsMapToAllBuckets) {
   EXPECT_EQ(uint64_t(1), snapshot.l2.total.h_multicast_carriers);
   EXPECT_EQ(uint64_t(1), snapshot.l2.total.h_scatter_carriers);
 }
+
+TEST(TmRingPmuTest, CountsPhysicalL2CarrierSizesAndClasses) {
+  TmRingPmu pmu;
+  TmRingL2PmuPort l2 = pmu.register_l2(0);
+
+  l2.response_admitted(TmRingL2AcceptStatus::ACCEPTED_UNICAST, 1, 4);
+  l2.response_admitted(TmRingL2AcceptStatus::ACCEPTED_NEW_GROUP, 2, 4);
+  l2.response_admitted(TmRingL2AcceptStatus::ACCEPTED_NEW_GROUP, 3, 4);
+  l2.carrier_injected(128, 1, TmRingFanoutMode::MULTICAST);
+  l2.carrier_injected(256, 4, TmRingFanoutMode::MULTICAST);
+  l2.carrier_injected(512, 4, TmRingFanoutMode::SCATTER);
+
+  const TmRingPmuSnapshot snapshot = pmu.snapshot(0);
+  const TmRingL2BufferStats& stats = snapshot.l2.total;
+  EXPECT_EQ(uint64_t(3), stats.responses_accepted);
+  EXPECT_EQ(uint64_t(3), stats.h_carriers);
+  EXPECT_EQ(uint64_t(9), stats.h_carrier_recipients);
+  EXPECT_EQ(uint64_t(896), stats.dat_bytes);
+  EXPECT_EQ(uint64_t(1), stats.h_unicast_carriers);
+  EXPECT_EQ(uint64_t(1), stats.h_multicast_carriers);
+  EXPECT_EQ(uint64_t(1), stats.h_scatter_carriers);
+  EXPECT_EQ(uint64_t(1), stats.injected_carrier_128b);
+  EXPECT_EQ(uint64_t(1), stats.injected_carrier_256b);
+  EXPECT_EQ(uint64_t(1), stats.injected_carrier_512b);
+  EXPECT_EQ(uint64_t(0), stats.injected_carrier_other);
+}
