@@ -426,6 +426,10 @@ class RingPerfHtmlTest(unittest.TestCase):
         self.assertIn('viewBox="0 0 1200 620"', document)
         self.assertIn('class="topology-legend"', document)
         self.assertIn('aria-label="M0 · station 1"', document)
+        self.assertIn('aria-label="L2_1 · station 3"', document)
+        self.assertIn('aria-label="HA1 · station 4"', document)
+        self.assertIn('aria-label="L2_3 · station 8"', document)
+        self.assertIn('aria-label="HA3 · station 9"', document)
         self.assertIn(">M0</text>", document)
         self.assertNotIn(">M0 · st1</text>", document)
 
