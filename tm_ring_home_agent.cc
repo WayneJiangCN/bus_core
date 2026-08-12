@@ -6,8 +6,9 @@
 #include <memory>
 #include <vector>
 
-TmRingHomeAgent::TmRingHomeAgent(const TmRingHomeAgentConfig& cfg)
-    : cfg_(cfg) {
+TmRingHomeAgent::TmRingHomeAgent(const TmRingHomeAgentConfig& cfg,
+                                 TmRingHaPmuPort pmu)
+    : cfg_(cfg), pmu_(pmu) {
   reset();
 }
 
@@ -20,11 +21,6 @@ void TmRingHomeAgent::reset() {
   response_candidate_ = entries_.end();
   write_lines_.clear();
   write_txn_lines_.clear();
-  clear_stats();
-}
-
-void TmRingHomeAgent::clear_stats() {
-  stats_.clear();
 }
 
 /*
@@ -37,16 +33,19 @@ void TmRingHomeAgent::clear_stats() {
  */
 TmHaAcceptResult TmRingHomeAgent::accept_read(p_tm_pld_t pld) {
   if (pld == nullptr) {
+    pmu_.read_admission(0, 0, TmRingHaReadOutcome::BYPASS);
     return TmHaAcceptResult::BYPASS;
   }
 
   const uint64_t req_line_base = line_base(pld->addr);
   if (write_lines_.find(req_line_base) != write_lines_.end()) {
-    stats_.write_hazard_stall_cycles++;
+    pmu_.read_admission(pld->mst_id, pld->size,
+                        TmRingHaReadOutcome::STALL_WRITE_HAZARD);
     return TmHaAcceptResult::STALL_WRITE_HAZARD;
   }
 
   if (!in_one_line(pld)) {
+    pmu_.read_admission(pld->mst_id, pld->size, TmRingHaReadOutcome::BYPASS);
     return TmHaAcceptResult::BYPASS;
   }
 
@@ -54,30 +53,34 @@ TmHaAcceptResult TmRingHomeAgent::accept_read(p_tm_pld_t pld) {
   if (find_transaction(req_line_base, &transaction_it)) {
     TmHaReadTxn& transaction = *transaction_it;
     if (!transaction.waiter_admission_open) {
-      stats_.aggregation_closed_stall_cycles++;
+      pmu_.read_admission(pld->mst_id, pld->size,
+                          TmRingHaReadOutcome::STALL_AGGREGATION_CLOSED);
       return TmHaAcceptResult::STALL_AGGREGATION_CLOSED;
     }
     if (transaction.waiters.size() >= cfg_.waiters_per_entry) {
-      stats_.waiter_full_stall_cycles++;
+      pmu_.read_admission(pld->mst_id, pld->size,
+                          TmRingHaReadOutcome::STALL_WAITER_FULL);
       return TmHaAcceptResult::STALL_WAITER_FULL;
     }
 
     transaction.waiters.push_back(make_waiter(pld));
-    record_read(pld);
     if (transaction.state == TmHaTxnState::PENDING_HIT ||
         transaction.state == TmHaTxnState::PENDING_MISS) {
-      stats_.rd_merged_pending++;
+      pmu_.read_admission(pld->mst_id, pld->size,
+                          TmRingHaReadOutcome::MERGED_PENDING);
     } else if (transaction.state == TmHaTxnState::INFLIGHT) {
-      stats_.rd_merged_inflight++;
+      pmu_.read_admission(pld->mst_id, pld->size,
+                          TmRingHaReadOutcome::MERGED_INFLIGHT);
     } else {
-      stats_.rd_merged_responding++;
+      pmu_.read_admission(pld->mst_id, pld->size,
+                          TmRingHaReadOutcome::MERGED_RESPONDING);
     }
-    stats_.backend_read_saved++;
     return TmHaAcceptResult::MERGED;
   }
 
   if (entries_.size() >= cfg_.entry_limit) {
-    stats_.table_full_stall_cycles++;
+    pmu_.read_admission(pld->mst_id, pld->size,
+                        TmRingHaReadOutcome::STALL_TABLE_FULL);
     return TmHaAcceptResult::STALL_TABLE_FULL;
   }
 
@@ -89,12 +92,12 @@ TmHaAcceptResult TmRingHomeAgent::accept_read(p_tm_pld_t pld) {
                              : TmHaTxnState::PENDING_MISS;
   transaction.waiters.push_back(make_waiter(pld));
   entries_.push_back(transaction);
-  record_read(pld);
-  stats_.rd_entries_allocated++;
   if (l2_hit) {
-    stats_.l2_hit_transactions++;
+    pmu_.read_admission(pld->mst_id, pld->size,
+                        TmRingHaReadOutcome::ACCEPTED_L2_HIT);
   } else {
-    stats_.l2_miss_transactions++;
+    pmu_.read_admission(pld->mst_id, pld->size,
+                        TmRingHaReadOutcome::ACCEPTED_L2_MISS);
   }
   return TmHaAcceptResult::ACCEPTED;
 }
@@ -108,6 +111,7 @@ TmHaAcceptResult TmRingHomeAgent::accept_read(p_tm_pld_t pld) {
 bool TmRingHomeAgent::reserve_write(p_tm_pld_t pld) {
   if (pld == nullptr ||
       (pld->cmd != PldCmd::WR && pld->cmd != PldCmd::WR_DAT)) {
+    pmu_.write_reservation_blocked();
     return false;
   }
 
@@ -117,13 +121,13 @@ bool TmRingHomeAgent::reserve_write(p_tm_pld_t pld) {
       write_txn_lines_.find(txn_key);
   const bool known_txn = txn_it != write_txn_lines_.end();
   if (known_txn && txn_it->second != req_line_base) {
-    stats_.write_hazard_stall_cycles++;
+    pmu_.write_reservation_blocked();
     return false;
   }
 
   if (!known_txn) {
     if (write_lines_.find(req_line_base) != write_lines_.end()) {
-      stats_.write_hazard_stall_cycles++;
+      pmu_.write_reservation_blocked();
       return false;
     }
     write_txn_lines_[txn_key] = req_line_base;
@@ -136,7 +140,7 @@ bool TmRingHomeAgent::reserve_write(p_tm_pld_t pld) {
   }
 
   if (has_blocking_read_transaction(req_line_base)) {
-    stats_.write_hazard_stall_cycles++;
+    pmu_.write_reservation_blocked();
     return false;
   }
   return true;
@@ -193,8 +197,7 @@ void TmRingHomeAgent::commit_backend_request() {
   TmHaReadTxn& transaction = *backend_candidate_;
   transaction.state = TmHaTxnState::INFLIGHT;
   transaction.backend_transaction_key = tm_pld_txn_key(backend_request);
-  stats_.rd_backend_issued++;
-  stats_.backend_read_bytes += cfg_.line_size;
+  pmu_.backend_read_issued(cfg_.line_size);
 
   backend_rr_cursor_ = std::next(backend_candidate_);
   if (backend_rr_cursor_ == entries_.end()) {
@@ -233,21 +236,19 @@ void TmRingHomeAgent::commit_functional_read(pld_rsp_t status) {
       make_completion_data(functional_read, status);
   transaction.next_response_waiter = 0;
   transaction.state = TmHaTxnState::RESPONDING;
-  stats_.functional_reads++;
+  pmu_.functional_read_completed();
   backend_rr_cursor_ = std::next(functional_candidate_);
   if (backend_rr_cursor_ == entries_.end()) {
     backend_rr_cursor_ = entries_.begin();
   }
   functional_candidate_ = entries_.end();
 
-  const uint64_t completion_bytes = current_completion_buffer_bytes();
-  if (completion_bytes > stats_.completion_buffer_bytes_peak) {
-    stats_.completion_buffer_bytes_peak = completion_bytes;
-  }
+  pmu_.completion_buffer_sample(
+      static_cast<uint32_t>(current_completion_buffer_bytes()));
 }
 
 void TmRingHomeAgent::record_private_l2_full_stall() {
-  stats_.private_l2_full_stall_cycles++;
+  pmu_.private_l2_blocked();
 }
 
 /*
@@ -277,10 +278,8 @@ bool TmRingHomeAgent::accept_backend_response(p_tm_pld_t rsp) {
     transaction.next_response_waiter = 0;
     transaction.state = TmHaTxnState::RESPONDING;
 
-    const uint64_t completion_bytes = current_completion_buffer_bytes();
-    if (completion_bytes > stats_.completion_buffer_bytes_peak) {
-      stats_.completion_buffer_bytes_peak = completion_bytes;
-    }
+    pmu_.completion_buffer_sample(
+        static_cast<uint32_t>(current_completion_buffer_bytes()));
     return true;
   }
   return false;
@@ -440,11 +439,6 @@ TmRingHomeAgent::TmHaWaiter TmRingHomeAgent::make_waiter(
   waiter.line_offset =
       static_cast<uint32_t>(pld->addr - line_base(pld->addr));
   return waiter;
-}
-
-void TmRingHomeAgent::record_read(p_tm_pld_t pld) {
-  stats_.rd_requests++;
-  stats_.useful_bytes += pld->size;
 }
 
 bool TmRingHomeAgent::classify_l2_hit(uint64_t req_line_base,
@@ -652,9 +646,8 @@ void TmRingHomeAgent::erase_transaction(TmHaTxnIter transaction) {
     return;
   }
 
-  const size_t waiter_bucket =
-      transaction->waiters.size() >= 64 ? 64 : transaction->waiters.size();
-  stats_.completed_transaction_waiters[waiter_bucket]++;
+  pmu_.transaction_completed(
+      static_cast<uint32_t>(transaction->waiters.size()));
   TmHaTxnIter successor = std::next(transaction);
   if (successor == entries_.end() && entries_.size() > 1) {
     successor = entries_.begin();

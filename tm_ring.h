@@ -71,8 +71,6 @@ class TmRingFabric : public tm_engine::TmModule {
   std::vector<TmRingConnHotspot> ring_top_busy_conns(
       TmRingSubnet subnet, uint32_t limit) const;
   uint64_t ring_conn_stalls() const;
-  TmRingHomeAgentStats home_agent_stats() const;
-  std::vector<TmRingHaSourceStats> ha_source_stats() const;
 
   TmRingL2BufferStats l2_buffer_stats() const;
 

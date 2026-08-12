@@ -260,9 +260,11 @@ void TmRingFabric::create_mem_ports() {
     const std::vector<TmRingQueuePmuPort> queue_pmu_ports =
         pmu_->register_endpoint_queues(TmRingNodeType::HOME_AGENT, i,
                                        queue_depths);
+    const TmRingHaPmuPort ha_pmu =
+        pmu_->register_home_agent(i, cfg_->num_masters);
     mem_ports_.push_back(tm_make_ring_mem_port(
         this->name() + "_mem_port_" + std::to_string(i), clk_,
-        *cfg_->targets[i], *cfg_, queue_depths, queue_pmu_ports));
+        *cfg_->targets[i], *cfg_, queue_depths, queue_pmu_ports, ha_pmu));
   }
 }
 
@@ -388,12 +390,10 @@ void TmRingFabric::reset() {
 }
 
 void TmRingFabric::clear_stats() {
-  for (const auto& mem_port : mem_ports_) {
-    mem_port->clear_stats();
-  }
   for (const auto& l2_buffer : l2_buffer_nodes_) {
     l2_buffer->clear_stats();
   }
+  pmu_->reset_model(clk_->time());
 }
 
 bool TmRingFabric::idle() {
@@ -478,27 +478,6 @@ TmRingL2BufferStats TmRingFabric::l2_buffer_stats() const {
     total.merge_from(l2_buffer->stats());
   }
   return total;
-}
-
-TmRingHomeAgentStats TmRingFabric::home_agent_stats() const {
-  TmRingHomeAgentStats total;
-  for (const auto& mem_port : mem_ports_) {
-    const auto stats = mem_port->home_agent_stats();
-    total.merge_from(stats);
-  }
-  return total;
-}
-
-std::vector<TmRingHaSourceStats> TmRingFabric::ha_source_stats() const {
-  std::vector<TmRingHaSourceStats> result;
-  for (const auto& mem_port : mem_ports_) {
-    for (const TmRingHaSourceStats& source : mem_port->ha_source_stats()) {
-      if (source.rd_packets != 0 || source.wr_packets != 0) {
-        result.push_back(source);
-      }
-    }
-  }
-  return result;
 }
 
 void TmRingFabric::attach_master(uint32_t idx, p_tm_ring_biu_t biu) {

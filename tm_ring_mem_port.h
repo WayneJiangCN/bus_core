@@ -16,6 +16,7 @@
 #include "tm_ring_home_agent.h"
 #include "tm_ring_l2_buffer_node.h"
 #include "tm_ring_node_interface.h"
+#include "tm_ring_pmu.h"
 #include "tm_ring_topology.h"
 #include "tm_ring_types.h"
 
@@ -27,7 +28,8 @@ class TmRingMemPort : public tm_engine::TmModule {
       const std::string& name, tm_engine::p_tm_clk_t clk,
       const tm_ring_target_cfg_t& target_cfg, const TmRingCfg& ring_cfg,
       const TmRingEndpointQueueDepths& queue_depths,
-      const std::vector<TmRingQueuePmuPort>& queue_pmu_ports);
+      const std::vector<TmRingQueuePmuPort>& queue_pmu_ports,
+      TmRingHaPmuPort ha_pmu);
   void reset();
   bool idle() const;
 
@@ -38,9 +40,6 @@ class TmRingMemPort : public tm_engine::TmModule {
   void attach(p_tm_mem_t mem);
   void attach_l2_buffer(p_tm_ring_l2_buffer_node_t l2_buffer);
   p_tm_ring_node_interface_t node_interface() const;
-  TmRingHomeAgentStats home_agent_stats() const;
-  const std::vector<TmRingHaSourceStats>& ha_source_stats() const;
-  void clear_stats();
 
   void send_rd_cmd();
   void send_wr_cmd();
@@ -85,7 +84,7 @@ class TmRingMemPort : public tm_engine::TmModule {
   p_tm_com_que_t wr_req_q_ = nullptr;
   p_tm_com_que_t wr_dat_q_ = nullptr;
   std::shared_ptr<TmRingHomeAgent> home_agent_ = nullptr;
-  std::vector<TmRingHaSourceStats> ha_source_stats_;
+  TmRingHaPmuPort ha_pmu_;
   p_tm_ring_l2_buffer_node_t l2_buffer_ = nullptr;
   // Original read requests accepted by this endpoint but not returned to Ring.
   uint32_t pending_rd_rsp_ = 0;
@@ -102,9 +101,10 @@ inline p_tm_ring_mem_port_t tm_make_ring_mem_port(
     const std::string& name, tm_engine::p_tm_clk_t clk,
     const tm_ring_target_cfg_t& target_cfg, const TmRingCfg& ring_cfg,
     const TmRingEndpointQueueDepths& queue_depths,
-    const std::vector<TmRingQueuePmuPort>& queue_pmu_ports) {
+    const std::vector<TmRingQueuePmuPort>& queue_pmu_ports,
+    TmRingHaPmuPort ha_pmu) {
   return std::make_shared<TmRingMemPort>(
-      name, clk, target_cfg, ring_cfg, queue_depths, queue_pmu_ports);
+      name, clk, target_cfg, ring_cfg, queue_depths, queue_pmu_ports, ha_pmu);
 }
 
 #endif  // _TM_RING_MEM_PORT_H_

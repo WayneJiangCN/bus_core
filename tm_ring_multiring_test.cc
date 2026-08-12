@@ -315,19 +315,20 @@ TEST_F(TmRingMultiRingFabricTest, UnicastReadWriteCrossesOneBridge) {
   EXPECT_GT(result.perf_result.ring_domain_stats[0].directed_edge_count,
             uint32_t(0));
 
-  ASSERT_EQ(size_t(3), result.perf_result.ha_source_stats.size());
-  EXPECT_EQ(uint32_t(0), result.perf_result.ha_source_stats[0].master_id);
-  EXPECT_EQ(uint64_t(1), result.perf_result.ha_source_stats[0].rd_packets);
-  EXPECT_EQ(uint64_t(0), result.perf_result.ha_source_stats[0].wr_packets);
-  EXPECT_EQ(uint32_t(1), result.perf_result.ha_source_stats[1].master_id);
-  EXPECT_EQ(uint64_t(0), result.perf_result.ha_source_stats[1].rd_packets);
-  EXPECT_EQ(uint64_t(1), result.perf_result.ha_source_stats[1].wr_packets);
-  EXPECT_EQ(uint32_t(3), result.perf_result.ha_source_stats[2].master_id);
-  EXPECT_EQ(uint64_t(1), result.perf_result.ha_source_stats[2].rd_packets);
-  EXPECT_EQ(uint64_t(0), result.perf_result.ha_source_stats[2].wr_packets);
-
   const TmRingPmuSnapshot rbrg_pmu = result.fabric->snapshot_pmu(
       result.perf_result.measurement_end_time);
+  const std::vector<TmRingHaSourceStats>& ha_sources = rbrg_pmu.ha.sources;
+  ASSERT_EQ(size_t(3), ha_sources.size());
+  EXPECT_EQ(uint32_t(0), ha_sources[0].master_id);
+  EXPECT_EQ(uint64_t(1), ha_sources[0].rd_packets);
+  EXPECT_EQ(uint64_t(0), ha_sources[0].wr_packets);
+  EXPECT_EQ(uint32_t(1), ha_sources[1].master_id);
+  EXPECT_EQ(uint64_t(0), ha_sources[1].rd_packets);
+  EXPECT_EQ(uint64_t(1), ha_sources[1].wr_packets);
+  EXPECT_EQ(uint32_t(3), ha_sources[2].master_id);
+  EXPECT_EQ(uint64_t(1), ha_sources[2].rd_packets);
+  EXPECT_EQ(uint64_t(0), ha_sources[2].wr_packets);
+
   for (uint32_t ring = 0; ring < 2; ++ring) {
     const TmRingRbrgPath paths[] = {
         TmRingRbrgPath::V_TO_H_REQ,
@@ -364,14 +365,13 @@ TEST_F(TmRingMultiRingFabricTest,
     logical_read_responses += stats.completed_packets;
   }
 
-  const TmRingHomeAgentStats home_agent_stats =
-      result.fabric->home_agent_stats();
+  const TmRingPmuSnapshot rbrg_pmu = result.fabric->snapshot_pmu(
+      result.perf_result.measurement_end_time);
+  const TmRingHomeAgentStats& home_agent_stats = rbrg_pmu.ha.total;
   const uint64_t backend_or_functional_line_reads =
       home_agent_stats.rd_backend_issued + home_agent_stats.functional_reads;
   const uint64_t l2_h_ring_carriers =
       result.fabric->l2_buffer_stats().h_carriers;
-  const TmRingPmuSnapshot rbrg_pmu = result.fabric->snapshot_pmu(
-      result.perf_result.measurement_end_time);
   uint64_t rbrg_v_ring_dat_carriers = 0;
   for (uint32_t ring = 0; ring < 2; ++ring) {
     rbrg_v_ring_dat_carriers +=

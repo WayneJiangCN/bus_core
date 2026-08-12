@@ -13,6 +13,7 @@
 #include "tm_ring_perf.h"
 #include "tm_ring_perf_master.h"
 #include "tm_ring_perf_report.h"
+#include "tm_ring_pmu.h"
 
 namespace {
 
@@ -53,7 +54,8 @@ TEST(TmRingHomeAgentTest, SingleWaiterGroupAcceptsLaterSameLineWaiter) {
   cfg.entry_limit = 4;
   cfg.waiters_per_entry = 4;
   cfg.hit_rate_pct = 100;
-  TmRingHomeAgent home_agent(cfg);
+  TmRingPmu pmu;
+  TmRingHomeAgent home_agent(cfg, pmu.register_home_agent(0, 8));
 
   p_tm_pld_t first = tm_make_pld(PldCmd::RD, 0x04000000, 128);
   first->mst_id = 0;
@@ -95,6 +97,13 @@ TEST(TmRingHomeAgentTest, SingleWaiterGroupAcceptsLaterSameLineWaiter) {
   summary.recipient_count = 2;
   EXPECT_TRUE(home_agent.consume_l2_group_summary(summary));
   EXPECT_TRUE(home_agent.idle());
+
+  const TmRingPmuSnapshot snapshot = pmu.snapshot(0);
+  EXPECT_EQ(uint64_t(2), snapshot.ha.total.rd_requests);
+  EXPECT_EQ(uint64_t(1), snapshot.ha.total.rd_merged_responding);
+  EXPECT_EQ(uint64_t(1), snapshot.ha.total.backend_read_saved);
+  EXPECT_EQ(uint64_t(1), snapshot.ha.total.functional_reads);
+  EXPECT_EQ(uint64_t(1), snapshot.ha.total.completed_transaction_waiters[2]);
 }
 
 TEST(TmRingHomeAgentTest, CrossLineReadBypassesProvisionalGroup) {
@@ -104,13 +113,15 @@ TEST(TmRingHomeAgentTest, CrossLineReadBypassesProvisionalGroup) {
   cfg.entry_limit = 4;
   cfg.waiters_per_entry = 4;
   cfg.hit_rate_pct = 100;
-  TmRingHomeAgent home_agent(cfg);
+  TmRingPmu pmu;
+  TmRingHomeAgent home_agent(cfg, pmu.register_home_agent(0, 8));
 
   p_tm_pld_t request = tm_make_pld(PldCmd::RD, 0x04000000, 1024);
   request->mst_id = 0;
   request->gid = 1;
   EXPECT_EQ(TmHaAcceptResult::BYPASS, home_agent.accept_read(request));
   EXPECT_TRUE(home_agent.idle());
+  EXPECT_EQ(uint64_t(0), pmu.snapshot(0).ha.total.rd_requests);
 }
 
 TEST(TmRingPerfTraceTest, BuildsPrivateAndSharedFiniteReadTraces) {
