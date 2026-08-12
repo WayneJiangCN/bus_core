@@ -648,11 +648,11 @@ inline int print_demo_performance(
   const TmRingPmuSnapshot ring_pmu = ring->snapshot_pmu(clk->time());
   const TmRingConnStallBreakdown ring_conn_breakdown =
       ring_pmu.conn_stall_breakdown();
-  const auto csstats = ring->csstats();
+  const auto& csstats = ring_pmu.cross_station.total;
   const auto home_agent_stats = ring->home_agent_stats();
   const auto l2_buffer_stats = ring->l2_buffer_stats();
   const std::vector<TmRingDomainStats> ring_domain_stats =
-      ring->ring_domain_stats(ring_pmu);
+      ring_pmu.conn.domains;
   const std::vector<TmRingRbrgStats> rbrg_stats = ring->rbrg_stats();
   const uint64_t l2_classified_transactions =
       home_agent_stats.l2_hit_transactions +

@@ -37,8 +37,12 @@ class TmRingCrossStationFixture {
         pmu.register_endpoint_queues(TmRingNodeType::MASTER, 1,
                                      queue_depths));
 
-    source = tm_make_ring_cs("deflection_source_station", clk);
-    destination = tm_make_ring_cs("deflection_destination_station", clk);
+    source = tm_make_ring_cs(
+        "deflection_source_station", clk,
+        pmu.register_cross_station(TmRingDomainType::V_RING, 0, 0));
+    destination = tm_make_ring_cs(
+        "deflection_destination_station", clk,
+        pmu.register_cross_station(TmRingDomainType::V_RING, 0, 1));
 
     cw_source_to_destination = tm_make_ring_conn(
         "deflection_cw_source_to_destination", clk, 1, 16, 1,
@@ -100,8 +104,9 @@ class TmRingCrossStationFixture {
 
   void run_until_deflections(uint64_t count) const {
     for (uint32_t cycle = 0; cycle < 128; ++cycle) {
-      if (destination->stats()
-              .deflection[tm_ring_subnet_index(TmRingSubnet::REQ)]
+      const TmRingPmuSnapshot snapshot = pmu.snapshot(clk->time());
+      if (snapshot.conn.domains[0]
+              .cross_station.deflection[tm_ring_subnet_index(TmRingSubnet::REQ)]
               .events >= count) {
         return;
       }
@@ -153,9 +158,11 @@ TEST(TmRingCrossStationTest,
       TmRingSubnet::REQ, TmRingPortDir::CW, packet));
 
   fixture.run_until_deflections(2);
+  const TmRingPmuSnapshot before_release_snapshot =
+      fixture.pmu.snapshot(fixture.clk->time());
   const TmRingDeflectionStats& before_release =
-      fixture.destination->stats()
-          .deflection[tm_ring_subnet_index(TmRingSubnet::REQ)];
+      before_release_snapshot.conn.domains[0]
+          .cross_station.deflection[tm_ring_subnet_index(TmRingSubnet::REQ)];
   ASSERT_GE(before_release.events, uint64_t(2));
 
   fixture.destination_node->pop_eject(TmRingSubnet::REQ);
@@ -164,9 +171,11 @@ TEST(TmRingCrossStationTest,
   fixture.destination_node->pop_eject(TmRingSubnet::REQ);
   tm_start(8);
 
+  const TmRingPmuSnapshot after_eject_snapshot =
+      fixture.pmu.snapshot(fixture.clk->time());
   const TmRingDeflectionStats& stats =
-      fixture.destination->stats()
-          .deflection[tm_ring_subnet_index(TmRingSubnet::REQ)];
+      after_eject_snapshot.conn.domains[0]
+          .cross_station.deflection[tm_ring_subnet_index(TmRingSubnet::REQ)];
   EXPECT_EQ(uint64_t(2), stats.events);
   EXPECT_EQ(uint64_t(1), stats.unique_packets);
   EXPECT_EQ(uint64_t(1), stats.eligible_unicast_packets);
@@ -176,7 +185,8 @@ TEST(TmRingCrossStationTest,
   EXPECT_GT(stats.delay_cycles_sum, uint64_t(0));
   EXPECT_GT(stats.delay_cycles_max, uint64_t(0));
   EXPECT_TRUE(fixture.destination_node->eject_q(TmRingSubnet::REQ)->empty());
-  EXPECT_EQ(uint64_t(1), fixture.destination->stats().ejected_packets);
+  EXPECT_EQ(uint64_t(1),
+            after_eject_snapshot.conn.domains[0].cross_station.ejected_packets);
 }
 
 TEST(TmRingCrossStationTest, TransitAndLocalHeadsShareOneOutputFairly) {
@@ -204,8 +214,12 @@ TEST(TmRingCrossStationTest, TransitAndLocalHeadsShareOneOutputFairly) {
     tm_start(1);
   }
 
-  EXPECT_GT(fixture.source->stats().transit_slots, uint64_t(1));
-  EXPECT_GT(fixture.source->stats().injected_packets, uint64_t(1));
+  const TmRingPmuSnapshot snapshot =
+      fixture.pmu.snapshot(fixture.clk->time());
+  const TmRingCrossStationStats& stats =
+      snapshot.conn.domains[0].cross_station;
+  EXPECT_GT(stats.transit_slots, uint64_t(1));
+  EXPECT_GT(stats.injected_packets, uint64_t(1));
 }
 
 TEST(TmRingCrossStationTest, FailedLocalWinnerKeepsHeadAndPriority) {

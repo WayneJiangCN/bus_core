@@ -1,5 +1,3 @@
-#include <algorithm>
-
 #include <stdexcept>
 
 #include "pem_biu.h"
@@ -179,8 +177,11 @@ TmRingFabric::TmRingDomain TmRingFabric::create_domain(
            ? "_h_ring"
            : "_v_ring" + std::to_string(ring_id));
   for (uint32_t station_id = 0; station_id < station_count; ++station_id) {
+    const TmRingCrossStationPmuPort cross_station_pmu =
+        pmu_->register_cross_station(type, ring_id, station_id);
     domain.stations.push_back(tm_make_ring_cs(
-        domain_name + "_cs" + std::to_string(station_id), clk_));
+        domain_name + "_cs" + std::to_string(station_id), clk_,
+        cross_station_pmu));
     for (uint32_t direction_index = 0; direction_index < 2;
          ++direction_index) {
       const TmRingPortDir direction =
@@ -386,14 +387,6 @@ void TmRingFabric::reset() {
 }
 
 void TmRingFabric::clear_stats() {
-  for (const p_tm_ring_cs_t& ring_station : h_ring_.stations) {
-    ring_station->clear_stats();
-  }
-  for (const TmRingDomain& domain : v_rings_) {
-    for (const p_tm_ring_cs_t& ring_station : domain.stations) {
-      ring_station->clear_stats();
-    }
-  }
   for (const p_tm_ring_rbrg_l1_t& rbrg : rbrgs_) {
     rbrg->clear_stats();
   }
@@ -463,36 +456,6 @@ TmRingPmuSnapshot TmRingFabric::snapshot_pmu(uint64_t cycle) const {
   return pmu_->snapshot(cycle);
 }
 
-std::vector<TmRingDomainStats> TmRingFabric::ring_domain_stats() const {
-  const TmRingPmuSnapshot snapshot = snapshot_pmu(clk_->time());
-  return ring_domain_stats(snapshot);
-}
-
-std::vector<TmRingDomainStats> TmRingFabric::ring_domain_stats(
-    const TmRingPmuSnapshot& snapshot) const {
-  std::vector<TmRingDomainStats> result = snapshot.conn.domains;
-
-  const auto merge_cross_station_stats = [&result](const TmRingDomain& domain) {
-    auto domain_stats = std::find_if(
-        result.begin(), result.end(),
-        [&domain](const TmRingDomainStats& stats) {
-          return stats.type == domain.type && stats.ring_id == domain.ring_id;
-        });
-    if (domain_stats == result.end()) {
-      return;
-    }
-    for (const p_tm_ring_cs_t& station : domain.stations) {
-      domain_stats->cross_station.merge_from(station->stats());
-    }
-  };
-
-  merge_cross_station_stats(h_ring_);
-  for (const TmRingDomain& domain : v_rings_) {
-    merge_cross_station_stats(domain);
-  }
-  return result;
-}
-
 std::vector<TmRingRbrgStats> TmRingFabric::rbrg_stats() const {
   std::vector<TmRingRbrgStats> result;
   result.reserve(rbrgs_.size());
@@ -524,19 +487,6 @@ TmRingL2BufferStats TmRingFabric::l2_buffer_stats() const {
   TmRingL2BufferStats total;
   for (const auto& l2_buffer : l2_buffer_nodes_) {
     total.merge_from(l2_buffer->stats());
-  }
-  return total;
-}
-
-TmRingCrossStationStats TmRingFabric::csstats() const {
-  TmRingCrossStationStats total;
-  for (const p_tm_ring_cs_t& ring_station : h_ring_.stations) {
-    total.merge_from(ring_station->stats());
-  }
-  for (const TmRingDomain& domain : v_rings_) {
-    for (const p_tm_ring_cs_t& ring_station : domain.stations) {
-      total.merge_from(ring_station->stats());
-    }
   }
   return total;
 }
