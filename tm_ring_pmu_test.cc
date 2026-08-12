@@ -294,9 +294,9 @@ TEST(TmRingPmuTest, EventsMapToAllBuckets) {
   EXPECT_EQ(uint64_t(1), snapshot.ha.total.private_l2_full_stall_cycles);
   EXPECT_EQ(uint64_t(256), snapshot.ha.total.completion_buffer_bytes_peak);
   EXPECT_EQ(uint64_t(1), snapshot.ha.total.completed_transaction_waiters[64]);
-  EXPECT_EQ(uint64_t(3), snapshot.l2.total.responses_accepted);
+  EXPECT_EQ(uint64_t(2), snapshot.l2.total.responses_accepted);
   EXPECT_EQ(uint64_t(1), snapshot.l2.total.buffer_full_stall_cycles);
-  EXPECT_EQ(uint64_t(12), snapshot.l2.total.latency_wait_cycles);
+  EXPECT_EQ(uint64_t(8), snapshot.l2.total.latency_wait_cycles);
   EXPECT_EQ(uint64_t(4), snapshot.l2.total.buffer_occupancy_peak);
   EXPECT_EQ(uint64_t(1), snapshot.l2.total.issue_interval_stall_cycles);
   EXPECT_EQ(uint64_t(1), snapshot.l2.total.dat_inject_full_stall_cycles);

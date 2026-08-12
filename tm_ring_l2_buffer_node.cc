@@ -13,9 +13,11 @@ TmRingL2BufferNode::TmRingL2BufferNode(const std::string& name,
                                        p_tm_clk_t clk,
                                        const TmRingL2TrafficConfig& cfg,
                                        const TmRingEndpointQueueDepths& queue_depths,
-                                       const std::vector<TmRingQueuePmuPort>& queue_pmu_ports)
+                                       const std::vector<TmRingQueuePmuPort>& queue_pmu_ports,
+                                       const TmRingL2PmuPort& pmu)
     : TmModule(name),
-      cfg_(cfg) {
+      cfg_(cfg),
+      pmu_(pmu) {
   node_interface_ = tm_make_ring_node_interface(
       clk, name + "_node_interface", queue_depths, queue_pmu_ports);
   response_q_ = tm_make_que<p_tm_pld_t>(
@@ -49,12 +51,7 @@ void TmRingL2BufferNode::reset() {
   frozen_summaries_.clear();
   frozen_carrier_ = nullptr;
   frozen_carrier_vring_ = 0;
-  clear_stats();
   node_interface_->reset();
-}
-
-void TmRingL2BufferNode::clear_stats() {
-  stats_.clear();
 }
 
 bool TmRingL2BufferNode::idle() const {
@@ -130,7 +127,7 @@ TmRingL2AcceptResult TmRingL2BufferNode::accept_response(
     }
 
     if (!has_capacity()) {
-      stats_.buffer_full_stall_cycles++;
+      pmu_.buffer_blocked();
       result.status = TmRingL2AcceptStatus::REJECTED_BUFFER_FULL;
       return result;
     }
@@ -144,14 +141,15 @@ TmRingL2AcceptResult TmRingL2BufferNode::accept_response(
     response_q_->push_back(envelope);
     response_count_++;
     open_groups_[group_token] = envelope;
-    record_accepted_entry();
     result.status = TmRingL2AcceptStatus::ACCEPTED_NEW_GROUP;
     result.group_token = group_token;
+    pmu_.response_admitted(result.status, response_count_,
+                           cfg_.response_latency);
     return result;
   }
 
   if (!has_capacity()) {
-    stats_.buffer_full_stall_cycles++;
+    pmu_.buffer_blocked();
     result.status = TmRingL2AcceptStatus::REJECTED_BUFFER_FULL;
     return result;
   }
@@ -162,8 +160,9 @@ TmRingL2AcceptResult TmRingL2BufferNode::accept_response(
   }
   response_q_->push_back(response);
   response_count_++;
-  record_accepted_entry();
   result.status = TmRingL2AcceptStatus::ACCEPTED_UNICAST;
+  pmu_.response_admitted(result.status, response_count_,
+                         cfg_.response_latency);
   return result;
 }
 
@@ -171,13 +170,6 @@ std::vector<TmRingL2GroupSummary> TmRingL2BufferNode::take_frozen_summaries() {
   std::vector<TmRingL2GroupSummary> summaries = frozen_summaries_;
   frozen_summaries_.clear();
   return summaries;
-}
-
-void TmRingL2BufferNode::record_accepted_entry() {
-  stats_.responses_accepted++;
-  stats_.latency_wait_cycles += cfg_.response_latency;
-  stats_.buffer_occupancy_peak = std::max<uint64_t>(
-      stats_.buffer_occupancy_peak, static_cast<uint64_t>(response_count_));
 }
 
 p_tm_pld_t TmRingL2BufferNode::make_unicast_response(
@@ -443,10 +435,6 @@ p_tm_ring_node_interface_t TmRingL2BufferNode::node_interface() const {
   return node_interface_;
 }
 
-const TmRingL2BufferStats& TmRingL2BufferNode::stats() const {
-  return stats_;
-}
-
 void TmRingL2BufferNode::prepare_dat_route(p_tm_pld_t rsp) {
   const TmRingLocation src = topology_->l2_location(target_id_);
   TmRingLocation destination;
@@ -525,7 +513,7 @@ void TmRingL2BufferNode::service() {
   freeze_fanout_group(logical_response);
 
   if (!issue_token_available_) {
-    stats_.issue_interval_stall_cycles++;
+    pmu_.issue_interval_blocked();
     return;
   }
 
@@ -558,31 +546,13 @@ void TmRingL2BufferNode::service() {
     prepare_dat_route(rsp);
   }
   if (!node_interface_->push_inject(TmRingSubnet::DAT, rsp)) {
-    stats_.dat_inject_full_stall_cycles++;
+    pmu_.dat_inject_blocked();
     return;
   }
 
-  stats_.h_carriers++;
-  stats_.dat_bytes += rsp->size;
-  stats_.h_carrier_recipients += recipient_count;
-  if (recipient_count == 1) {
-    stats_.h_unicast_carriers++;
-  } else if (rsp->ring_fanout->mode ==
-             TmRingFanoutMode::MULTICAST) {
-    stats_.h_multicast_carriers++;
-  } else {
-    stats_.h_scatter_carriers++;
-  }
-  const uint32_t carrier_bytes = rsp->size;
-  if (carrier_bytes == 128) {
-    stats_.injected_carrier_128b++;
-  } else if (carrier_bytes == 256) {
-    stats_.injected_carrier_256b++;
-  } else if (carrier_bytes == 512) {
-    stats_.injected_carrier_512b++;
-  } else {
-    stats_.injected_carrier_other++;
-  }
+  const TmRingFanoutMode fanout_mode =
+      is_fanout_group ? rsp->ring_fanout->mode : TmRingFanoutMode::MULTICAST;
+  pmu_.carrier_injected(rsp->size, recipient_count, fanout_mode);
   bool logical_response_complete = true;
   if (is_fanout_group) {
     std::vector<TmRingFanoutRecipient>& recipients =

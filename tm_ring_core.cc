@@ -276,9 +276,10 @@ void TmRingFabric::create_l2_buffer_nodes() {
     const std::vector<TmRingQueuePmuPort> queue_pmu_ports =
         pmu_->register_endpoint_queues(TmRingNodeType::L2_BUFFER, target,
                                        queue_depths);
+    const TmRingL2PmuPort l2_pmu = pmu_->register_l2(target);
     l2_buffer_nodes_.push_back(tm_make_ring_l2_buffer_node(
         this->name() + "_l2_buffer_" + std::to_string(target), clk_,
-        cfg_->l2_traffic, queue_depths, queue_pmu_ports));
+        cfg_->l2_traffic, queue_depths, queue_pmu_ports, l2_pmu));
   }
 }
 
@@ -390,9 +391,6 @@ void TmRingFabric::reset() {
 }
 
 void TmRingFabric::clear_stats() {
-  for (const auto& l2_buffer : l2_buffer_nodes_) {
-    l2_buffer->clear_stats();
-  }
   pmu_->reset_model(clk_->time());
 }
 
@@ -470,14 +468,6 @@ TmRingFabric::ring_top_busy_conns(TmRingSubnet subnet,
 
 uint64_t TmRingFabric::ring_conn_stalls() const {
   return ring_conn_stall_breakdown().total();
-}
-
-TmRingL2BufferStats TmRingFabric::l2_buffer_stats() const {
-  TmRingL2BufferStats total;
-  for (const auto& l2_buffer : l2_buffer_nodes_) {
-    total.merge_from(l2_buffer->stats());
-  }
-  return total;
 }
 
 void TmRingFabric::attach_master(uint32_t idx, p_tm_ring_biu_t biu) {

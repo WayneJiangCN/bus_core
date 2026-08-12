@@ -697,7 +697,7 @@ TmRingPerfResult tm_ring_collect_perf_result(
   result.cross_station_stats = ring_pmu.cross_station.total;
   result.home_agent_stats = ring_pmu.ha.total;
   result.ha_source_stats = ring_pmu.ha.sources;
-  result.l2_buffer_stats = fabric.l2_buffer_stats();
+  result.l2_buffer_stats = ring_pmu.l2.total;
   for (const TmMemStats& stats : memory_stats) {
     result.memory_stats.merge_from(stats);
   }

@@ -72,8 +72,6 @@ class TmRingFabric : public tm_engine::TmModule {
       TmRingSubnet subnet, uint32_t limit) const;
   uint64_t ring_conn_stalls() const;
 
-  TmRingL2BufferStats l2_buffer_stats() const;
-
  private:
   struct TmRingDomain {
     TmRingDomainType type = TmRingDomainType::V_RING;

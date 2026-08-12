@@ -671,7 +671,10 @@ void TmRingPmu::ha_source_request_received(uint32_t id, uint32_t master_id,
 void TmRingPmu::l2_response_admitted(uint32_t id, TmRingL2AcceptStatus result,
                                      uint32_t occupancy_after,
                                      uint32_t response_latency) {
-  if (result == TmRingL2AcceptStatus::REJECTED_BUFFER_FULL) return;
+  if (result != TmRingL2AcceptStatus::ACCEPTED_NEW_GROUP &&
+      result != TmRingL2AcceptStatus::ACCEPTED_UNICAST) {
+    return;
+  }
   TmRingL2BufferStats& stats = impl_->l2s[id].stats;
   ++stats.responses_accepted;
   stats.latency_wait_cycles += response_latency;

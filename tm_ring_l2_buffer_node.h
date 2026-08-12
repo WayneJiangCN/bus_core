@@ -12,6 +12,7 @@
 #include "tm_que.h"
 #include "tm_ring_fanout.h"
 #include "tm_ring_node_interface.h"
+#include "tm_ring_pmu.h"
 #include "tm_ring_topology.h"
 #include "tm_ring_types.h"
 
@@ -22,19 +23,18 @@ class TmRingL2BufferNode : public tm_engine::TmModule {
   TmRingL2BufferNode(const std::string& name, tm_engine::p_tm_clk_t clk,
                      const TmRingL2TrafficConfig& cfg,
                      const TmRingEndpointQueueDepths& queue_depths,
-                     const std::vector<TmRingQueuePmuPort>& queue_pmu_ports);
+                     const std::vector<TmRingQueuePmuPort>& queue_pmu_ports,
+                     const TmRingL2PmuPort& pmu);
 
   void attach(uint32_t target_id,
               std::shared_ptr<TmRingTopology> topology);
   void reset();
-  void clear_stats();
   bool idle() const;
   TmRingL2AcceptResult accept_response(
       const TmRingL2ResponseCandidate& candidate);
   std::vector<TmRingL2GroupSummary> take_frozen_summaries();
 
   p_tm_ring_node_interface_t node_interface() const;
-  const TmRingL2BufferStats& stats() const;
 
  private:
   void service_ready_response();
@@ -58,9 +58,9 @@ class TmRingL2BufferNode : public tm_engine::TmModule {
   bool materialize_fanout(p_tm_pld_t carrier) const;
   uint32_t carrier_size(p_tm_pld_t envelope,
                         uint32_t* carrier_offset) const;
-  void record_accepted_entry();
 
   TmRingL2TrafficConfig cfg_;
+  TmRingL2PmuPort pmu_;
   uint32_t target_id_ = 0;
   std::shared_ptr<TmRingTopology> topology_ = nullptr;
   p_tm_ring_node_interface_t node_interface_ = nullptr;
@@ -78,7 +78,6 @@ class TmRingL2BufferNode : public tm_engine::TmModule {
   p_tm_pld_t frozen_carrier_ = nullptr;
   uint32_t frozen_carrier_vring_ = 0;
   uint64_t next_group_token_ = 0;
-  TmRingL2BufferStats stats_;
 };
 
 using tm_ring_l2_buffer_node_t = TmRingL2BufferNode;
@@ -88,9 +87,10 @@ inline p_tm_ring_l2_buffer_node_t tm_make_ring_l2_buffer_node(
     const std::string& name, tm_engine::p_tm_clk_t clk,
     const TmRingL2TrafficConfig& cfg,
     const TmRingEndpointQueueDepths& queue_depths,
-    const std::vector<TmRingQueuePmuPort>& queue_pmu_ports) {
+    const std::vector<TmRingQueuePmuPort>& queue_pmu_ports,
+    const TmRingL2PmuPort& pmu) {
   return std::make_shared<TmRingL2BufferNode>(
-      name, clk, cfg, queue_depths, queue_pmu_ports);
+      name, clk, cfg, queue_depths, queue_pmu_ports, pmu);
 }
 
 #endif  // _TM_RING_L2_BUFFER_NODE_H_
