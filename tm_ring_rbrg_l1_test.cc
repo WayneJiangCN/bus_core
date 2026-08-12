@@ -92,6 +92,8 @@ TEST_F(TmRingRbrgL1DirectionalTest,
        DifferentPreferredOutputsAdvanceInOneCycle) {
   const p_tm_pld_t cw = make_req(0, 1);
   const p_tm_pld_t ccw = make_req(1, 2);
+  cw->ring_segment_serialization_paid = true;
+  ccw->ring_segment_serialization_paid = true;
   ASSERT_TRUE(rbrg_->v_node_interface()->push_eject(
       TmRingSubnet::REQ, TmRingPortDir::CW, cw));
   ASSERT_TRUE(rbrg_->v_node_interface()->push_eject(
@@ -103,6 +105,8 @@ TEST_F(TmRingRbrgL1DirectionalTest,
                     TmRingSubnet::REQ, TmRingPortDir::CW));
   EXPECT_EQ(ccw, rbrg_->h_node_interface()->front_inject(
                      TmRingSubnet::REQ, TmRingPortDir::CCW));
+  EXPECT_FALSE(cw->ring_segment_serialization_paid);
+  EXPECT_FALSE(ccw->ring_segment_serialization_paid);
 }
 
 TEST_F(TmRingRbrgL1DirectionalTest, SamePreferredOutputUsesBothFreeSplits) {

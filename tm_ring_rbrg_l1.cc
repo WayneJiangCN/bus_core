@@ -493,8 +493,12 @@ void TmRingRbrgL1::handoff_serializer(TmRingRbrgPath path,
   if (!state.serializer_handoff_event_pending) {
     return;
   }
-  if (state.serializer_slot == nullptr ||
-      !destination->push_inject(subnet, direction, state.serializer_slot)) {
+  if (state.serializer_slot == nullptr) {
+    throw std::logic_error("RBRG lost reserved Split capacity");
+  }
+  // The packet enters a new Ring segment at the target Split.
+  state.serializer_slot->ring_segment_serialization_paid = false;
+  if (!destination->push_inject(subnet, direction, state.serializer_slot)) {
     throw std::logic_error("RBRG lost reserved Split capacity");
   }
   stats_.paths[index].packets++;
