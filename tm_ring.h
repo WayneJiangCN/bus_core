@@ -66,7 +66,6 @@ class TmRingFabric : public tm_engine::TmModule {
   void clear_stats();
   TmRingPmuSnapshot snapshot_pmu(uint64_t cycle) const;
   TmRingConnStallBreakdown ring_conn_stall_breakdown() const;
-  std::vector<TmRingRbrgStats> rbrg_stats() const;
   uint32_t ring_link_width_bytes() const;
   uint32_t rbrg_width_bytes() const;
   std::vector<TmRingConnHotspot> ring_top_busy_conns(
@@ -74,8 +73,6 @@ class TmRingFabric : public tm_engine::TmModule {
   uint64_t ring_conn_stalls() const;
   TmRingHomeAgentStats home_agent_stats() const;
   std::vector<TmRingHaSourceStats> ha_source_stats() const;
-  const TmRingRbrgPathStats& rbrg_path_stats(
-      uint32_t v_ring_id, TmRingRbrgPath path) const;
 
   TmRingL2BufferStats l2_buffer_stats() const;
 

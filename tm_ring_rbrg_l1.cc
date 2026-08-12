@@ -1,6 +1,5 @@
 #include "tm_ring_rbrg_l1.h"
 
-#include <algorithm>
 #include <stdexcept>
 #include <vector>
 
@@ -11,6 +10,7 @@ using namespace tm_engine;
 TmRingRbrgL1::TmRingRbrgL1(const std::string& name, p_tm_clk_t clk,
                            uint32_t v_ring_id, uint32_t queue_depth,
                            uint32_t latency, uint32_t width_bytes,
+                           const TmRingRbrgPmuPort& pmu,
                            const TmRingEndpointQueueDepths& v_queue_depths,
                            const TmRingEndpointQueueDepths& h_queue_depths,
                            const vector<TmRingQueuePmuPort>& v_queue_pmu_ports,
@@ -19,6 +19,7 @@ TmRingRbrgL1::TmRingRbrgL1(const std::string& name, p_tm_clk_t clk,
     : TmModule(name),
       v_ring_id_(v_ring_id),
       rbrg_width_bytes_(width_bytes),
+      pmu_(pmu),
       topology_(topology) {
   v_niu_ = tm_make_ring_node_interface(
       clk, name + "_v_node_interface", v_queue_depths, v_queue_pmu_ports);
@@ -74,13 +75,11 @@ void TmRingRbrgL1::reset() {
         state.retired_bandwidth_event_pending || state.bandwidth_event_pending;
     state.bandwidth_available = true;
     state.bandwidth_event_pending = false;
-    state.queue_occupancy = 0;
     state.transfer_q->clear();
   }
   fanout_tie_next_direction_ = TmRingPortDir::CW;
   v_niu_->reset();
   h_niu_->reset();
-  clear_stats();
 }
 
 bool TmRingRbrgL1::idle() const {
@@ -97,23 +96,12 @@ bool TmRingRbrgL1::idle() const {
   return true;
 }
 
-void TmRingRbrgL1::clear_stats() {
-  stats_.clear();
-}
-
 p_tm_ring_node_interface_t TmRingRbrgL1::v_node_interface() const {
   return v_niu_;
 }
 
 p_tm_ring_node_interface_t TmRingRbrgL1::h_node_interface() const {
   return h_niu_;
-}
-
-const TmRingRbrgStats& TmRingRbrgL1::stats() const { return stats_; }
-
-const TmRingRbrgPathStats& TmRingRbrgL1::path_stats(
-    TmRingRbrgPath path) const {
-  return stats_.paths[path_index(path)];
 }
 
 void TmRingRbrgL1::recv_v_req() {
@@ -168,7 +156,6 @@ void TmRingRbrgL1::receive(TmRingRbrgPath path, TmRingSubnet subnet,
                             const p_tm_ring_node_interface_t& source) {
   const uint32_t index = path_index(path);
   PathState& state = paths_[index];
-  TmRingRbrgPathStats& stats = stats_.paths[index];
   if (source->eject_q(subnet)->empty()) {
     return;
   }
@@ -179,7 +166,7 @@ void TmRingRbrgL1::receive(TmRingRbrgPath path, TmRingSubnet subnet,
     return;
   }
   if (state.transfer_q->full()) {
-    stats.queue_full_stalls++;
+    pmu_.queue_blocked(path);
     return;
   }
 
@@ -190,15 +177,11 @@ void TmRingRbrgL1::receive(TmRingRbrgPath path, TmRingSubnet subnet,
   } else {
     prepare_v_segment(pld);
   }
-  state.transfer_q->push_back(pld);
-  state.queue_occupancy++;
-  stats.queue_occupancy_peak =
-      std::max(stats.queue_occupancy_peak, state.queue_occupancy);
-  source->pop_eject(subnet);
-
   const uint32_t serialization_cycles = tm_ring_serialization_cycles(
       tm_ring_packet_bytes(pld), rbrg_width_bytes_);
-  stats.busy_cycles += serialization_cycles;
+  state.transfer_q->push_back(pld);
+  pmu_.enqueued(path, serialization_cycles);
+  source->pop_eject(subnet);
   state.bandwidth_available = false;
   state.bandwidth_event_pending = true;
   state.bandwidth_ready_event->notify_after(serialization_cycles);
@@ -213,13 +196,12 @@ void TmRingRbrgL1::send(TmRingRbrgPath path, TmRingSubnet subnet,
   }
   p_tm_pld_t pld = state.transfer_q->front();
   if (!destination->push_inject(subnet, pld)) {
-    stats_.paths[index].destination_inject_stalls++;
+    pmu_.destination_blocked(path);
     return;
   }
-  stats_.paths[index].packets++;
-  stats_.paths[index].bytes += tm_ring_packet_bytes(pld);
+  const uint32_t bytes = tm_ring_packet_bytes(pld);
   state.transfer_q->pop_front();
-  state.queue_occupancy--;
+  pmu_.delivered(path, bytes);
   receive(path, subnet, source_for(path));
 }
 

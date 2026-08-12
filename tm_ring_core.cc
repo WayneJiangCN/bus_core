@@ -294,11 +294,12 @@ void TmRingFabric::create_rbrgs() {
     const std::vector<TmRingQueuePmuPort> h_queue_pmu_ports =
         pmu_->register_endpoint_queues(TmRingNodeType::RBRG_H, ring,
                                        h_queue_depths);
+    const TmRingRbrgPmuPort rbrg_pmu_port = pmu_->register_rbrg(ring);
     rbrgs_.push_back(tm_make_ring_rbrg_l1(
         this->name() + "_rbrg_" + std::to_string(ring), clk_, ring,
         cfg_->rbrg_queue_depth, cfg_->rbrg_latency, cfg_->rbrg_width_bytes,
-        v_queue_depths, h_queue_depths, v_queue_pmu_ports, h_queue_pmu_ports,
-        topology_));
+        rbrg_pmu_port, v_queue_depths, h_queue_depths, v_queue_pmu_ports,
+        h_queue_pmu_ports, topology_));
   }
 }
 
@@ -387,9 +388,6 @@ void TmRingFabric::reset() {
 }
 
 void TmRingFabric::clear_stats() {
-  for (const p_tm_ring_rbrg_l1_t& rbrg : rbrgs_) {
-    rbrg->clear_stats();
-  }
   for (const auto& mem_port : mem_ports_) {
     mem_port->clear_stats();
   }
@@ -456,15 +454,6 @@ TmRingPmuSnapshot TmRingFabric::snapshot_pmu(uint64_t cycle) const {
   return pmu_->snapshot(cycle);
 }
 
-std::vector<TmRingRbrgStats> TmRingFabric::rbrg_stats() const {
-  std::vector<TmRingRbrgStats> result;
-  result.reserve(rbrgs_.size());
-  for (const p_tm_ring_rbrg_l1_t& rbrg : rbrgs_) {
-    result.push_back(rbrg->stats());
-  }
-  return result;
-}
-
 uint32_t TmRingFabric::ring_link_width_bytes() const {
   return cfg_->ring_link_width_bytes;
 }
@@ -510,11 +499,6 @@ std::vector<TmRingHaSourceStats> TmRingFabric::ha_source_stats() const {
     }
   }
   return result;
-}
-
-const TmRingRbrgPathStats& TmRingFabric::rbrg_path_stats(
-    uint32_t v_ring_id, TmRingRbrgPath path) const {
-  return rbrgs_.at(v_ring_id)->path_stats(path);
 }
 
 void TmRingFabric::attach_master(uint32_t idx, p_tm_ring_biu_t biu) {

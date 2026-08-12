@@ -616,7 +616,7 @@ TmRingPerfResult tm_ring_collect_perf_result(
       fabric.snapshot_pmu(measurement_end_cycle);
   result.endpoint_queue_stats = ring_pmu.queue.endpoints;
   result.ring_domain_stats = ring_pmu.conn.domains;
-  result.rbrg_stats = fabric.rbrg_stats();
+  result.rbrg_stats = ring_pmu.rbrg.instances;
 
   bool has_request = false;
   bool has_response = false;

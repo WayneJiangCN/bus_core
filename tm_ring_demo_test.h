@@ -653,7 +653,8 @@ inline int print_demo_performance(
   const auto l2_buffer_stats = ring->l2_buffer_stats();
   const std::vector<TmRingDomainStats> ring_domain_stats =
       ring_pmu.conn.domains;
-  const std::vector<TmRingRbrgStats> rbrg_stats = ring->rbrg_stats();
+  const auto& rbrg_stats = ring_pmu.rbrg.instances;
+  const auto& rbrg_instance_ids = ring_pmu.rbrg.instance_ids;
   const uint64_t l2_classified_transactions =
       home_agent_stats.l2_hit_transactions +
       home_agent_stats.l2_miss_transactions;
@@ -857,10 +858,11 @@ inline int print_demo_performance(
   }
   const char* rbrg_path_names[] = {"v_to_h_req", "v_to_h_dat",
                                    "h_to_v_rsp", "h_to_v_dat"};
-  for (uint32_t rbrg_id = 0; rbrg_id < rbrg_stats.size(); ++rbrg_id) {
-    std::cout << "TEST_RBRG id=" << rbrg_id;
+  for (uint32_t rbrg_index = 0; rbrg_index < rbrg_stats.size();
+       ++rbrg_index) {
+    std::cout << "TEST_RBRG id=" << rbrg_instance_ids.at(rbrg_index);
     for (uint32_t path = 0; path < 4; ++path) {
-      const TmRingRbrgPathStats& stats = rbrg_stats[rbrg_id].paths[path];
+      const TmRingRbrgPathStats& stats = rbrg_stats[rbrg_index].paths[path];
       std::cout << ' ' << rbrg_path_names[path] << "_packets=" << stats.packets
                 << ' ' << rbrg_path_names[path] << "_bytes=" << stats.bytes
                 << ' ' << rbrg_path_names[path]

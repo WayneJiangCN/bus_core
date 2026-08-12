@@ -326,6 +326,8 @@ TEST_F(TmRingMultiRingFabricTest, UnicastReadWriteCrossesOneBridge) {
   EXPECT_EQ(uint64_t(1), result.perf_result.ha_source_stats[2].rd_packets);
   EXPECT_EQ(uint64_t(0), result.perf_result.ha_source_stats[2].wr_packets);
 
+  const TmRingPmuSnapshot rbrg_pmu = result.fabric->snapshot_pmu(
+      result.perf_result.measurement_end_time);
   for (uint32_t ring = 0; ring < 2; ++ring) {
     const TmRingRbrgPath paths[] = {
         TmRingRbrgPath::V_TO_H_REQ,
@@ -334,24 +336,16 @@ TEST_F(TmRingMultiRingFabricTest, UnicastReadWriteCrossesOneBridge) {
         TmRingRbrgPath::H_TO_V_DAT,
     };
     const uint64_t v_to_h_packets =
-        result.fabric
-            ->rbrg_path_stats(ring, TmRingRbrgPath::V_TO_H_REQ)
-            .packets +
-        result.fabric
-            ->rbrg_path_stats(ring, TmRingRbrgPath::V_TO_H_DAT)
-            .packets;
+        rbrg_pmu.rbrg_path_stats(ring, TmRingRbrgPath::V_TO_H_REQ).packets +
+        rbrg_pmu.rbrg_path_stats(ring, TmRingRbrgPath::V_TO_H_DAT).packets;
     const uint64_t h_to_v_packets =
-        result.fabric
-            ->rbrg_path_stats(ring, TmRingRbrgPath::H_TO_V_RSP)
-            .packets +
-        result.fabric
-            ->rbrg_path_stats(ring, TmRingRbrgPath::H_TO_V_DAT)
-            .packets;
+        rbrg_pmu.rbrg_path_stats(ring, TmRingRbrgPath::H_TO_V_RSP).packets +
+        rbrg_pmu.rbrg_path_stats(ring, TmRingRbrgPath::H_TO_V_DAT).packets;
     EXPECT_GT(v_to_h_packets, uint64_t(0));
     EXPECT_GT(h_to_v_packets, uint64_t(0));
     for (TmRingRbrgPath path : paths) {
       const TmRingRbrgPathStats& path_stats =
-          result.fabric->rbrg_path_stats(ring, path);
+          rbrg_pmu.rbrg_path_stats(ring, path);
       if (path_stats.packets != 0) {
         EXPECT_GT(path_stats.busy_cycles, uint64_t(0));
       }
@@ -376,12 +370,12 @@ TEST_F(TmRingMultiRingFabricTest,
       home_agent_stats.rd_backend_issued + home_agent_stats.functional_reads;
   const uint64_t l2_h_ring_carriers =
       result.fabric->l2_buffer_stats().h_carriers;
+  const TmRingPmuSnapshot rbrg_pmu = result.fabric->snapshot_pmu(
+      result.perf_result.measurement_end_time);
   uint64_t rbrg_v_ring_dat_carriers = 0;
   for (uint32_t ring = 0; ring < 2; ++ring) {
     rbrg_v_ring_dat_carriers +=
-        result.fabric
-            ->rbrg_path_stats(ring, TmRingRbrgPath::H_TO_V_DAT)
-            .packets;
+        rbrg_pmu.rbrg_path_stats(ring, TmRingRbrgPath::H_TO_V_DAT).packets;
   }
 
   EXPECT_EQ(uint64_t(8), logical_read_responses);
