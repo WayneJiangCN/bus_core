@@ -125,6 +125,7 @@ TmRingFabric::TmRingFabric(p_tm_clk_t clk, p_tm_ring_cfg_t cfg)
 }
 
 void TmRingFabric::config() {
+  pmu_ = std::make_shared<TmRingPmu>();
   init_topology();
   clear_components();
   h_ring_ = create_domain(TmRingDomainType::H_RING, 0,
@@ -239,9 +240,12 @@ void TmRingFabric::create_master_nius() {
       cfg_->endpoint_queue_depths[static_cast<uint32_t>(
           TmRingNodeType::MASTER)];
   for (uint32_t i = 0; i < cfg_->num_masters; ++i) {
+    const std::vector<TmRingQueuePmuPort> queue_pmu_ports =
+        pmu_->register_endpoint_queues(TmRingNodeType::MASTER, i,
+                                       queue_depths);
     master_nius_.push_back(tm_make_ring_master_niu(
         this->name() + "_master_niu" + std::to_string(i), clk_, i,
-        queue_depths));
+        queue_depths, queue_pmu_ports));
   }
 }
 
@@ -250,9 +254,12 @@ void TmRingFabric::create_mem_ports() {
       cfg_->endpoint_queue_depths[static_cast<uint32_t>(
           TmRingNodeType::HOME_AGENT)];
   for (uint32_t i = 0; i < cfg_->targets.size(); ++i) {
+    const std::vector<TmRingQueuePmuPort> queue_pmu_ports =
+        pmu_->register_endpoint_queues(TmRingNodeType::HOME_AGENT, i,
+                                       queue_depths);
     mem_ports_.push_back(tm_make_ring_mem_port(
         this->name() + "_mem_port_" + std::to_string(i), clk_,
-        *cfg_->targets[i], *cfg_, queue_depths));
+        *cfg_->targets[i], *cfg_, queue_depths, queue_pmu_ports));
   }
 }
 
@@ -261,9 +268,12 @@ void TmRingFabric::create_l2_buffer_nodes() {
       cfg_->endpoint_queue_depths[static_cast<uint32_t>(
           TmRingNodeType::L2_BUFFER)];
   for (uint32_t target = 0; target < cfg_->targets.size(); ++target) {
+    const std::vector<TmRingQueuePmuPort> queue_pmu_ports =
+        pmu_->register_endpoint_queues(TmRingNodeType::L2_BUFFER, target,
+                                       queue_depths);
     l2_buffer_nodes_.push_back(tm_make_ring_l2_buffer_node(
         this->name() + "_l2_buffer_" + std::to_string(target), clk_,
-        cfg_->l2_traffic, queue_depths));
+        cfg_->l2_traffic, queue_depths, queue_pmu_ports));
   }
 }
 
@@ -275,10 +285,17 @@ void TmRingFabric::create_rbrgs() {
       cfg_->endpoint_queue_depths[static_cast<uint32_t>(
           TmRingNodeType::RBRG_H)];
   for (uint32_t ring = 0; ring < topology_->v_ring_count(); ++ring) {
+    const std::vector<TmRingQueuePmuPort> v_queue_pmu_ports =
+        pmu_->register_endpoint_queues(TmRingNodeType::RBRG_V, ring,
+                                       v_queue_depths);
+    const std::vector<TmRingQueuePmuPort> h_queue_pmu_ports =
+        pmu_->register_endpoint_queues(TmRingNodeType::RBRG_H, ring,
+                                       h_queue_depths);
     rbrgs_.push_back(tm_make_ring_rbrg_l1(
         this->name() + "_rbrg_" + std::to_string(ring), clk_, ring,
         cfg_->rbrg_queue_depth, cfg_->rbrg_latency, cfg_->rbrg_width_bytes,
-        v_queue_depths, h_queue_depths, topology_));
+        v_queue_depths, h_queue_depths, v_queue_pmu_ports, h_queue_pmu_ports,
+        topology_));
   }
 }
 
@@ -363,10 +380,10 @@ void TmRingFabric::reset() {
   for (auto& l2_buffer : l2_buffer_nodes_) {
     l2_buffer->reset();
   }
+  pmu_->reset_model(clk_->time());
 }
 
 void TmRingFabric::clear_stats() {
-  const uint64_t now = clk_->time();
   for (const p_tm_ring_cs_t& ring_station : h_ring_.stations) {
     ring_station->clear_stats();
   }
@@ -383,19 +400,12 @@ void TmRingFabric::clear_stats() {
   }
   for (const p_tm_ring_rbrg_l1_t& rbrg : rbrgs_) {
     rbrg->clear_stats();
-    rbrg->v_node_interface()->clear_stats(now);
-    rbrg->h_node_interface()->clear_stats(now);
-  }
-  for (const auto& master_niu : master_nius_) {
-    master_niu->node_interface()->clear_stats(now);
   }
   for (const auto& mem_port : mem_ports_) {
     mem_port->clear_stats();
-    mem_port->node_interface()->clear_stats(now);
   }
   for (const auto& l2_buffer : l2_buffer_nodes_) {
     l2_buffer->clear_stats();
-    l2_buffer->node_interface()->clear_stats(now);
   }
 }
 
@@ -462,46 +472,8 @@ TmRingFabric::ring_conn_stall_breakdown() const {
   return stalls;
 }
 
-std::vector<TmRingEndpointQueueStats> TmRingFabric::ring_queue_stats(
-    uint64_t snapshot_cycle) const {
-  std::vector<TmRingEndpointQueueStats> result;
-  result.reserve((master_nius_.size() + mem_ports_.size() +
-                  l2_buffer_nodes_.size() + 2 * rbrgs_.size()) *
-                 9);
-
-  const auto append_endpoint = [&result, snapshot_cycle](
-                                   TmRingNodeType node_type, uint32_t node_id,
-                                   const p_tm_ring_node_interface_t& niu) {
-    const std::vector<TmRingQueueStats> queue_stats =
-        niu->queue_stats(snapshot_cycle);
-    for (const TmRingQueueStats& queue : queue_stats) {
-      TmRingEndpointQueueStats endpoint_stats;
-      endpoint_stats.node_type = node_type;
-      endpoint_stats.node_id = node_id;
-      endpoint_stats.queue = queue;
-      result.push_back(endpoint_stats);
-    }
-  };
-
-  for (uint32_t i = 0; i < master_nius_.size(); ++i) {
-    append_endpoint(TmRingNodeType::MASTER, i,
-                    master_nius_[i]->node_interface());
-  }
-  for (uint32_t i = 0; i < mem_ports_.size(); ++i) {
-    append_endpoint(TmRingNodeType::HOME_AGENT, i,
-                    mem_ports_[i]->node_interface());
-  }
-  for (uint32_t i = 0; i < l2_buffer_nodes_.size(); ++i) {
-    append_endpoint(TmRingNodeType::L2_BUFFER, i,
-                    l2_buffer_nodes_[i]->node_interface());
-  }
-  for (uint32_t i = 0; i < rbrgs_.size(); ++i) {
-    append_endpoint(TmRingNodeType::RBRG_V, i,
-                    rbrgs_[i]->v_node_interface());
-    append_endpoint(TmRingNodeType::RBRG_H, i,
-                    rbrgs_[i]->h_node_interface());
-  }
-  return result;
+TmRingPmuSnapshot TmRingFabric::snapshot_pmu(uint64_t cycle) const {
+  return pmu_->snapshot(cycle);
 }
 
 std::vector<TmRingDomainStats> TmRingFabric::ring_domain_stats() const {

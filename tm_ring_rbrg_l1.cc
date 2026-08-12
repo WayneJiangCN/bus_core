@@ -13,15 +13,17 @@ TmRingRbrgL1::TmRingRbrgL1(const std::string& name, p_tm_clk_t clk,
                            uint32_t latency, uint32_t width_bytes,
                            const TmRingEndpointQueueDepths& v_queue_depths,
                            const TmRingEndpointQueueDepths& h_queue_depths,
+                           const vector<TmRingQueuePmuPort>& v_queue_pmu_ports,
+                           const vector<TmRingQueuePmuPort>& h_queue_pmu_ports,
                            std::shared_ptr<TmRingTopology> topology)
     : TmModule(name),
       v_ring_id_(v_ring_id),
       rbrg_width_bytes_(width_bytes),
       topology_(topology) {
   v_niu_ = tm_make_ring_node_interface(
-      clk, name + "_v_node_interface", v_queue_depths);
+      clk, name + "_v_node_interface", v_queue_depths, v_queue_pmu_ports);
   h_niu_ = tm_make_ring_node_interface(
-      clk, name + "_h_node_interface", h_queue_depths);
+      clk, name + "_h_node_interface", h_queue_depths, h_queue_pmu_ports);
 
   for (uint32_t path = 0; path < paths_.size(); ++path) {
     paths_[path].transfer_q = tm_make_que<p_tm_pld_t>(

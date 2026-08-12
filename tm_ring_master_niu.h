@@ -5,6 +5,7 @@
 
 #include <memory>
 #include <string>
+#include <vector>
 
 #include "arbiter.h"
 #include "tm_clock.h"
@@ -23,7 +24,8 @@ class TmRingMasterNiu : public tm_engine::TmModule {
  public:
   TmRingMasterNiu(const std::string& name, tm_engine::p_tm_clk_t clk,
                   uint32_t master_port,
-                  const TmRingEndpointQueueDepths& queue_depths);
+                  const TmRingEndpointQueueDepths& queue_depths,
+                  const std::vector<TmRingQueuePmuPort>& queue_pmu_ports);
   void reset();
   bool idle() const;
 
@@ -34,7 +36,8 @@ class TmRingMasterNiu : public tm_engine::TmModule {
 
  private:
   void config(tm_engine::p_tm_clk_t clk,
-              const TmRingEndpointQueueDepths& queue_depths);
+              const TmRingEndpointQueueDepths& queue_depths,
+              const std::vector<TmRingQueuePmuPort>& queue_pmu_ports);
   void recv_biu_request();
   void recv_biu_data();
   void recv_rsp();
@@ -58,9 +61,10 @@ using p_tm_ring_m_niu_t = std::shared_ptr<tm_ring_m_niu_t>;
 
 inline p_tm_ring_m_niu_t tm_make_ring_master_niu(
     const std::string& name, tm_engine::p_tm_clk_t clk, uint32_t master_port,
-    const TmRingEndpointQueueDepths& queue_depths) {
+    const TmRingEndpointQueueDepths& queue_depths,
+    const std::vector<TmRingQueuePmuPort>& queue_pmu_ports) {
   return std::make_shared<TmRingMasterNiu>(name, clk, master_port,
-                                            queue_depths);
+                                            queue_depths, queue_pmu_ports);
 }
 
 #endif  // _TM_RING_MASTER_NIU_H_

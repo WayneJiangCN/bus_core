@@ -612,7 +612,8 @@ TmRingPerfResult tm_ring_collect_perf_result(
   result.measurement_end_time = measurement_end_cycle;
   result.ring_link_width_bytes = fabric.ring_link_width_bytes();
   result.rbrg_width_bytes = fabric.rbrg_width_bytes();
-  result.endpoint_queue_stats = fabric.ring_queue_stats(measurement_end_cycle);
+  result.endpoint_queue_stats =
+      fabric.snapshot_pmu(measurement_end_cycle).queue.endpoints;
   result.ring_domain_stats = fabric.ring_domain_stats();
   result.rbrg_stats = fabric.rbrg_stats();
 

@@ -6,6 +6,7 @@
 #include <array>
 #include <memory>
 #include <string>
+#include <vector>
 
 #include "tm_clock.h"
 #include "tm_engine.h"
@@ -21,6 +22,8 @@ class TmRingRbrgL1 : public tm_engine::TmModule {
                uint32_t latency, uint32_t width_bytes,
                const TmRingEndpointQueueDepths& v_queue_depths,
                const TmRingEndpointQueueDepths& h_queue_depths,
+               const std::vector<TmRingQueuePmuPort>& v_queue_pmu_ports,
+               const std::vector<TmRingQueuePmuPort>& h_queue_pmu_ports,
                std::shared_ptr<TmRingTopology> topology);
 
   void reset() override;
@@ -85,10 +88,13 @@ inline p_tm_ring_rbrg_l1_t tm_make_ring_rbrg_l1(
     uint32_t queue_depth, uint32_t latency, uint32_t width_bytes,
     const TmRingEndpointQueueDepths& v_queue_depths,
     const TmRingEndpointQueueDepths& h_queue_depths,
+    const std::vector<TmRingQueuePmuPort>& v_queue_pmu_ports,
+    const std::vector<TmRingQueuePmuPort>& h_queue_pmu_ports,
     std::shared_ptr<TmRingTopology> topology) {
   return std::shared_ptr<TmRingRbrgL1>(
       new TmRingRbrgL1(name, clk, v_ring_id, queue_depth, latency,
                        width_bytes, v_queue_depths, h_queue_depths,
+                       v_queue_pmu_ports, h_queue_pmu_ports,
                        topology));
 }
 

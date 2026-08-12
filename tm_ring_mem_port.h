@@ -26,7 +26,8 @@ class TmRingMemPort : public tm_engine::TmModule {
   TmRingMemPort(
       const std::string& name, tm_engine::p_tm_clk_t clk,
       const tm_ring_target_cfg_t& target_cfg, const TmRingCfg& ring_cfg,
-      const TmRingEndpointQueueDepths& queue_depths);
+      const TmRingEndpointQueueDepths& queue_depths,
+      const std::vector<TmRingQueuePmuPort>& queue_pmu_ports);
   void reset();
   bool idle() const;
 
@@ -100,9 +101,10 @@ using p_tm_ring_mem_port_t = std::shared_ptr<tm_ring_mem_port_t>;
 inline p_tm_ring_mem_port_t tm_make_ring_mem_port(
     const std::string& name, tm_engine::p_tm_clk_t clk,
     const tm_ring_target_cfg_t& target_cfg, const TmRingCfg& ring_cfg,
-    const TmRingEndpointQueueDepths& queue_depths) {
+    const TmRingEndpointQueueDepths& queue_depths,
+    const std::vector<TmRingQueuePmuPort>& queue_pmu_ports) {
   return std::make_shared<TmRingMemPort>(
-      name, clk, target_cfg, ring_cfg, queue_depths);
+      name, clk, target_cfg, ring_cfg, queue_depths, queue_pmu_ports);
 }
 
 #endif  // _TM_RING_MEM_PORT_H_

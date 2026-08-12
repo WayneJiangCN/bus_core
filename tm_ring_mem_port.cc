@@ -9,7 +9,8 @@ using namespace std;
 TmRingMemPort::TmRingMemPort(const std::string& name, p_tm_clk_t clk,
                               const tm_ring_target_cfg_t& target_cfg,
                               const TmRingCfg& ring_cfg,
-                              const TmRingEndpointQueueDepths& queue_depths)
+                              const TmRingEndpointQueueDepths& queue_depths,
+                              const vector<TmRingQueuePmuPort>& queue_pmu_ports)
     : TmModule(name), rd_rsp_port_num_(ring_cfg.rd_rsp_port_num) {
 
   log_para_t log_para(name + ".log");
@@ -47,7 +48,7 @@ TmRingMemPort::TmRingMemPort(const std::string& name, p_tm_clk_t clk,
   tm_sensitive(TM_MAKE_CPROC(&TmRingMemPort::recv_mem_rsp), inf_->vld);
 
   node_interface_ = tm_make_ring_node_interface(
-      clk, name + "_node_interface", queue_depths);
+      clk, name + "_node_interface", queue_depths, queue_pmu_ports);
   tm_sensitive(TM_MAKE_CPROC(&TmRingMemPort::recv_ring_req),
                node_interface_->eject_q(TmRingSubnet::REQ)->vld);
   tm_sensitive(TM_MAKE_CPROC(&TmRingMemPort::recv_ring_dat),

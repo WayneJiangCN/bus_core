@@ -308,8 +308,8 @@ std::vector<TmRingQueuePmuPort> TmRingPmu::register_endpoint_queues(
     TmRingNodeType node_type, uint32_t node_id,
     const TmRingEndpointQueueDepths& depths) {
   std::vector<TmRingQueuePmuPort> ports;
-  for (uint32_t dir = 0; dir < 2; ++dir) {
-    for (uint32_t subnet = 0; subnet < tm_ring_subnet_count(); ++subnet) {
+  for (uint32_t subnet = 0; subnet < tm_ring_subnet_count(); ++subnet) {
+    for (uint32_t dir = 0; dir < 2; ++dir) {
       Impl::QueueEntry entry;
       entry.endpoint.node_type = node_type;
       entry.endpoint.node_id = node_id;

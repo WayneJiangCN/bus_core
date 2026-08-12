@@ -64,8 +64,7 @@ class TmRingFabric : public tm_engine::TmModule {
   void attach_target(uint32_t idx, p_tm_mem_t mem);
 
   void clear_stats();
-  std::vector<TmRingEndpointQueueStats> ring_queue_stats(
-      uint64_t snapshot_cycle) const;
+  TmRingPmuSnapshot snapshot_pmu(uint64_t cycle) const;
   TmRingConnStallBreakdown ring_conn_stall_breakdown() const;
   std::vector<TmRingDomainStats> ring_domain_stats() const;
   std::vector<TmRingRbrgStats> rbrg_stats() const;
@@ -96,6 +95,7 @@ class TmRingFabric : public tm_engine::TmModule {
 
   tm_engine::p_tm_clk_t clk_ = nullptr;
   p_tm_ring_cfg_t cfg_ = nullptr;
+  std::shared_ptr<TmRingPmu> pmu_ = nullptr;
 
   std::vector<p_tm_ring_m_niu_t> master_nius_;
   std::vector<p_tm_ring_mem_port_t> mem_ports_;

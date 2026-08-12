@@ -12,11 +12,12 @@ using namespace tm_engine;
 TmRingL2BufferNode::TmRingL2BufferNode(const std::string& name,
                                        p_tm_clk_t clk,
                                        const TmRingL2TrafficConfig& cfg,
-                                       const TmRingEndpointQueueDepths& queue_depths)
+                                       const TmRingEndpointQueueDepths& queue_depths,
+                                       const std::vector<TmRingQueuePmuPort>& queue_pmu_ports)
     : TmModule(name),
       cfg_(cfg) {
   node_interface_ = tm_make_ring_node_interface(
-      clk, name + "_node_interface", queue_depths);
+      clk, name + "_node_interface", queue_depths, queue_pmu_ports);
   response_q_ = tm_make_que<p_tm_pld_t>(
       clk, name + "_response_q", cfg_.buffer_depth, cfg_.response_latency);
   issue_ready_event_ = tm_make_event(name + "_issue_ready");

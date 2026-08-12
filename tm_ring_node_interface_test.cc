@@ -1,6 +1,7 @@
 #include <gtest/gtest.h>
 
 #include "tm_ring_node_interface.h"
+#include "tm_ring_pmu.h"
 
 namespace {
 
@@ -10,14 +11,23 @@ p_tm_pld_t make_packet(PldCmd cmd) {
   return tm_make_pld(cmd, 0, 16);
 }
 
+p_tm_ring_node_interface_t make_node_interface(
+    const p_tm_clk_t& clk, const std::string& name,
+    const TmRingEndpointQueueDepths& depths, TmRingPmu* pmu) {
+  const std::vector<TmRingQueuePmuPort> ports =
+      pmu->register_endpoint_queues(TmRingNodeType::MASTER, 0, depths);
+  return tm_make_ring_node_interface(clk, name, depths, ports);
+}
+
 TEST(TmRingNodeInterfaceTest, UsesIndependentSubnetDepths) {
   tm_init();
   const p_tm_clk_t clk = tm_make_clk();
   TmRingEndpointQueueDepths depths;
   depths.inject = {{1, 2, 3}};
   depths.eject = {{2, 3, 4}};
+  TmRingPmu pmu;
   const p_tm_ring_node_interface_t node_interface =
-      tm_make_ring_node_interface(clk, "independent_subnet_depths", depths);
+      make_node_interface(clk, "independent_subnet_depths", depths, &pmu);
 
   EXPECT_TRUE(node_interface->push_inject(TmRingSubnet::REQ,
                                           TmRingPortDir::CW,
@@ -34,6 +44,15 @@ TEST(TmRingNodeInterfaceTest, UsesIndependentSubnetDepths) {
   EXPECT_FALSE(node_interface->push_inject(TmRingSubnet::DAT,
                                             TmRingPortDir::CCW,
                                             make_packet(PldCmd::WR_DAT)));
+
+  const TmRingPmuSnapshot snapshot = pmu.snapshot(clk->time());
+  ASSERT_EQ(size_t(9), snapshot.queue.endpoints.size());
+  const TmRingQueueStats& dat_ccw_inject = snapshot.queue.endpoints[5].queue;
+  EXPECT_EQ(TmRingSubnet::DAT, dat_ccw_inject.subnet);
+  EXPECT_EQ(TmRingPortDir::CCW, dat_ccw_inject.direction);
+  EXPECT_EQ(uint32_t(3), dat_ccw_inject.depth);
+  EXPECT_EQ(uint64_t(3), dat_ccw_inject.counters.pushes);
+  EXPECT_EQ(uint64_t(1), dat_ccw_inject.counters.push_rejects);
 }
 
 TEST(TmRingNodeInterfaceTest, AccumulatesOccupancyAndFullCyclesOnEvents) {
@@ -42,8 +61,9 @@ TEST(TmRingNodeInterfaceTest, AccumulatesOccupancyAndFullCyclesOnEvents) {
   TmRingEndpointQueueDepths depths;
   depths.inject = {{2, 2, 2}};
   depths.eject = {{2, 2, 2}};
+  TmRingPmu pmu;
   const p_tm_ring_node_interface_t node_interface =
-      tm_make_ring_node_interface(clk, "stats_test", depths);
+      make_node_interface(clk, "stats_test", depths, &pmu);
 
   // Existing Ring tests use tm_start(N) with N as the simulated cycle count.
   EXPECT_TRUE(node_interface->push_eject(TmRingSubnet::DAT,
@@ -55,10 +75,9 @@ TEST(TmRingNodeInterfaceTest, AccumulatesOccupancyAndFullCyclesOnEvents) {
   node_interface->pop_eject(TmRingSubnet::DAT);
   tm_start(2);
 
-  const std::vector<TmRingQueueStats> snapshots =
-      node_interface->queue_stats(clk->time());
-  ASSERT_EQ(size_t(9), snapshots.size());
-  const TmRingQueueStats& dat_eject = snapshots[8];
+  const TmRingPmuSnapshot snapshot = pmu.snapshot(clk->time());
+  ASSERT_EQ(size_t(9), snapshot.queue.endpoints.size());
+  const TmRingQueueStats& dat_eject = snapshot.queue.endpoints[8].queue;
   EXPECT_EQ(uint64_t(2), dat_eject.counters.pushes);
   EXPECT_EQ(uint64_t(1), dat_eject.counters.pops);
   EXPECT_EQ(uint32_t(2), dat_eject.occupancy_peak);
@@ -72,8 +91,9 @@ TEST(TmRingNodeInterfaceTest, CountsInjectRejectWithoutChangingOccupancy) {
   TmRingEndpointQueueDepths depths;
   depths.inject = {{1, 2, 2}};
   depths.eject = {{2, 2, 2}};
+  TmRingPmu pmu;
   const p_tm_ring_node_interface_t node_interface =
-      tm_make_ring_node_interface(clk, "reject_stats_test", depths);
+      make_node_interface(clk, "reject_stats_test", depths, &pmu);
 
   EXPECT_TRUE(node_interface->push_inject(TmRingSubnet::REQ,
                                            TmRingPortDir::CW,
@@ -82,10 +102,9 @@ TEST(TmRingNodeInterfaceTest, CountsInjectRejectWithoutChangingOccupancy) {
                                             TmRingPortDir::CW,
                                             make_packet(PldCmd::RD)));
 
-  const std::vector<TmRingQueueStats> snapshots =
-      node_interface->queue_stats(clk->time());
-  ASSERT_EQ(size_t(9), snapshots.size());
-  const TmRingQueueStats& req_cw_inject = snapshots[0];
+  const TmRingPmuSnapshot snapshot = pmu.snapshot(clk->time());
+  ASSERT_EQ(size_t(9), snapshot.queue.endpoints.size());
+  const TmRingQueueStats& req_cw_inject = snapshot.queue.endpoints[0].queue;
   EXPECT_EQ(uint64_t(1), req_cw_inject.counters.pushes);
   EXPECT_EQ(uint64_t(0), req_cw_inject.counters.pops);
   EXPECT_EQ(uint64_t(1), req_cw_inject.counters.push_rejects);
