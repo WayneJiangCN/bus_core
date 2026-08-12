@@ -363,8 +363,10 @@ std::string tm_ring_format_perf_result(const TmRingPerfResult& result) {
   }
 
   uint64_t v_ring_carriers = 0;
-  for (uint32_t rbrg_id = 0; rbrg_id < result.rbrg_stats.size(); ++rbrg_id) {
-    const TmRingRbrgStats& rbrg = result.rbrg_stats[rbrg_id];
+  for (uint32_t rbrg_index = 0; rbrg_index < result.rbrg_stats.size();
+       ++rbrg_index) {
+    const TmRingRbrgStats& rbrg = result.rbrg_stats[rbrg_index];
+    const uint32_t rbrg_id = result.rbrg_instance_ids.at(rbrg_index);
     for (uint32_t path_index = 0; path_index < rbrg.paths.size();
          ++path_index) {
       const TmRingRbrgPath path = static_cast<TmRingRbrgPath>(path_index);

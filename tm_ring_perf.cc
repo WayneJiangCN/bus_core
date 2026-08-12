@@ -617,6 +617,7 @@ TmRingPerfResult tm_ring_collect_perf_result(
   result.endpoint_queue_stats = ring_pmu.queue.endpoints;
   result.ring_domain_stats = ring_pmu.conn.domains;
   result.rbrg_stats = ring_pmu.rbrg.instances;
+  result.rbrg_instance_ids = ring_pmu.rbrg.instance_ids;
 
   bool has_request = false;
   bool has_response = false;

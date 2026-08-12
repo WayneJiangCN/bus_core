@@ -166,6 +166,7 @@ struct TmRingPerfResult {
   TmMemStats memory_stats;
   std::vector<TmRingDomainStats> ring_domain_stats;
   std::vector<TmRingRbrgStats> rbrg_stats;
+  std::vector<uint32_t> rbrg_instance_ids;
   std::vector<TmRingEndpointQueueStats> endpoint_queue_stats;
 };
 

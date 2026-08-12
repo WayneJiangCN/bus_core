@@ -782,6 +782,12 @@ TEST(TmRingPerfReportTest, EmitsMeasuredChannelAndBufferRecords) {
   rbrg_path.queue_full_stalls = 4;
   rbrg_path.destination_inject_stalls = 5;
   result.rbrg_stats.push_back(rbrg0);
+  result.rbrg_instance_ids.push_back(1);
+
+  TmRingRbrgStats rbrg7;
+  rbrg7.paths[static_cast<uint32_t>(TmRingRbrgPath::H_TO_V_DAT)].packets = 2;
+  result.rbrg_stats.push_back(rbrg7);
+  result.rbrg_instance_ids.push_back(7);
 
   const std::string report = tm_ring_format_perf_result(result);
 
@@ -801,7 +807,11 @@ TEST(TmRingPerfReportTest, EmitsMeasuredChannelAndBufferRecords) {
             report.find("PERF_RING_EDGE domain=h ring=0 subnet=dat "
                         "direction=cw src_station=0 dst_station=1"));
   EXPECT_NE(std::string::npos,
-            report.find("PERF_RBRG_CHANNEL id=0 path=v_to_h_dat"));
+            report.find("PERF_RBRG_CHANNEL id=1 path=v_to_h_dat"));
+  EXPECT_NE(std::string::npos,
+            report.find("PERF_RBRG_CHANNEL id=7 path=h_to_v_dat"));
+  EXPECT_EQ(std::string::npos,
+            report.find("PERF_RBRG_CHANNEL id=0"));
   EXPECT_NE(std::string::npos, report.find("cycle_util_pct=80.000000"));
   EXPECT_NE(std::string::npos,
             report.find("payload_util_pct=50.000000"));
