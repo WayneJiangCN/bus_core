@@ -282,6 +282,11 @@ inline p_tm_ring_cfg_t tm_make_ring_cfg(std::string name, cfg::p_cfg_t cfg) {
       static_cast<uint32_t>(cfg->get_cfg<int>("RING.ring_link_latency"));
   ring_cfg->ring_link_width_bytes =
       static_cast<uint32_t>(cfg->get_cfg<int>("RING.ring_link_width_bytes"));
+  const int rbrg_queue_depth = cfg->get_cfg<int>("RING.rbrg_queue_depth");
+  if (rbrg_queue_depth <= 0) {
+    throw std::invalid_argument("RBRG queue depth must be positive");
+  }
+  ring_cfg->rbrg_queue_depth = static_cast<uint32_t>(rbrg_queue_depth);
   const char* endpoint_names[] = {"master", "home_agent", "l2_buffer",
                                   "rbrg_v", "rbrg_h"};
   const char* subnet_names[] = {"req", "rsp", "dat"};
@@ -294,8 +299,13 @@ inline p_tm_ring_cfg_t tm_make_ring_cfg(std::string name, cfg::p_cfg_t cfg) {
       const std::string field_prefix =
           std::string("RING.") + endpoint_names[node_type] + "_" +
           subnet_names[subnet] + "_";
-      queue_depths.inject[subnet] = tm_ring_endpoint_queue_depth(
-          cfg, field_prefix + "inject_depth");
+      const bool is_rbrg =
+          node_type == static_cast<uint32_t>(TmRingNodeType::RBRG_V) ||
+          node_type == static_cast<uint32_t>(TmRingNodeType::RBRG_H);
+      queue_depths.inject[subnet] =
+          is_rbrg ? ring_cfg->rbrg_queue_depth
+                  : tm_ring_endpoint_queue_depth(
+                        cfg, field_prefix + "inject_depth");
       queue_depths.eject[subnet] = tm_ring_endpoint_queue_depth(
           cfg, field_prefix + "eject_depth");
     }
@@ -307,8 +317,6 @@ inline p_tm_ring_cfg_t tm_make_ring_cfg(std::string name, cfg::p_cfg_t cfg) {
   }
   ring_cfg->max_aicore_per_vring =
       static_cast<uint32_t>(max_aicore_per_vring);
-  ring_cfg->rbrg_queue_depth =
-      static_cast<uint32_t>(cfg->get_cfg<int>("RING.rbrg_queue_depth"));
   ring_cfg->rbrg_latency =
       static_cast<uint32_t>(cfg->get_cfg<int>("RING.rbrg_latency"));
   ring_cfg->rbrg_width_bytes =
