@@ -91,6 +91,50 @@ TEST(TmRingConnTest, SerializerAndPacketCompletionKeepExistingTiming) {
   EXPECT_EQ(packet, timing_fixture.dat->front());
 }
 
+TEST(TmRingConnTest, PaidSegmentPacketOnlyWaitsForPropagation) {
+  TmRingConnFixture fixture;
+  const auto packet = fixture.make_dat();
+  packet->ring_segment_serialization_paid = true;
+
+  ASSERT_TRUE(fixture.conn->accept_slot(packet));
+  EXPECT_TRUE(packet->ring_segment_serialization_paid);
+  tm_start(1);
+  EXPECT_TRUE(fixture.dat->empty());
+  tm_start(1);
+  ASSERT_FALSE(fixture.dat->empty());
+  EXPECT_EQ(packet, fixture.dat->front());
+}
+
+TEST(TmRingConnTest, TwoHopDatPaysSerializationOncePerSegment) {
+  tm_init();
+  const p_tm_clk_t clk = tm_make_clk();
+  const p_tm_com_que_t b_req = tm_make_com_que(clk, "b_req", 1);
+  const p_tm_com_que_t b_rsp = tm_make_com_que(clk, "b_rsp", 1);
+  const p_tm_com_que_t b_dat = tm_make_com_que(clk, "b_dat", 1);
+  const p_tm_com_que_t c_req = tm_make_com_que(clk, "c_req", 1);
+  const p_tm_com_que_t c_rsp = tm_make_com_que(clk, "c_rsp", 1);
+  const p_tm_com_que_t c_dat = tm_make_com_que(clk, "c_dat", 1);
+  const p_tm_ring_conn_t ab = tm_make_ring_conn(
+      "ab", clk, 1, 128, 1, TmRingPortDir::CW);
+  const p_tm_ring_conn_t bc = tm_make_ring_conn(
+      "bc", clk, 1, 128, 2, TmRingPortDir::CW);
+  ab->attach(b_req, b_rsp, b_dat);
+  bc->attach(c_req, c_rsp, c_dat);
+
+  const p_tm_pld_t packet = tm_make_pld(PldCmd::RD_RSP, 0, 512);
+  packet->ring_subnet = static_cast<uint32_t>(TmRingSubnet::DAT);
+  packet->ring_traffic_class = static_cast<uint32_t>(PldCmd::RD_RSP);
+  ASSERT_TRUE(ab->accept_slot(packet));
+
+  tm_start(4);
+  ASSERT_FALSE(b_dat->empty());
+  b_dat->pop_front();
+  ASSERT_TRUE(bc->accept_slot(packet));
+  tm_start(1);
+  ASSERT_FALSE(c_dat->empty());
+  EXPECT_EQ(packet, c_dat->front());
+}
+
 TEST(TmRingConnTest, BusyDatSerializerDoesNotBlockReq) {
   TmRingConnFixture fixture;
   ASSERT_TRUE(fixture.conn->accept_slot(fixture.make_dat()));

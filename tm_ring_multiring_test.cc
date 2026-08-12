@@ -143,6 +143,35 @@ TEST(TmRingMultiRingTopologyTest, MeasuresFanoutSpanInBothDirections) {
                std::invalid_argument);
 }
 
+TEST(TmRingRbrgL1Test, ReSerializesBeforeInjectingTheNextRingSegment) {
+  tm_init();
+  const p_tm_clk_t clk = tm_make_clk();
+  std::shared_ptr<TmRingTopology> topology(new TmRingTopology());
+  topology->config(make_multiring_cfg(1, 1, 8));
+
+  TmRingEndpointQueueDepths depths;
+  depths.inject = {{1, 1, 1}};
+  depths.eject = {{1, 1, 1}};
+  const p_tm_ring_rbrg_l1_t rbrg = tm_make_ring_rbrg_l1(
+      "rbrg_cut_through", clk, 0, 1, 1, 16, depths, depths, topology);
+
+  const p_tm_pld_t packet = tm_make_pld(PldCmd::WR_DAT, 0, 32);
+  packet->slv_id = 0;
+  packet->ring_subnet = static_cast<uint32_t>(TmRingSubnet::DAT);
+  packet->ring_traffic_class = static_cast<uint32_t>(PldCmd::WR_DAT);
+  packet->ring_segment_serialization_paid = true;
+  ASSERT_TRUE(rbrg->v_node_interface()->push_eject(TmRingSubnet::DAT,
+                                                    packet));
+
+  tm_start(2);
+  EXPECT_EQ(nullptr, rbrg->h_node_interface()->front_inject(
+                         TmRingSubnet::DAT, TmRingPortDir::CW));
+  tm_start(1);
+  EXPECT_EQ(packet, rbrg->h_node_interface()->front_inject(
+                        TmRingSubnet::DAT, TmRingPortDir::CW));
+  EXPECT_FALSE(packet->ring_segment_serialization_paid);
+}
+
 class TmRingMultiRingFabricTest : public ::testing::Test {
  protected:
   struct RunResult {

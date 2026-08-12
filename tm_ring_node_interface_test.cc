@@ -93,6 +93,29 @@ TEST(TmRingNodeInterfaceTest, CountsInjectRejectWithoutChangingOccupancy) {
   EXPECT_EQ(uint32_t(1), req_cw_inject.occupancy_peak);
 }
 
+TEST(TmRingNodeInterfaceTest, StartsNewSegmentOnlyAfterAcceptedInjection) {
+  tm_init();
+  const p_tm_clk_t clk = tm_make_clk();
+  TmRingEndpointQueueDepths depths;
+  depths.inject = {{1, 1, 1}};
+  depths.eject = {{1, 1, 1}};
+  const p_tm_ring_node_interface_t node_interface =
+      tm_make_ring_node_interface(clk, "serialization_segment_boundary",
+                                  depths);
+
+  const p_tm_pld_t accepted = make_packet(PldCmd::RD);
+  accepted->ring_segment_serialization_paid = true;
+  ASSERT_TRUE(node_interface->push_inject(TmRingSubnet::REQ,
+                                          TmRingPortDir::CW, accepted));
+  EXPECT_FALSE(accepted->ring_segment_serialization_paid);
+
+  const p_tm_pld_t rejected = make_packet(PldCmd::RD);
+  rejected->ring_segment_serialization_paid = true;
+  EXPECT_FALSE(node_interface->push_inject(TmRingSubnet::REQ,
+                                            TmRingPortDir::CW, rejected));
+  EXPECT_TRUE(rejected->ring_segment_serialization_paid);
+}
+
 TEST(TmRingNodeInterfaceTest, KeepsRbrgDirectionalEjectHeadsIndependent) {
   tm_init();
   const p_tm_clk_t clk = tm_make_clk();

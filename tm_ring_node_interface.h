@@ -145,6 +145,8 @@ class TmRingNodeInterface {
       ++state.counters.push_rejects;
       return false;
     }
+    // A successful injection begins a new Ring serialization segment.
+    pld->ring_segment_serialization_paid = false;
     record_push(state, pld);
     return true;
   }

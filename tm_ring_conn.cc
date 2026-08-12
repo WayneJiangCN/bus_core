@@ -168,12 +168,20 @@ void TmRingConn::reserve_slot(p_tm_pld_t slot) {
   const uint32_t serialization_cycles =
       tm_ring_serialization_cycles(bytes, width_bytes_);
 
-  serializer_slots_[idx] = slot;
   serializer_available_[idx] = false;
   serializer_release_event_pending_[idx] = true;
-  serializer_to_pipeline_event_pending_[idx] = true;
   inflight_count_[idx]++;
   record_slot(idx, bytes, serialization_cycles);
+
+  if (slot->ring_segment_serialization_paid) {
+    slot_pipelines_[idx]->push_back(slot);
+    serializer_release_events_[idx]->notify_after(serialization_cycles);
+    return;
+  }
+
+  slot->ring_segment_serialization_paid = true;
+  serializer_slots_[idx] = slot;
+  serializer_to_pipeline_event_pending_[idx] = true;
   serializer_to_pipeline_events_[idx]->notify_after(
       serialization_cycles - 1);
   serializer_release_events_[idx]->notify_after(serialization_cycles);
