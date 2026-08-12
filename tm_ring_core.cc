@@ -390,10 +390,6 @@ void TmRingFabric::reset() {
   pmu_->reset_model(clk_->time());
 }
 
-void TmRingFabric::clear_stats() {
-  pmu_->reset_model(clk_->time());
-}
-
 bool TmRingFabric::idle() {
   const auto domain_idle = [](const TmRingDomain& domain) {
     if (!domain.slot_pool->empty()) {
@@ -443,11 +439,6 @@ bool TmRingFabric::idle() {
   return true;
 }
 
-TmRingConnStallBreakdown
-TmRingFabric::ring_conn_stall_breakdown() const {
-  return snapshot_pmu(clk_->time()).conn_stall_breakdown();
-}
-
 TmRingPmuSnapshot TmRingFabric::snapshot_pmu(uint64_t cycle) const {
   return pmu_->snapshot(cycle);
 }
@@ -458,16 +449,6 @@ uint32_t TmRingFabric::ring_link_width_bytes() const {
 
 uint32_t TmRingFabric::rbrg_width_bytes() const {
   return cfg_->rbrg_width_bytes;
-}
-
-std::vector<TmRingConnHotspot>
-TmRingFabric::ring_top_busy_conns(TmRingSubnet subnet,
-                                  uint32_t limit) const {
-  return snapshot_pmu(clk_->time()).top_busy_conns(subnet, limit);
-}
-
-uint64_t TmRingFabric::ring_conn_stalls() const {
-  return ring_conn_stall_breakdown().total();
 }
 
 void TmRingFabric::attach_master(uint32_t idx, p_tm_ring_biu_t biu) {

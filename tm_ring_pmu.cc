@@ -21,7 +21,6 @@ void merge_cross(TmRingCrossStationStats* into,
   into->transit_slots += from.transit_slots;
   into->injected_packets += from.injected_packets;
   into->ejected_packets += from.ejected_packets;
-  into->inject_queue_full_stalls += from.inject_queue_full_stalls;
   into->eject_queue_full_stalls += from.eject_queue_full_stalls;
   into->slot_pool_full_stalls += from.slot_pool_full_stalls;
   into->i_tag_sets += from.i_tag_sets;

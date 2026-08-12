@@ -63,14 +63,9 @@ class TmRingFabric : public tm_engine::TmModule {
   void attach_target(uint32_t idx, p_tm_com_inf_t inf);
   void attach_target(uint32_t idx, p_tm_mem_t mem);
 
-  void clear_stats();
   TmRingPmuSnapshot snapshot_pmu(uint64_t cycle) const;
-  TmRingConnStallBreakdown ring_conn_stall_breakdown() const;
   uint32_t ring_link_width_bytes() const;
   uint32_t rbrg_width_bytes() const;
-  std::vector<TmRingConnHotspot> ring_top_busy_conns(
-      TmRingSubnet subnet, uint32_t limit) const;
-  uint64_t ring_conn_stalls() const;
 
  private:
   struct TmRingDomain {

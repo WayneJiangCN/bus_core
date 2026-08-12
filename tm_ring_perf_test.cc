@@ -711,7 +711,7 @@ TEST(TmRingPerfReportTest, EmitsHomeAgentRequestSourcesByMasterAndCommand) {
   source.master_id = 5;
   source.rd_packets = 7;
   source.wr_packets = 3;
-  result.ha_source_stats.push_back(source);
+  result.ring_pmu.ha.sources.push_back(source);
 
   const std::string report = tm_ring_format_perf_result(result);
 
@@ -767,7 +767,7 @@ TEST(TmRingPerfReportTest, EmitsMeasuredChannelAndBufferRecords) {
   edge.bytes = 6400;
   edge.busy_cycles = 80;
   h_domain.edges.push_back(edge);
-  result.ring_domain_stats.push_back(h_domain);
+  result.ring_pmu.conn.domains.push_back(h_domain);
 
   TmRingEndpointQueueStats endpoint;
   endpoint.node_type = TmRingNodeType::MASTER;
@@ -782,7 +782,7 @@ TEST(TmRingPerfReportTest, EmitsMeasuredChannelAndBufferRecords) {
   endpoint.queue.counters.push_rejects = 1;
   endpoint.queue.counters.occupancy_area = 200;
   endpoint.queue.counters.full_cycles = 10;
-  result.endpoint_queue_stats.push_back(endpoint);
+  result.ring_pmu.queue.endpoints.push_back(endpoint);
 
   TmRingRbrgStats rbrg0;
   TmRingRbrgPathStats& rbrg_path =
@@ -793,13 +793,13 @@ TEST(TmRingPerfReportTest, EmitsMeasuredChannelAndBufferRecords) {
   rbrg_path.queue_occupancy_peak = 3;
   rbrg_path.queue_full_stalls = 4;
   rbrg_path.destination_inject_stalls = 5;
-  result.rbrg_stats.push_back(rbrg0);
-  result.rbrg_instance_ids.push_back(1);
+  result.ring_pmu.rbrg.instances.push_back(rbrg0);
+  result.ring_pmu.rbrg.instance_ids.push_back(1);
 
   TmRingRbrgStats rbrg7;
   rbrg7.paths[static_cast<uint32_t>(TmRingRbrgPath::H_TO_V_DAT)].packets = 2;
-  result.rbrg_stats.push_back(rbrg7);
-  result.rbrg_instance_ids.push_back(7);
+  result.ring_pmu.rbrg.instances.push_back(rbrg7);
+  result.ring_pmu.rbrg.instance_ids.push_back(7);
 
   const std::string report = tm_ring_format_perf_result(result);
 
@@ -1004,7 +1004,7 @@ PerfSmokeResult run_perf_smoke(const TmRingPerfCase& perf_case,
 
 void expect_l2_snapshot_matches_perf(const PerfSmokeResult& result) {
   const TmRingL2BufferStats& actual = result.ring_pmu.l2.total;
-  const TmRingL2BufferStats& expected = result.perf_result.l2_buffer_stats;
+  const TmRingL2BufferStats& expected = result.perf_result.ring_pmu.l2.total;
   EXPECT_EQ(expected.responses_accepted, actual.responses_accepted);
   EXPECT_EQ(expected.latency_wait_cycles, actual.latency_wait_cycles);
   EXPECT_EQ(expected.buffer_occupancy_peak, actual.buffer_occupancy_peak);
@@ -1115,7 +1115,7 @@ uint64_t rbrg_packets(const TmRingRbrgStats& stats) {
 
 uint64_t v_ring_dat_carriers(const TmRingPerfResult& result) {
   uint64_t carriers = 0;
-  for (const TmRingRbrgStats& stats : result.rbrg_stats) {
+  for (const TmRingRbrgStats& stats : result.ring_pmu.rbrg.instances) {
     carriers += stats.paths[static_cast<uint32_t>(
         TmRingRbrgPath::H_TO_V_DAT)].packets;
   }
@@ -1194,17 +1194,18 @@ void run_multi_vring_aggregated_read_benchmark(
   const PerfSmokeResult result = run_perf_smoke(perf_case, overrides);
 
   ASSERT_EQ(static_cast<size_t>(expected_vrings + 1),
-            result.perf_result.ring_domain_stats.size());
+            result.perf_result.ring_pmu.conn.domains.size());
   ASSERT_EQ(static_cast<size_t>(expected_vrings),
-            result.perf_result.rbrg_stats.size());
-  for (const TmRingRbrgStats& stats : result.perf_result.rbrg_stats) {
+            result.perf_result.ring_pmu.rbrg.instances.size());
+  for (const TmRingRbrgStats& stats :
+       result.perf_result.ring_pmu.rbrg.instances) {
     ASSERT_GT(rbrg_packets(stats), uint64_t(0));
   }
-  const TmRingL2BufferStats& l2 = result.perf_result.l2_buffer_stats;
+  const TmRingL2BufferStats& l2 = result.perf_result.ring_pmu.l2.total;
   const uint64_t expected_logical_responses =
       static_cast<uint64_t>(masters) * perf_case.bytes_per_master /
       request_bytes;
-  ASSERT_GT(result.perf_result.home_agent_stats.backend_read_saved,
+  ASSERT_GT(result.perf_result.ring_pmu.ha.total.backend_read_saved,
             uint64_t(0));
   ASSERT_GT(l2.responses_accepted, uint64_t(0));
   ASSERT_LE(l2.responses_accepted, expected_logical_responses);
@@ -1254,10 +1255,11 @@ void run_multi_vring_128kb_benchmark(
   const PerfSmokeResult result = run_perf_smoke(perf_case, overrides);
 
   ASSERT_EQ(static_cast<size_t>(expected_vrings + 1),
-            result.perf_result.ring_domain_stats.size());
+            result.perf_result.ring_pmu.conn.domains.size());
   ASSERT_EQ(static_cast<size_t>(expected_vrings),
-            result.perf_result.rbrg_stats.size());
-  for (const TmRingRbrgStats& stats : result.perf_result.rbrg_stats) {
+            result.perf_result.ring_pmu.rbrg.instances.size());
+  for (const TmRingRbrgStats& stats :
+       result.perf_result.ring_pmu.rbrg.instances) {
     ASSERT_GT(rbrg_packets(stats), uint64_t(0));
   }
   if (op != TmRingPerfOp::WRITE &&
@@ -1265,7 +1267,7 @@ void run_multi_vring_128kb_benchmark(
     const uint64_t expected_read_responses =
         static_cast<uint64_t>(masters) * perf_case.bytes_per_master /
         burst_bytes;
-    const TmRingL2BufferStats& l2 = result.perf_result.l2_buffer_stats;
+    const TmRingL2BufferStats& l2 = result.perf_result.ring_pmu.l2.total;
     ASSERT_EQ(expected_read_responses, l2.responses_accepted);
     ASSERT_EQ(expected_read_responses, l2.h_carrier_recipients);
     ASSERT_EQ(expected_read_responses, l2.h_unicast_carriers);
@@ -1295,18 +1297,19 @@ void run_multi_vring_no_merge_read_benchmark(
   const PerfSmokeResult result = run_perf_smoke(perf_case, overrides);
 
   ASSERT_EQ(static_cast<size_t>(expected_vrings + 1),
-            result.perf_result.ring_domain_stats.size());
+            result.perf_result.ring_pmu.conn.domains.size());
   ASSERT_EQ(static_cast<size_t>(expected_vrings),
-            result.perf_result.rbrg_stats.size());
-  for (const TmRingRbrgStats& stats : result.perf_result.rbrg_stats) {
+            result.perf_result.ring_pmu.rbrg.instances.size());
+  for (const TmRingRbrgStats& stats :
+       result.perf_result.ring_pmu.rbrg.instances) {
     ASSERT_GT(rbrg_packets(stats), uint64_t(0));
   }
   const uint64_t expected_responses =
       static_cast<uint64_t>(masters) * perf_case.bytes_per_master /
       request_bytes;
-  const TmRingL2BufferStats& l2 = result.perf_result.l2_buffer_stats;
+  const TmRingL2BufferStats& l2 = result.perf_result.ring_pmu.l2.total;
   ASSERT_EQ(uint64_t(0),
-            result.perf_result.home_agent_stats.backend_read_saved);
+            result.perf_result.ring_pmu.ha.total.backend_read_saved);
   ASSERT_EQ(uint64_t(0),
             l2.h_multicast_carriers);
   ASSERT_EQ(uint64_t(0),
@@ -1360,8 +1363,8 @@ void run_aggregation_wave_test(
   const PerfSmokeResult result = run_perf_smoke(perf_case, overrides);
   const TmRingPerfEstimate& ideal = result.perf_result.estimate;
   const TmRingPerfEstimate& no_merge = result.perf_result.no_merge_estimate;
-  const TmRingHomeAgentStats& ha = result.perf_result.home_agent_stats;
-  const TmRingL2BufferStats& l2 = result.perf_result.l2_buffer_stats;
+  const TmRingHomeAgentStats& ha = result.perf_result.ring_pmu.ha.total;
+  const TmRingL2BufferStats& l2 = result.perf_result.ring_pmu.l2.total;
   const uint64_t actual_v_carriers =
       v_ring_dat_carriers(result.perf_result);
 
@@ -1395,10 +1398,11 @@ void run_aggregation_wave_test(
   ASSERT_TRUE(result.perf_result.drained);
   ASSERT_EQ(uint64_t(0), result.perf_result.protocol_errors);
   ASSERT_EQ(static_cast<size_t>(expected_vrings + 1),
-            result.perf_result.ring_domain_stats.size());
+            result.perf_result.ring_pmu.conn.domains.size());
   ASSERT_EQ(static_cast<size_t>(expected_vrings),
-            result.perf_result.rbrg_stats.size());
-  for (const TmRingRbrgStats& stats : result.perf_result.rbrg_stats) {
+            result.perf_result.ring_pmu.rbrg.instances.size());
+  for (const TmRingRbrgStats& stats :
+       result.perf_result.ring_pmu.rbrg.instances) {
     ASSERT_GT(stats.paths[static_cast<uint32_t>(
                   TmRingRbrgPath::H_TO_V_DAT)].packets,
               uint64_t(0));
@@ -1526,18 +1530,19 @@ TEST(RingPerfBenchmark, MultiVringCrossLineNonMergedRead1024B) {
   const uint64_t expected_responses =
       static_cast<uint64_t>(masters) * perf_case.bytes_per_master /
       perf_case.burst_bytes;
-  const TmRingL2BufferStats& l2 = result.perf_result.l2_buffer_stats;
+  const TmRingL2BufferStats& l2 = result.perf_result.ring_pmu.l2.total;
 
   ASSERT_EQ(static_cast<size_t>(expected_vrings + 1),
-            result.perf_result.ring_domain_stats.size());
+            result.perf_result.ring_pmu.conn.domains.size());
   ASSERT_EQ(static_cast<size_t>(expected_vrings),
-            result.perf_result.rbrg_stats.size());
-  for (const TmRingRbrgStats& stats : result.perf_result.rbrg_stats) {
+            result.perf_result.ring_pmu.rbrg.instances.size());
+  for (const TmRingRbrgStats& stats :
+       result.perf_result.ring_pmu.rbrg.instances) {
     ASSERT_GT(rbrg_packets(stats), uint64_t(0));
   }
-  ASSERT_EQ(uint64_t(0), result.perf_result.home_agent_stats.rd_requests);
+  ASSERT_EQ(uint64_t(0), result.perf_result.ring_pmu.ha.total.rd_requests);
   ASSERT_EQ(uint64_t(0),
-            result.perf_result.home_agent_stats.backend_read_saved);
+            result.perf_result.ring_pmu.ha.total.backend_read_saved);
   ASSERT_EQ(expected_responses, l2.responses_accepted);
   ASSERT_EQ(expected_responses, l2.h_carrier_recipients);
   ASSERT_EQ(expected_responses, l2.h_unicast_carriers);

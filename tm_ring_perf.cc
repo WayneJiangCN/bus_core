@@ -605,6 +605,7 @@ TmRingPerfResult tm_ring_collect_perf_result(
     uint64_t measurement_end_cycle,
     bool drained) {
   TmRingPerfResult result;
+  result.ring_pmu = fabric.snapshot_pmu(measurement_end_cycle);
   result.perf_case = perf_case;
   result.estimate = estimate;
   result.no_merge_estimate = no_merge_estimate;
@@ -612,12 +613,6 @@ TmRingPerfResult tm_ring_collect_perf_result(
   result.measurement_end_time = measurement_end_cycle;
   result.ring_link_width_bytes = fabric.ring_link_width_bytes();
   result.rbrg_width_bytes = fabric.rbrg_width_bytes();
-  const TmRingPmuSnapshot ring_pmu =
-      fabric.snapshot_pmu(measurement_end_cycle);
-  result.endpoint_queue_stats = ring_pmu.queue.endpoints;
-  result.ring_domain_stats = ring_pmu.conn.domains;
-  result.rbrg_stats = ring_pmu.rbrg.instances;
-  result.rbrg_instance_ids = ring_pmu.rbrg.instance_ids;
 
   bool has_request = false;
   bool has_response = false;
@@ -693,11 +688,6 @@ TmRingPerfResult tm_ring_collect_perf_result(
         (static_cast<double>(completed_bytes.size()) * square_sum);
   }
 
-  result.conn_stats = ring_pmu.conn.total;
-  result.cross_station_stats = ring_pmu.cross_station.total;
-  result.home_agent_stats = ring_pmu.ha.total;
-  result.ha_source_stats = ring_pmu.ha.sources;
-  result.l2_buffer_stats = ring_pmu.l2.total;
   for (const TmMemStats& stats : memory_stats) {
     result.memory_stats.merge_from(stats);
   }

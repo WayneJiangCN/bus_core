@@ -158,16 +158,8 @@ struct TmRingPerfResult {
   bool drained = false;
   TmRingPerfEstimate estimate;
   TmRingPerfEstimate no_merge_estimate;
-  std::array<TmRingConnStats, 3> conn_stats;
-  TmRingCrossStationStats cross_station_stats;
-  TmRingHomeAgentStats home_agent_stats;
-  std::vector<TmRingHaSourceStats> ha_source_stats;
-  TmRingL2BufferStats l2_buffer_stats;
+  TmRingPmuSnapshot ring_pmu;
   TmMemStats memory_stats;
-  std::vector<TmRingDomainStats> ring_domain_stats;
-  std::vector<TmRingRbrgStats> rbrg_stats;
-  std::vector<uint32_t> rbrg_instance_ids;
-  std::vector<TmRingEndpointQueueStats> endpoint_queue_stats;
 };
 
 std::vector<TmRingPerfTxn> tm_ring_build_perf_trace(

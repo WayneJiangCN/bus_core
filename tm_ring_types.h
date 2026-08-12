@@ -11,7 +11,6 @@
 
 #include "tm_bus_types.h"
 #include "tm_mem.h"
-#include "tm_ring_stats.h"
 
 using PldCmd = pld_cmd_t;
 using plt_cmt_t = PldCmd;
@@ -70,22 +69,6 @@ enum class TmRingNodeType : uint32_t {
 };
 
 enum class TmRingQueueSide : uint32_t { INJECT = 0, EJECT = 1 };
-
-struct TmRingQueueStats {
-  TmRingSubnet subnet = TmRingSubnet::REQ;
-  TmRingQueueSide side = TmRingQueueSide::INJECT;
-  TmRingPortDir direction = TmRingPortDir::LOCAL;
-  uint32_t depth = 0;
-  uint32_t occupancy = 0;
-  uint32_t occupancy_peak = 0;
-  TmRingQueueCounters counters;
-};
-
-struct TmRingEndpointQueueStats {
-  TmRingNodeType node_type = TmRingNodeType::MASTER;
-  uint32_t node_id = 0;
-  TmRingQueueStats queue;
-};
 
 struct TmRingEndpointQueueDepths {
   std::array<uint32_t, 3> inject = {{2, 2, 2}};

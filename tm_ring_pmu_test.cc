@@ -55,7 +55,18 @@ TEST(TmRingPmuTest, ConnRejectMapsOneAttemptToOneTotalReject) {
   EXPECT_EQ(uint64_t(1), dat.send_reject_stall);
   EXPECT_EQ(uint64_t(1), dat.serialization_busy_stall);
   EXPECT_EQ(uint64_t(1), dat.downstream_register_full_stall);
+  EXPECT_EQ(uint64_t(3), tm_ring_conn_total_stalls(dat));
   EXPECT_EQ(uint64_t(2), snapshot.conn_stall_breakdown().total());
+}
+
+TEST(TmRingPmuTest, RbrgEventsAccumulateBusyCyclesInSnapshot) {
+  TmRingPmu pmu;
+  TmRingRbrgPmuPort rbrg = pmu.register_rbrg(0);
+  rbrg.enqueued(TmRingRbrgPath::V_TO_H_REQ, 3);
+  rbrg.enqueued(TmRingRbrgPath::V_TO_H_REQ, 5);
+
+  const TmRingPmuSnapshot snapshot = pmu.snapshot(0);
+  EXPECT_EQ(uint64_t(8), snapshot.rbrg.instances[0].paths[0].busy_cycles);
 }
 
 TEST(TmRingPmuTest, ConnHotspotsKeepLegacySerializationFirstOrdering) {
