@@ -51,7 +51,7 @@ class TmRingNodeInterface {
   bool idle() const {
     for (uint32_t subnet = 0; subnet < tm_ring_subnet_count(); ++subnet) {
       for (uint32_t direction = 0; direction < 2; ++direction) {
-        if (!inject_states_[subnet][direction].queue->empty()) {
+        if (!inject_states_[queue_index(subnet, direction)].queue->empty()) {
           return false;
         }
       }
