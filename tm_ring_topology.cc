@@ -39,8 +39,8 @@ void TmRingTopology::config(p_tm_ring_cfg_t cfg) {
         ring * h_ring_station_count_ / v_ring_num);
   }
 
-  uint32_t target = 0;
-  bool place_ha = true;
+  std::vector<uint32_t> target_stations;
+  target_stations.reserve(2 * target_num);
   for (uint32_t station = 0; station < h_ring_station_count_; ++station) {
     bool is_rbrg = false;
     for (uint32_t ring = 0; ring < v_ring_num; ++ring) {
@@ -52,14 +52,22 @@ void TmRingTopology::config(p_tm_ring_cfg_t cfg) {
     if (is_rbrg) {
       continue;
     }
-    if (place_ha) {
-      ha_locations_[target] =
-          TmRingLocation(TmRingDomainType::H_RING, 0, station);
-    } else {
-      l2_locations_[target++] =
-          TmRingLocation(TmRingDomainType::H_RING, 0, station);
+    target_stations.push_back(station);
+  }
+
+  uint32_t station_index = 0;
+  for (uint32_t target = 0; target < target_num; target += 2) {
+    ha_locations_[target] = TmRingLocation(
+        TmRingDomainType::H_RING, 0, target_stations[station_index++]);
+    l2_locations_[target] = TmRingLocation(
+        TmRingDomainType::H_RING, 0, target_stations[station_index++]);
+    if (target + 1 == target_num) {
+      break;
     }
-    place_ha = !place_ha;
+    l2_locations_[target + 1] = TmRingLocation(
+        TmRingDomainType::H_RING, 0, target_stations[station_index++]);
+    ha_locations_[target + 1] = TmRingLocation(
+        TmRingDomainType::H_RING, 0, target_stations[station_index++]);
   }
 }
 

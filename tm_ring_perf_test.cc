@@ -18,9 +18,9 @@ namespace {
 
 using namespace tm_engine;
 
-constexpr uint32_t kMultiVringBenchmarkMasters = 6;
-constexpr uint32_t kMultiVringBenchmarkMaxAicorePerVring = 3;
-
+constexpr uint32_t kMultiVringBenchmarkMasters = 8;
+constexpr uint32_t kMultiVringBenchmarkMaxAicorePerVring = 4;
+constexpr uint32_t kMultiVringBenchmarkBYTES_PER_MASTER =  1024* 1024;// 1 MiB
 void set_conn_stats(TmRingConnStats* stats, uint64_t packets,
                     uint64_t bytes, uint64_t busy_cycles,
                     uint64_t downstream_stalls, uint64_t serialization_stalls,
@@ -993,7 +993,7 @@ TmRingPerfCase make_128kb_case(const std::string& name, TmRingPerfOp op,
   perf_case.op = op;
   perf_case.pattern = pattern;
   perf_case.active_masters = masters;
-  perf_case.bytes_per_master = 128 * 1024;
+  perf_case.bytes_per_master =kMultiVringBenchmarkBYTES_PER_MASTER;
   perf_case.burst_bytes = burst_bytes;
   // The benchmark exercises the DDR-side endpoint rather than the L2 address
   // window used by the small functional smoke tests.

@@ -54,13 +54,25 @@ TEST(TmRingMultiRingTopologyTest, BalancesEighteenMastersAcrossThreeRings) {
   }
 }
 
+TEST(TmRingMultiRingTopologyTest, PlacesL2StationsBetweenSideHomeAgents) {
+  TmRingTopology topology;
+  topology.config(make_multiring_cfg(8, 4, 4));
+
+  const uint32_t ha_stations[] = {1, 4, 6, 9};
+  const uint32_t l2_stations[] = {2, 3, 7, 8};
+  for (uint32_t target = 0; target < 4; ++target) {
+    EXPECT_EQ(ha_stations[target], topology.ha_location(target).station_id);
+    EXPECT_EQ(l2_stations[target], topology.l2_location(target).station_id);
+  }
+}
+
 TEST(TmRingMultiRingTopologyTest, PlacesHringStationsAndRoutesLocations) {
   TmRingTopology topology;
   topology.config(make_multiring_cfg(18, 4, 8));
 
   const uint32_t rbrg_stations[] = {0, 3, 7};
-  const uint32_t ha_stations[] = {1, 4, 6, 9};
-  const uint32_t l2_stations[] = {2, 5, 8, 10};
+  const uint32_t ha_stations[] = {1, 5, 6, 10};
+  const uint32_t l2_stations[] = {2, 4, 8, 9};
   for (uint32_t ring = 0; ring < 3; ++ring) {
     const TmRingLocation location = topology.rbrg_h_location(ring);
     EXPECT_EQ(TmRingDomainType::H_RING, location.ring_type);
