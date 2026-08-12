@@ -58,6 +58,29 @@ TEST(TmRingPmuTest, ConnRejectMapsOneAttemptToOneTotalReject) {
   EXPECT_EQ(uint64_t(2), snapshot.conn_stall_breakdown().total());
 }
 
+TEST(TmRingPmuTest, ConnHotspotsKeepLegacySerializationFirstOrdering) {
+  TmRingPmu pmu;
+  TmRingConnPmuPort busy = pmu.register_conn(
+      TmRingDomainType::V_RING, 0, 1, TmRingPortDir::CW, 2,
+      TmRingPortDir::CCW);
+  TmRingConnPmuPort serialization = pmu.register_conn(
+      TmRingDomainType::V_RING, 0, 0, TmRingPortDir::CW, 1,
+      TmRingPortDir::CCW);
+  busy.accepted(TmRingSubnet::REQ, 4096, 100, 1);
+  serialization.accepted(TmRingSubnet::REQ, 16, 1, 1);
+  serialization.rejected(TmRingSubnet::REQ,
+                         TmRingConnRejectReason::SERIALIZER_BUSY);
+
+  const TmRingPmuSnapshot snapshot = pmu.snapshot(0);
+  const std::vector<TmRingConnHotspot> hotspots =
+      snapshot.top_busy_conns(TmRingSubnet::REQ, 2);
+  ASSERT_EQ(size_t(2), hotspots.size());
+  EXPECT_EQ(uint32_t(0), hotspots[0].src_station);
+  EXPECT_EQ(uint64_t(1), hotspots[0].serialization_busy_stall);
+  ASSERT_EQ(size_t(2), snapshot.conn.domains[0].edges.size());
+  EXPECT_EQ(uint32_t(0), snapshot.conn.domains[0].hottest.src_station);
+}
+
 TEST(TmRingPmuTest, HaAndL2EventsPopulateBucketsAndSources) {
   TmRingPmu pmu;
   TmRingHaPmuPort ha = pmu.register_home_agent(2, 8);

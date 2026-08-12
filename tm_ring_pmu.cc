@@ -167,6 +167,24 @@ TmRingConnHotspot conn_hotspot(const TmRingPmu::Impl::ConnEntry& entry,
   return hot;
 }
 
+bool conn_hotspot_hotter(const TmRingConnHotspot& left,
+                         const TmRingConnHotspot& right) {
+  if (left.serialization_busy_stall != right.serialization_busy_stall) {
+    return left.serialization_busy_stall > right.serialization_busy_stall;
+  }
+  if (left.busy_cycles != right.busy_cycles) {
+    return left.busy_cycles > right.busy_cycles;
+  }
+  if (left.bytes != right.bytes) {
+    return left.bytes > right.bytes;
+  }
+  if (left.src_station != right.src_station) {
+    return left.src_station < right.src_station;
+  }
+  return static_cast<uint32_t>(left.src_dir) <
+         static_cast<uint32_t>(right.src_dir);
+}
+
 }  // namespace
 
 TmRingQueuePmuPort::TmRingQueuePmuPort(TmRingPmu* pmu, uint32_t id)
@@ -733,13 +751,7 @@ TmRingPmuSnapshot TmRingPmu::snapshot(uint64_t cycle) const {
   }
   for (TmRingDomainStats& domain : snapshot.conn.domains) {
     domain.directed_edge_count /= 2;
-    std::sort(domain.edges.begin(), domain.edges.end(),
-              [](const TmRingConnHotspot& left,
-                 const TmRingConnHotspot& right) {
-                return left.busy_cycles != right.busy_cycles
-                           ? left.busy_cycles > right.busy_cycles
-                           : left.total_stalls > right.total_stalls;
-              });
+    std::sort(domain.edges.begin(), domain.edges.end(), conn_hotspot_hotter);
     if (!domain.edges.empty()) domain.hottest = domain.edges.front();
   }
   for (const Impl::CrossEntry& entry : impl_->crosses) {
@@ -781,13 +793,7 @@ std::vector<TmRingConnHotspot> TmRingPmuSnapshot::top_busy_conns(
       if (edge.subnet == subnet) result.push_back(edge);
     }
   }
-  std::sort(result.begin(), result.end(),
-            [](const TmRingConnHotspot& left,
-               const TmRingConnHotspot& right) {
-              return left.busy_cycles != right.busy_cycles
-                         ? left.busy_cycles > right.busy_cycles
-                         : left.total_stalls > right.total_stalls;
-            });
+  std::sort(result.begin(), result.end(), conn_hotspot_hotter);
   if (result.size() > limit) result.resize(limit);
   return result;
 }

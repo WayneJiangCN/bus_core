@@ -77,6 +77,20 @@ class TmRingConnFixture {
   p_tm_ring_conn_t conn;
 };
 
+void expect_conn_stats_eq(const TmRingConnStats& expected,
+                          const TmRingConnStats& actual) {
+  EXPECT_EQ(expected.packets, actual.packets);
+  EXPECT_EQ(expected.bytes, actual.bytes);
+  EXPECT_EQ(expected.busy_cycles, actual.busy_cycles);
+  EXPECT_EQ(expected.downstream_register_full_stall,
+            actual.downstream_register_full_stall);
+  EXPECT_EQ(expected.serialization_busy_stall,
+            actual.serialization_busy_stall);
+  EXPECT_EQ(expected.pipeline_full_stall, actual.pipeline_full_stall);
+  EXPECT_EQ(expected.send_reject_stall, actual.send_reject_stall);
+  EXPECT_EQ(expected.inflight_peak, actual.inflight_peak);
+}
+
 TEST(TmRingConnTest, SerializerAndPacketCompletionKeepExistingTiming) {
   {
     TmRingConnFixture serializer_fixture;
@@ -115,18 +129,22 @@ TEST(TmRingPmuTest, ConnReadinessProbeDoesNotRecordRejectUntilAcceptFails) {
   TmRingConnFixture fixture;
   ASSERT_TRUE(fixture.conn->accept_slot(fixture.make_dat()));
   const auto candidate = fixture.make_dat();
+  const TmRingPmuSnapshot before_probe =
+      fixture.pmu->snapshot(fixture.clk->time());
 
   EXPECT_FALSE(TmRingConnTestAccess::can_accept(*fixture.conn, candidate));
   EXPECT_FALSE(TmRingConnTestAccess::can_accept(*fixture.conn, candidate));
-  EXPECT_EQ(uint64_t(0),
-            fixture.pmu->snapshot(fixture.clk->time())
-                .conn.total[tm_ring_subnet_index(TmRingSubnet::DAT)]
-                .send_reject_stall);
+  const TmRingPmuSnapshot after_probe =
+      fixture.pmu->snapshot(fixture.clk->time());
+  expect_conn_stats_eq(
+      before_probe.conn.total[tm_ring_subnet_index(TmRingSubnet::DAT)],
+      after_probe.conn.total[tm_ring_subnet_index(TmRingSubnet::DAT)]);
 
   EXPECT_FALSE(fixture.conn->accept_slot(candidate));
+  const TmRingPmuSnapshot after_reject =
+      fixture.pmu->snapshot(fixture.clk->time());
   const TmRingConnStats& dat =
-      fixture.pmu->snapshot(fixture.clk->time())
-          .conn.total[tm_ring_subnet_index(TmRingSubnet::DAT)];
+      after_reject.conn.total[tm_ring_subnet_index(TmRingSubnet::DAT)];
   EXPECT_EQ(uint64_t(1), dat.send_reject_stall);
   EXPECT_EQ(uint64_t(1), dat.serialization_busy_stall);
 }
