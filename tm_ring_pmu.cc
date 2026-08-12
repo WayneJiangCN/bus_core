@@ -753,8 +753,14 @@ TmRingPmuSnapshot TmRingPmu::snapshot(uint64_t cycle) const {
   }
   for (TmRingDomainStats& domain : snapshot.conn.domains) {
     domain.directed_edge_count /= 2;
-    std::sort(domain.edges.begin(), domain.edges.end(), conn_hotspot_hotter);
-    if (!domain.edges.empty()) domain.hottest = domain.edges.front();
+    if (!domain.edges.empty()) {
+      domain.hottest = domain.edges.front();
+      for (size_t index = 1; index < domain.edges.size(); ++index) {
+        if (conn_hotspot_hotter(domain.edges[index], domain.hottest)) {
+          domain.hottest = domain.edges[index];
+        }
+      }
+    }
   }
   for (const Impl::CrossEntry& entry : impl_->crosses) {
     merge_cross(&snapshot.cross_station.total, entry.stats);

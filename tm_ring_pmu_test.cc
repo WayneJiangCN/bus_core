@@ -89,6 +89,7 @@ TEST(TmRingPmuTest, ConnHotspotsKeepLegacySerializationFirstOrdering) {
   EXPECT_EQ(uint32_t(0), hotspots[0].src_station);
   EXPECT_EQ(uint64_t(1), hotspots[0].serialization_busy_stall);
   ASSERT_EQ(size_t(6), snapshot.conn.domains[0].edges.size());
+  EXPECT_EQ(uint32_t(1), snapshot.conn.domains[0].edges[0].src_station);
   EXPECT_EQ(uint32_t(0), snapshot.conn.domains[0].hottest.src_station);
 }
 
