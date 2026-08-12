@@ -202,16 +202,10 @@ TmRingFabric::TmRingDomain TmRingFabric::create_domain(
 void TmRingFabric::attach_domain(TmRingDomain* domain) {
   for (uint32_t station_id = 0; station_id < domain->stations.size();
        ++station_id) {
-    const uint32_t cw_neighbor = topology_->neighbor_station(
-        domain->type, domain->ring_id, station_id, TmRingPortDir::CW);
-    const uint32_t ccw_neighbor = topology_->neighbor_station(
-        domain->type, domain->ring_id, station_id, TmRingPortDir::CCW);
     domain->stations[station_id]->attach(
         station_id,
         output_conn(*domain, station_id, TmRingPortDir::CW),
         output_conn(*domain, station_id, TmRingPortDir::CCW),
-        output_conn(*domain, cw_neighbor, TmRingPortDir::CCW),
-        output_conn(*domain, ccw_neighbor, TmRingPortDir::CW),
         domain->slot_pool);
   }
 

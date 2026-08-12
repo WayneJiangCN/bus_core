@@ -18,6 +18,9 @@ namespace {
 
 using namespace tm_engine;
 
+constexpr uint32_t kMultiVringBenchmarkMasters = 6;
+constexpr uint32_t kMultiVringBenchmarkMaxAicorePerVring = 3;
+
 void set_conn_stats(TmRingConnStats* stats, uint64_t packets,
                     uint64_t bytes, uint64_t busy_cycles,
                     uint64_t downstream_stalls, uint64_t serialization_stalls,
@@ -355,7 +358,7 @@ TEST(TmRingPerfEstimatorTest, CountsExplicitDomainEdgesAndRbrgPaths) {
   EXPECT_EQ(uint64_t(2), estimate.fabric_min_cycles);
 }
 
-TEST(TmRingPerfEstimatorTest, SharedSectorReadsUseOneFixedCwCarrier) {
+TEST(TmRingPerfEstimatorTest, SharedSectorReadsAlternateEqualFanoutSpans) {
   tm_init();
   auto cfg = make_perf_cfg(3, 1);
   TmRingTopology topology;
@@ -365,38 +368,35 @@ TEST(TmRingPerfEstimatorTest, SharedSectorReadsUseOneFixedCwCarrier) {
   const uint32_t carrier_sizes[] = {128, 256, 512};
   for (const uint32_t carrier_size : carrier_sizes) {
     std::vector<TmRingPerfTxn> trace;
-    for (uint32_t master = 0; master < 3; ++master) {
-      TmRingPerfTxn txn;
-      txn.master_port = master;
-      txn.cmd = PldCmd::RD;
-      txn.addr = 0;
-      txn.size = carrier_size;
-      trace.push_back(txn);
+    for (uint32_t line = 0; line < 2; ++line) {
+      for (uint32_t master = 0; master < 3; ++master) {
+        TmRingPerfTxn txn;
+        txn.master_port = master;
+        txn.cmd = PldCmd::RD;
+        txn.addr = line * 512;
+        txn.size = carrier_size;
+        txn.ordinal = line;
+        trace.push_back(txn);
+      }
     }
 
     const TmRingPerfEstimate estimate =
         tm_ring_estimate_fabric(trace, topology, *cfg);
     const uint64_t packet_cycles = carrier_size / 128;
-    const TmRingPerfEdgeKey h_dat_edge(
-        TmRingDomainType::H_RING, 0, TmRingSubnet::DAT, 2,
-        TmRingPortDir::CW);
-    const TmRingPerfEdgeKey v0_dat_edge(
+    const TmRingPerfEdgeKey cw_edge(
         TmRingDomainType::V_RING, 0, TmRingSubnet::DAT, 0,
         TmRingPortDir::CW);
-    const TmRingPerfEdgeKey v1_dat_edge(
-        TmRingDomainType::V_RING, 0, TmRingSubnet::DAT, 1,
-        TmRingPortDir::CW);
-    const TmRingPerfEdgeKey v2_dat_edge(
-        TmRingDomainType::V_RING, 0, TmRingSubnet::DAT, 2,
-        TmRingPortDir::CW);
+    const TmRingPerfEdgeKey ccw_edge(
+        TmRingDomainType::V_RING, 0, TmRingSubnet::DAT, 0,
+        TmRingPortDir::CCW);
     const TmRingPerfRbrgKey dat_path(0, TmRingRbrgPath::H_TO_V_DAT);
-    EXPECT_EQ(uint64_t(4), estimate.physical_packets);
-    EXPECT_EQ(uint64_t(3) * carrier_size, estimate.total_useful_bytes);
-    EXPECT_EQ(packet_cycles, estimate.edge_cycles.at(h_dat_edge));
-    EXPECT_EQ(packet_cycles, estimate.edge_cycles.at(v0_dat_edge));
-    EXPECT_EQ(packet_cycles, estimate.edge_cycles.at(v1_dat_edge));
-    EXPECT_EQ(packet_cycles, estimate.edge_cycles.at(v2_dat_edge));
-    EXPECT_EQ(packet_cycles, estimate.rbrg_path_cycles.at(dat_path));
+    EXPECT_EQ(uint64_t(8), estimate.physical_packets);
+    EXPECT_EQ(uint64_t(6) * carrier_size, estimate.total_useful_bytes);
+    EXPECT_EQ(uint64_t(2), estimate.v_carriers);
+    EXPECT_EQ(packet_cycles, estimate.edge_cycles.at(cw_edge));
+    EXPECT_EQ(packet_cycles, estimate.edge_cycles.at(ccw_edge));
+    EXPECT_EQ(uint64_t(2) * packet_cycles,
+              estimate.rbrg_path_cycles.at(dat_path));
   }
 }
 
@@ -1237,57 +1237,66 @@ void run_aggregation_wave_test(
 TEST(RingPerfBenchmark, MultiVringPrivateRead128B) {
   run_multi_vring_128kb_benchmark(
       "multi_vring_private_read_128b", TmRingPerfOp::READ,
-      TmRingPerfPattern::SEQUENTIAL_PRIVATE, 18, 8, 128);
+      TmRingPerfPattern::SEQUENTIAL_PRIVATE, kMultiVringBenchmarkMasters,
+      kMultiVringBenchmarkMaxAicorePerVring, 128);
 }
 
 TEST(RingPerfBenchmark, MultiVringPrivateWrite128B) {
   run_multi_vring_128kb_benchmark(
       "multi_vring_private_write_128b", TmRingPerfOp::WRITE,
-      TmRingPerfPattern::SEQUENTIAL_PRIVATE, 18, 8, 128);
+      TmRingPerfPattern::SEQUENTIAL_PRIVATE, kMultiVringBenchmarkMasters,
+      kMultiVringBenchmarkMaxAicorePerVring, 128);
 }
 
 TEST(RingPerfBenchmark, MultiVringIndependentReadWrite128B) {
   run_multi_vring_128kb_benchmark(
       "multi_vring_independent_read_write_128b", TmRingPerfOp::READ_WRITE,
-      TmRingPerfPattern::SEQUENTIAL_PRIVATE, 18, 8, 128);
+      TmRingPerfPattern::SEQUENTIAL_PRIVATE, kMultiVringBenchmarkMasters,
+      kMultiVringBenchmarkMaxAicorePerVring, 128);
 }
 
 TEST(RingPerfBenchmark, MultiVringSameLineScatterRead128B) {
   run_multi_vring_aggregated_read_benchmark(
       "multi_vring_same_line_scatter_read_128b",
-      TmRingPerfPattern::SAME_LINE_SCATTER, 18, 8, 128, 0,
+      TmRingPerfPattern::SAME_LINE_SCATTER, kMultiVringBenchmarkMasters,
+      kMultiVringBenchmarkMaxAicorePerVring, 128, 0,
       PerfAggregationExpectation::SCATTER);
 }
 
 TEST(RingPerfBenchmark, MultiVringSameLineScatterRead256B) {
   run_multi_vring_aggregated_read_benchmark(
       "multi_vring_same_line_scatter_read_256b",
-      TmRingPerfPattern::SAME_LINE_SCATTER, 18, 8, 256, 0,
+      TmRingPerfPattern::SAME_LINE_SCATTER, kMultiVringBenchmarkMasters,
+      kMultiVringBenchmarkMaxAicorePerVring, 256, 0,
       PerfAggregationExpectation::SCATTER);
 }
 
 TEST(RingPerfBenchmark, MultiVringSharedRead128B) {
   run_multi_vring_aggregated_read_benchmark(
       "multi_vring_shared_read_128b", TmRingPerfPattern::SEQUENTIAL_SHARED,
-      18, 8, 128, 512,
+      kMultiVringBenchmarkMasters, kMultiVringBenchmarkMaxAicorePerVring,
+      128, 512,
       PerfAggregationExpectation::MULTICAST);
 }
 
 TEST(RingPerfBenchmark, MultiVringSharedRead256B) {
   run_multi_vring_aggregated_read_benchmark(
       "multi_vring_shared_read_256b", TmRingPerfPattern::SEQUENTIAL_SHARED,
-      18, 8, 256, 512, PerfAggregationExpectation::MULTICAST);
+      kMultiVringBenchmarkMasters, kMultiVringBenchmarkMaxAicorePerVring,
+      256, 512, PerfAggregationExpectation::MULTICAST);
 }
 
 TEST(RingPerfBenchmark, MultiVringSharedRead512B) {
   run_multi_vring_aggregated_read_benchmark(
       "multi_vring_shared_read_512b", TmRingPerfPattern::SEQUENTIAL_SHARED,
-      18, 8, 512, 512, PerfAggregationExpectation::MULTICAST);
+      kMultiVringBenchmarkMasters, kMultiVringBenchmarkMaxAicorePerVring,
+      512, 512, PerfAggregationExpectation::MULTICAST);
 }
 
 TEST(RingPerfBenchmark, MultiVringCrossLineNonMergedRead1024B) {
-  const uint32_t masters = 18;
-  const uint32_t max_aicore_per_vring = 8;
+  const uint32_t masters = kMultiVringBenchmarkMasters;
+  const uint32_t max_aicore_per_vring =
+      kMultiVringBenchmarkMaxAicorePerVring;
   const uint32_t expected_vrings =
       (masters + max_aicore_per_vring - 1) / max_aicore_per_vring;
   TmRingPerfCase perf_case = make_128kb_case(
@@ -1322,48 +1331,56 @@ TEST(RingPerfBenchmark, MultiVringCrossLineNonMergedRead1024B) {
 
 TEST(RingPerfBenchmark, MultiVringNoMergeRead128B) {
   run_multi_vring_no_merge_read_benchmark(
-      "multi_vring_no_merge_read_128b", 18, 8, 128);
+      "multi_vring_no_merge_read_128b", kMultiVringBenchmarkMasters,
+      kMultiVringBenchmarkMaxAicorePerVring, 128);
 }
 
 TEST(RingPerfBenchmark, MultiVringNoMergeRead256B) {
   run_multi_vring_no_merge_read_benchmark(
-      "multi_vring_no_merge_read_256b", 18, 8, 256);
+      "multi_vring_no_merge_read_256b", kMultiVringBenchmarkMasters,
+      kMultiVringBenchmarkMaxAicorePerVring, 256);
 }
 
 TEST(RingPerfBenchmark, MultiVringNoMergeRead512B) {
   run_multi_vring_no_merge_read_benchmark(
-      "multi_vring_no_merge_read_512b", 18, 8, 512);
+      "multi_vring_no_merge_read_512b", kMultiVringBenchmarkMasters,
+      kMultiVringBenchmarkMaxAicorePerVring, 512);
 }
 
 TEST(RingAggregationWaveTest, SameLineScatterRead128B) {
   run_aggregation_wave_test(
       "wave_same_line_scatter_read_128b",
-      TmRingPerfPattern::SAME_LINE_SCATTER, 18, 8, 128, 0, 256,
+      TmRingPerfPattern::SAME_LINE_SCATTER, kMultiVringBenchmarkMasters,
+      kMultiVringBenchmarkMaxAicorePerVring, 128, 0, 256,
       PerfAggregationExpectation::SCATTER);
 }
 
 TEST(RingAggregationWaveTest, SameLineScatterRead256B) {
   run_aggregation_wave_test(
       "wave_same_line_scatter_read_256b",
-      TmRingPerfPattern::SAME_LINE_SCATTER, 18, 8, 256, 0, 256,
+      TmRingPerfPattern::SAME_LINE_SCATTER, kMultiVringBenchmarkMasters,
+      kMultiVringBenchmarkMaxAicorePerVring, 256, 0, 256,
       PerfAggregationExpectation::SCATTER);
 }
 
 TEST(RingAggregationWaveTest, SharedRead128B) {
   run_aggregation_wave_test(
-      "wave_shared_read_128b", TmRingPerfPattern::SEQUENTIAL_SHARED, 18, 8,
+      "wave_shared_read_128b", TmRingPerfPattern::SEQUENTIAL_SHARED,
+      kMultiVringBenchmarkMasters, kMultiVringBenchmarkMaxAicorePerVring,
       128, 512, 256, PerfAggregationExpectation::MULTICAST);
 }
 
 TEST(RingAggregationWaveTest, SharedRead256B) {
   run_aggregation_wave_test(
-      "wave_shared_read_256b", TmRingPerfPattern::SEQUENTIAL_SHARED, 18, 8,
+      "wave_shared_read_256b", TmRingPerfPattern::SEQUENTIAL_SHARED,
+      kMultiVringBenchmarkMasters, kMultiVringBenchmarkMaxAicorePerVring,
       256, 512, 256, PerfAggregationExpectation::MULTICAST);
 }
 
 TEST(RingAggregationWaveTest, SharedRead512B) {
   run_aggregation_wave_test(
-      "wave_shared_read_512b", TmRingPerfPattern::SEQUENTIAL_SHARED, 18, 8,
+      "wave_shared_read_512b", TmRingPerfPattern::SEQUENTIAL_SHARED,
+      kMultiVringBenchmarkMasters, kMultiVringBenchmarkMaxAicorePerVring,
       512, 512, 256, PerfAggregationExpectation::MULTICAST);
 }
 

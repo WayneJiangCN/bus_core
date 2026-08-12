@@ -145,31 +145,25 @@ void add_rbrg_path_cycles(TmRingPerfEstimate* estimate, uint32_t rbrg_id,
   estimate->rbrg_path_cycles[key] += packet_cycles(cmd, size, rbrg_width);
 }
 
-void add_fixed_cw_path(TmRingPerfEstimate* estimate, PldCmd cmd,
-                       uint32_t size, const TmRingLocation& source,
-                       const std::vector<TmRingLocation>& recipients,
-                       const TmRingTopology& topology,
-                       uint32_t link_width) {
+void add_fanout_path(TmRingPerfEstimate* estimate, PldCmd cmd,
+                     uint32_t size, const TmRingLocation& source,
+                     const std::vector<TmRingLocation>& recipients,
+                     TmRingPortDir direction,
+                     const TmRingTopology& topology,
+                     uint32_t link_width) {
   if (recipients.empty()) {
     return;
   }
 
-  const uint32_t station_count = domain_station_count(source, topology);
-  uint32_t last_distance = 0;
-  for (const TmRingLocation& recipient : recipients) {
-    const uint32_t distance =
-        (recipient.station_id + station_count - source.station_id) %
-        station_count;
-    last_distance = std::max(last_distance, distance);
-  }
+  const uint32_t span = topology.fanout_span(source, recipients, direction);
   const uint32_t packet_cost = packet_cycles(cmd, size, link_width);
   uint32_t current = source.station_id;
-  for (uint32_t hop = 0; hop < last_distance; ++hop) {
+  for (uint32_t hop = 0; hop < span; ++hop) {
     TmRingLocation edge_source(source.ring_type, source.ring_id, current);
-    add_edge_cycles(estimate, tm_ring_cmd_subnet(cmd), edge_source,
-                    TmRingPortDir::CW, packet_cost);
+    add_edge_cycles(estimate, tm_ring_cmd_subnet(cmd), edge_source, direction,
+                    packet_cost);
     current = topology.neighbor_station(source.ring_type, source.ring_id,
-                                        current, TmRingPortDir::CW);
+                                        current, direction);
   }
 }
 
@@ -432,6 +426,8 @@ TmRingPerfEstimate tm_ring_estimate_fabric(
     TmRingPerfAggregationModel aggregation_model) {
   TmRingPerfEstimate estimate;
   std::map<ReadGroupKey, std::vector<const TmRingPerfTxn*> > read_groups;
+  std::vector<TmRingPortDir> fanout_tie_next_direction(
+      topology.v_ring_count(), TmRingPortDir::CW);
 
   for (const TmRingPerfTxn& txn : trace) {
     estimate.total_useful_bytes += txn.size;
@@ -555,9 +551,25 @@ TmRingPerfEstimate tm_ring_estimate_fabric(
       for (const TmRingPerfTxn* request : v_ring_group.second) {
         recipients.push_back(topology.master_location(request->master_port));
       }
-      add_fixed_cw_path(&estimate, PldCmd::RD_RSP, carrier_size,
-                        topology.rbrg_v_location(rbrg_id), recipients,
-                        topology, ring_cfg.ring_link_width_bytes);
+      const TmRingLocation v_source = topology.rbrg_v_location(rbrg_id);
+      const uint32_t cw_span = topology.fanout_span(
+          v_source, recipients, TmRingPortDir::CW);
+      const uint32_t ccw_span = topology.fanout_span(
+          v_source, recipients, TmRingPortDir::CCW);
+      TmRingPortDir direction = TmRingPortDir::CW;
+      if (cw_span < ccw_span) {
+        direction = TmRingPortDir::CW;
+      } else if (ccw_span < cw_span) {
+        direction = TmRingPortDir::CCW;
+      } else {
+        direction = fanout_tie_next_direction[rbrg_id];
+        fanout_tie_next_direction[rbrg_id] =
+            direction == TmRingPortDir::CW ? TmRingPortDir::CCW
+                                           : TmRingPortDir::CW;
+      }
+      add_fanout_path(&estimate, PldCmd::RD_RSP, carrier_size, v_source,
+                      recipients, direction, topology,
+                      ring_cfg.ring_link_width_bytes);
     }
   }
 

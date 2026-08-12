@@ -27,9 +27,14 @@ class TmRingSlotPool {
     std::fill(occupancy_.begin(), occupancy_.end(), 0);
   }
 
+  bool can_acquire(TmRingSubnet subnet, TmRingPortDir direction) const {
+    const uint32_t idx = slot_index(subnet, direction);
+    return occupancy_[idx] + reserved_empty_slots_ < capacity_per_lane_;
+  }
+
   bool try_acquire(TmRingSubnet subnet, TmRingPortDir direction) {
     const uint32_t idx = slot_index(subnet, direction);
-    if (occupancy_[idx] + reserved_empty_slots_ >= capacity_per_lane_) {
+    if (!can_acquire(subnet, direction)) {
       return false;
     }
     occupancy_[idx]++;

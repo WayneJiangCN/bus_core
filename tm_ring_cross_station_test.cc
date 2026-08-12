@@ -6,6 +6,18 @@ namespace {
 
 using namespace tm_engine;
 
+TEST(TmRingSlotPoolTest, CanAcquireDoesNotConsumeTheReservedSlot) {
+  TmRingSlotPool slot_pool(1, 0);
+
+  EXPECT_TRUE(slot_pool.can_acquire(TmRingSubnet::DAT, TmRingPortDir::CW));
+  EXPECT_TRUE(slot_pool.can_acquire(TmRingSubnet::DAT, TmRingPortDir::CW));
+  ASSERT_TRUE(slot_pool.try_acquire(TmRingSubnet::DAT, TmRingPortDir::CW));
+  EXPECT_FALSE(slot_pool.can_acquire(TmRingSubnet::DAT,
+                                     TmRingPortDir::CW));
+  slot_pool.release(TmRingSubnet::DAT, TmRingPortDir::CW);
+  EXPECT_TRUE(slot_pool.can_acquire(TmRingSubnet::DAT, TmRingPortDir::CW));
+}
+
 class TmRingCrossStationFixture {
  public:
   TmRingCrossStationFixture() {
@@ -26,40 +38,48 @@ class TmRingCrossStationFixture {
 
     cw_source_to_destination = tm_make_ring_conn(
         "deflection_cw_source_to_destination", clk, 1, 16, 1,
-        TmRingPortDir::CW);
+        TmRingPortDir::CCW);
     cw_destination_to_source = tm_make_ring_conn(
         "deflection_cw_destination_to_source", clk, 1, 16, 0,
-        TmRingPortDir::CW);
+        TmRingPortDir::CCW);
     ccw_source_to_destination = tm_make_ring_conn(
         "deflection_ccw_source_to_destination", clk, 1, 16, 1,
-        TmRingPortDir::CCW);
+        TmRingPortDir::CW);
     ccw_destination_to_source = tm_make_ring_conn(
         "deflection_ccw_destination_to_source", clk, 1, 16, 0,
-        TmRingPortDir::CCW);
+        TmRingPortDir::CW);
 
     source->attach(0, cw_source_to_destination, ccw_source_to_destination,
-                   cw_destination_to_source, ccw_destination_to_source,
                    slot_pool);
     destination->attach(1, cw_destination_to_source,
-                        ccw_destination_to_source, cw_source_to_destination,
-                        ccw_source_to_destination, slot_pool);
+                        ccw_destination_to_source, slot_pool);
     source->bind_node_interface(source_node);
     destination->bind_node_interface(destination_node);
 
     attach_to_destination(cw_source_to_destination, destination,
-                          TmRingPortDir::CW);
+                          TmRingPortDir::CCW);
     attach_to_destination(cw_destination_to_source, source,
-                          TmRingPortDir::CW);
+                          TmRingPortDir::CCW);
     attach_to_destination(ccw_source_to_destination, destination,
-                          TmRingPortDir::CCW);
+                          TmRingPortDir::CW);
     attach_to_destination(ccw_destination_to_source, source,
-                          TmRingPortDir::CCW);
+                          TmRingPortDir::CW);
   }
 
   p_tm_pld_t make_req(uint32_t destination_station) const {
     p_tm_pld_t packet = tm_make_pld(PldCmd::RD, 0, 16);
     packet->ring_subnet = static_cast<uint32_t>(TmRingSubnet::REQ);
     packet->ring_traffic_class = static_cast<uint32_t>(PldCmd::RD);
+    packet->ring_direction = static_cast<uint32_t>(TmRingPortDir::CW);
+    tm_pld_set_ring_route(packet, static_cast<uint32_t>(PldCmd::RD), 0, 0,
+                          destination_station);
+    return packet;
+  }
+
+  p_tm_pld_t make_dat(uint32_t destination_station) const {
+    p_tm_pld_t packet = tm_make_pld(PldCmd::RD_RSP, 0, 128);
+    packet->ring_subnet = static_cast<uint32_t>(TmRingSubnet::DAT);
+    packet->ring_traffic_class = static_cast<uint32_t>(PldCmd::RD_RSP);
     packet->ring_direction = static_cast<uint32_t>(TmRingPortDir::CW);
     tm_pld_set_ring_route(packet, static_cast<uint32_t>(PldCmd::RD), 0, 0,
                           destination_station);
@@ -144,6 +164,68 @@ TEST(TmRingCrossStationTest,
   EXPECT_GT(stats.delay_cycles_max, uint64_t(0));
   EXPECT_TRUE(fixture.destination_node->eject_q(TmRingSubnet::REQ)->empty());
   EXPECT_EQ(uint64_t(1), fixture.destination->stats().ejected_packets);
+}
+
+TEST(TmRingCrossStationTest, TransitAndLocalHeadsShareOneOutputFairly) {
+  TmRingCrossStationFixture fixture;
+  ASSERT_TRUE(fixture.source_node->push_inject(
+      TmRingSubnet::DAT, TmRingPortDir::CW, fixture.make_dat(1)));
+
+  for (uint32_t cycle = 0; cycle < 64; ++cycle) {
+    if (fixture.source_node->front_inject(TmRingSubnet::DAT,
+                                          TmRingPortDir::CW) == nullptr) {
+      ASSERT_TRUE(fixture.source_node->push_inject(
+          TmRingSubnet::DAT, TmRingPortDir::CW, fixture.make_dat(1)));
+    }
+    p_tm_com_que_t transit = fixture.source->transit_in_reg(
+        TmRingPortDir::CCW, TmRingSubnet::DAT);
+    if (transit->empty() && fixture.slot_pool->can_acquire(
+                                TmRingSubnet::DAT, TmRingPortDir::CW)) {
+      ASSERT_TRUE(fixture.slot_pool->try_acquire(
+          TmRingSubnet::DAT, TmRingPortDir::CW));
+      transit->push_back(fixture.make_dat(1));
+    }
+    if (fixture.destination_node->front_eject(TmRingSubnet::DAT) != nullptr) {
+      fixture.destination_node->pop_eject(TmRingSubnet::DAT);
+    }
+    tm_start(1);
+  }
+
+  EXPECT_GT(fixture.source->stats().transit_slots, uint64_t(1));
+  EXPECT_GT(fixture.source->stats().injected_packets, uint64_t(1));
+}
+
+TEST(TmRingCrossStationTest, FailedLocalWinnerKeepsHeadAndPriority) {
+  TmRingCrossStationFixture fixture;
+  ASSERT_TRUE(fixture.slot_pool->try_acquire(
+      TmRingSubnet::DAT, TmRingPortDir::CW));
+  ASSERT_TRUE(fixture.cw_source_to_destination->accept_slot(
+      fixture.make_dat(1)));
+
+  ASSERT_TRUE(fixture.source_node->push_inject(
+      TmRingSubnet::DAT, TmRingPortDir::CW, fixture.make_dat(1)));
+  ASSERT_TRUE(fixture.slot_pool->try_acquire(
+      TmRingSubnet::DAT, TmRingPortDir::CW));
+  p_tm_com_que_t transit = fixture.source->transit_in_reg(
+      TmRingPortDir::CCW, TmRingSubnet::DAT);
+  transit->push_back(fixture.make_dat(1));
+
+  tm_start(1);
+  ASSERT_NE(nullptr, fixture.source_node->front_inject(
+                         TmRingSubnet::DAT, TmRingPortDir::CW));
+  ASSERT_FALSE(transit->empty());
+
+  for (uint32_t cycle = 0; cycle < 32; ++cycle) {
+    tm_start(1);
+    if (fixture.source_node->front_inject(
+            TmRingSubnet::DAT, TmRingPortDir::CW) == nullptr ||
+        transit->empty()) {
+      break;
+    }
+  }
+  EXPECT_EQ(nullptr, fixture.source_node->front_inject(
+                         TmRingSubnet::DAT, TmRingPortDir::CW));
+  EXPECT_FALSE(transit->empty());
 }
 
 }  // namespace

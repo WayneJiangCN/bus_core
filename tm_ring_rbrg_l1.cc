@@ -2,6 +2,7 @@
 
 #include <algorithm>
 #include <stdexcept>
+#include <vector>
 
 #include "tm_ring_fanout.h"
 
@@ -74,6 +75,7 @@ void TmRingRbrgL1::reset() {
     state.queue_occupancy = 0;
     state.transfer_q->clear();
   }
+  fanout_tie_next_direction_ = TmRingPortDir::CW;
   v_niu_->reset();
   h_niu_->reset();
   clear_stats();
@@ -258,18 +260,38 @@ void TmRingRbrgL1::prepare_v_segment(p_tm_pld_t pld) {
       pld->ring_fanout.reset();
     } else {
       uint64_t pending_stations = 0;
+      std::vector<TmRingLocation> recipient_locations;
+      recipient_locations.reserve(pld->ring_fanout->recipients.size());
       for (const TmRingFanoutRecipient& recipient :
            pld->ring_fanout->recipients) {
         if (recipient.dst_ring_id != v_ring_id_) {
           throw std::logic_error("Mixed V-Ring H-to-V DAT carrier");
         }
         pending_stations |= tm_ring_station_bit(recipient.dst_node);
+        recipient_locations.push_back(TmRingLocation(
+            TmRingDomainType::V_RING, v_ring_id_, recipient.dst_node));
+      }
+      const uint32_t cw_span = topology_->fanout_span(
+          src, recipient_locations, TmRingPortDir::CW);
+      const uint32_t ccw_span = topology_->fanout_span(
+          src, recipient_locations, TmRingPortDir::CCW);
+      TmRingPortDir direction = TmRingPortDir::CW;
+      if (cw_span < ccw_span) {
+        direction = TmRingPortDir::CW;
+      } else if (ccw_span < cw_span) {
+        direction = TmRingPortDir::CCW;
+      } else {
+        direction = fanout_tie_next_direction_;
+        fanout_tie_next_direction_ =
+            fanout_tie_next_direction_ == TmRingPortDir::CW
+                ? TmRingPortDir::CCW
+                : TmRingPortDir::CW;
       }
       pld->ring_fanout->pending_stations = pending_stations;
       pld->ring_fanout->active_on_ring = true;
       pld->mst_addr = src.station_id;
       pld->slv_addr = first.dst_node;
-      pld->ring_direction = static_cast<uint32_t>(TmRingPortDir::CW);
+      pld->ring_direction = static_cast<uint32_t>(direction);
       clear_ring_local_state(pld);
       return;
     }

@@ -98,6 +98,39 @@ TEST(TmRingMultiRingTopologyTest, ChoosesCwForEqualDistance) {
                                                     0, 3)));
 }
 
+TEST(TmRingMultiRingTopologyTest, MeasuresFanoutSpanInBothDirections) {
+  TmRingTopology topology;
+  topology.config(make_multiring_cfg(4, 1, 8));
+
+  const TmRingLocation source = topology.rbrg_v_location(0);
+  std::vector<TmRingLocation> recipients;
+  recipients.push_back(topology.master_location(0));
+  recipients.push_back(topology.master_location(1));
+  EXPECT_EQ(uint32_t(2),
+            topology.fanout_span(source, recipients, TmRingPortDir::CW));
+  EXPECT_EQ(uint32_t(4),
+            topology.fanout_span(source, recipients, TmRingPortDir::CCW));
+
+  recipients.push_back(topology.master_location(2));
+  recipients.push_back(topology.master_location(3));
+  EXPECT_EQ(uint32_t(4),
+            topology.fanout_span(source, recipients, TmRingPortDir::CW));
+  EXPECT_EQ(uint32_t(4),
+            topology.fanout_span(source, recipients, TmRingPortDir::CCW));
+  EXPECT_THROW(
+      topology.fanout_span(source, recipients, TmRingPortDir::LOCAL),
+      std::invalid_argument);
+
+  TmRingTopology split_topology;
+  split_topology.config(make_multiring_cfg(4, 1, 2));
+  std::vector<TmRingLocation> cross_ring_recipients;
+  cross_ring_recipients.push_back(split_topology.master_location(2));
+  EXPECT_THROW(split_topology.fanout_span(
+                   split_topology.rbrg_v_location(0),
+                   cross_ring_recipients, TmRingPortDir::CW),
+               std::invalid_argument);
+}
+
 class TmRingMultiRingFabricTest : public ::testing::Test {
  protected:
   struct RunResult {
@@ -138,19 +171,23 @@ class TmRingMultiRingFabricTest : public ::testing::Test {
     std::vector<std::vector<TmRingPerfTxn>> traces(4);
     const uint32_t master_count = static_cast<uint32_t>(traces.size());
     for (uint32_t master_id = 0; master_id < master_count; ++master_id) {
-      TmRingPerfTxn read;
-      read.master_port = master_id;
-      read.cmd = PldCmd::RD;
-      read.addr = 0x0000;
-      read.size = 128;
-      traces[master_id].push_back(read);
+      for (uint32_t line = 0; line < 2; ++line) {
+        TmRingPerfTxn read;
+        read.master_port = master_id;
+        read.cmd = PldCmd::RD;
+        read.addr = line * 512;
+        read.size = 128;
+        read.ordinal = line;
+        traces[master_id].push_back(read);
+      }
     }
-    return run_fabric("cross_vring_fanout", 100, traces);
+    return run_fabric("cross_vring_fanout", 100, traces, true);
   }
 
   RunResult run_fabric(
       const std::string& scenario_name, uint32_t l2_hit_rate_pct,
-      const std::vector<std::vector<TmRingPerfTxn>>& traces) {
+      const std::vector<std::vector<TmRingPerfTxn>>& traces,
+      bool coordinate_waves = false) {
     RunResult result;
     const std::string config_path = "../etc/pem_config_cloud.toml";
     std::ifstream config_file(config_path.c_str());
@@ -187,6 +224,11 @@ class TmRingMultiRingFabricTest : public ::testing::Test {
     auto biu_cfg = cfg->get_cfg_tab("BIU");
     std::vector<p_pem_biu_t> bius;
     std::vector<std::shared_ptr<TmRingPerfMaster>> masters;
+    std::shared_ptr<TmRingPerfWaveCoordinator> wave_coordinator;
+    if (coordinate_waves) {
+      wave_coordinator =
+          std::make_shared<TmRingPerfWaveCoordinator>(master_count);
+    }
     for (uint32_t master_id = 0; master_id < master_count; ++master_id) {
       p_pem_biu_t biu(new pem_biu_t(
           scenario_name + "_biu" + std::to_string(master_id), clk, biu_cfg));
@@ -199,7 +241,7 @@ class TmRingMultiRingFabricTest : public ::testing::Test {
       std::shared_ptr<TmRingPerfMaster> master(new TmRingPerfMaster());
       master->config(
           scenario_name + "_master" + std::to_string(master_id), clk,
-          master_id, traces[master_id]);
+          master_id, traces[master_id], wave_coordinator);
       master->attach(biu);
       master->build();
       masters.push_back(master);
@@ -319,10 +361,23 @@ TEST_F(TmRingMultiRingFabricTest,
             .packets;
   }
 
-  EXPECT_EQ(uint64_t(4), logical_read_responses);
-  EXPECT_EQ(uint64_t(1), backend_or_functional_line_reads);
-  EXPECT_EQ(uint64_t(2), l2_h_ring_carriers);
-  EXPECT_EQ(uint64_t(2), rbrg_v_ring_dat_carriers);
+  EXPECT_EQ(uint64_t(8), logical_read_responses);
+  EXPECT_EQ(uint64_t(2), backend_or_functional_line_reads);
+  EXPECT_EQ(uint64_t(4), l2_h_ring_carriers);
+  EXPECT_EQ(uint64_t(4), rbrg_v_ring_dat_carriers);
+
+  uint32_t v_ring_domains = 0;
+  for (const TmRingDomainStats& domain :
+       result.perf_result.ring_domain_stats) {
+    if (domain.type != TmRingDomainType::V_RING) {
+      continue;
+    }
+    ++v_ring_domains;
+    const uint32_t dat = static_cast<uint32_t>(TmRingSubnet::DAT);
+    EXPECT_GT(domain.cw[dat].busy_cycles, uint64_t(0));
+    EXPECT_GT(domain.ccw[dat].busy_cycles, uint64_t(0));
+  }
+  EXPECT_EQ(uint32_t(2), v_ring_domains);
   EXPECT_EQ(uint64_t(0), result.perf_result.protocol_errors);
   EXPECT_TRUE(result.idle);
   EXPECT_TRUE(result.fabric->idle());

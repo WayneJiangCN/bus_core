@@ -80,6 +80,7 @@ class TmRingRbrgL1 : public tm_engine::TmModule {
   p_tm_ring_node_interface_t v_niu_ = nullptr;
   p_tm_ring_node_interface_t h_niu_ = nullptr;
   std::array<PathState, 4> paths_;
+  TmRingPortDir fanout_tie_next_direction_ = TmRingPortDir::CW;
   TmRingRbrgStats stats_;
 };
 

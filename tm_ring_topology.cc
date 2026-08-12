@@ -185,6 +185,50 @@ TmRingPortDir TmRingTopology::route_direction(
                                         : TmRingPortDir::CCW;
 }
 
+uint32_t TmRingTopology::fanout_span(
+    const TmRingLocation& src,
+    const std::vector<TmRingLocation>& recipients,
+    TmRingPortDir direction) const {
+  if (direction != TmRingPortDir::CW && direction != TmRingPortDir::CCW) {
+    throw std::invalid_argument("Fanout direction must be CW or CCW");
+  }
+
+  uint32_t station_count = h_ring_station_count_;
+  if (src.ring_type == TmRingDomainType::H_RING) {
+    if (src.ring_id != 0) {
+      throw std::invalid_argument("Invalid H-Ring location");
+    }
+  } else {
+    if (src.ring_id >= v_ring_station_counts_.size()) {
+      throw std::invalid_argument("Invalid V-Ring location");
+    }
+    station_count = v_ring_station_counts_[src.ring_id];
+  }
+  if (src.station_id >= station_count) {
+    throw std::invalid_argument("Invalid fanout source station");
+  }
+
+  uint32_t span = 0;
+  for (const TmRingLocation& recipient : recipients) {
+    if (recipient.ring_type != src.ring_type ||
+        recipient.ring_id != src.ring_id ||
+        recipient.station_id >= station_count) {
+      throw std::invalid_argument(
+          "Fanout recipients must share a valid ring domain");
+    }
+    const uint32_t distance =
+        direction == TmRingPortDir::CW
+            ? (recipient.station_id + station_count - src.station_id) %
+                  station_count
+            : (src.station_id + station_count - recipient.station_id) %
+                  station_count;
+    if (distance > span) {
+      span = distance;
+    }
+  }
+  return span;
+}
+
 uint32_t TmRingTopology::neighbor_station(TmRingDomainType type,
                                           uint32_t ring_id,
                                           uint32_t station_id,

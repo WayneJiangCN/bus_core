@@ -33,6 +33,10 @@ class TmRingTopology
     uint32_t master_vring(uint32_t master_port) const;
     TmRingPortDir route_direction(const TmRingLocation& src,
                                   const TmRingLocation& dst) const;
+    uint32_t fanout_span(
+        const TmRingLocation& src,
+        const std::vector<TmRingLocation>& recipients,
+        TmRingPortDir direction) const;
     uint32_t neighbor_station(TmRingDomainType type, uint32_t ring_id,
                               uint32_t station_id,
                               TmRingPortDir direction) const;
