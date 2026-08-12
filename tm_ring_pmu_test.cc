@@ -88,6 +88,45 @@ TEST(TmRingPmuTest, ResetClearsCountersButKeepsRegisteredPorts) {
             snapshot.rbrg_path_stats(0, TmRingRbrgPath::V_TO_H_REQ).packets);
 }
 
+TEST(TmRingPmuTest, RbrgSnapshotPreservesRegistrationOrderAndIds) {
+  TmRingPmu pmu;
+  TmRingRbrgPmuPort first = pmu.register_rbrg(1);
+  TmRingRbrgPmuPort second = pmu.register_rbrg(7);
+  first.enqueued(TmRingRbrgPath::V_TO_H_REQ, 2);
+  first.delivered(TmRingRbrgPath::V_TO_H_REQ, 16);
+  second.enqueued(TmRingRbrgPath::H_TO_V_DAT, 3);
+  second.delivered(TmRingRbrgPath::H_TO_V_DAT, 128);
+
+  const TmRingPmuSnapshot snapshot = pmu.snapshot(3);
+  ASSERT_EQ(size_t(2), snapshot.rbrg.instances.size());
+  EXPECT_EQ(uint64_t(1), snapshot.rbrg.instances[0].paths[0].packets);
+  EXPECT_EQ(uint64_t(1), snapshot.rbrg.instances[1].paths[3].packets);
+  EXPECT_EQ(uint64_t(1),
+            snapshot.rbrg_path_stats(1, TmRingRbrgPath::V_TO_H_REQ).packets);
+  EXPECT_EQ(uint64_t(1),
+            snapshot.rbrg_path_stats(7, TmRingRbrgPath::H_TO_V_DAT).packets);
+}
+
+TEST(TmRingPmuTest, SnapshotAggregatesCrossStationsByDomain) {
+  TmRingPmu pmu;
+  pmu.register_conn(TmRingDomainType::V_RING, 4, 0, TmRingPortDir::CW, 1,
+                    TmRingPortDir::CCW);
+  pmu.register_conn(TmRingDomainType::V_RING, 4, 1, TmRingPortDir::CCW, 0,
+                    TmRingPortDir::CW);
+  TmRingCrossStationPmuPort cross =
+      pmu.register_cross_station(TmRingDomainType::V_RING, 4, 0);
+  cross.packet_deflected(TmRingSubnet::DAT, nullptr, 3, false);
+  cross.e_tag_set(TmRingSubnet::DAT);
+
+  const TmRingPmuSnapshot snapshot = pmu.snapshot(3);
+  ASSERT_EQ(size_t(1), snapshot.conn.domains.size());
+  const TmRingDomainStats& domain = snapshot.conn.domains[0];
+  EXPECT_EQ(uint32_t(1), domain.directed_edge_count);
+  EXPECT_EQ(uint64_t(1), domain.cross_station.eject_queue_full_stalls);
+  EXPECT_EQ(uint64_t(1), domain.cross_station.deflection[2].events);
+  EXPECT_EQ(uint64_t(1), domain.cross_station.e_tag_sets);
+}
+
 TEST(TmRingPmuTest, EventsMapToAllBuckets) {
   TmRingPmu pmu;
   TmRingConnPmuPort conn = pmu.register_conn(
@@ -104,6 +143,7 @@ TEST(TmRingPmuTest, EventsMapToAllBuckets) {
   cross.transit_committed(TmRingSubnet::REQ, TmRingSlotKind::TAGGED_EMPTY);
   cross.packet_injected(TmRingSubnet::REQ);
   cross.packet_ejected(TmRingSubnet::REQ, nullptr, 9);
+  cross.packet_deflected(TmRingSubnet::REQ, nullptr, 7, false);
   cross.packet_deflected(TmRingSubnet::REQ, nullptr, 7, true);
   cross.slot_pool_blocked(TmRingSubnet::REQ, TmRingPortDir::CW);
   cross.i_tag_set(TmRingSubnet::REQ);
@@ -159,19 +199,68 @@ TEST(TmRingPmuTest, EventsMapToAllBuckets) {
   l2.carrier_injected(64, 1, TmRingFanoutMode::SCATTER);
 
   const TmRingPmuSnapshot snapshot = pmu.snapshot(10);
+  const TmRingConnStats& req = snapshot.conn.total[0];
+  EXPECT_EQ(uint64_t(1), req.packets);
+  EXPECT_EQ(uint64_t(16), req.bytes);
+  EXPECT_EQ(uint64_t(1), req.busy_cycles);
+  EXPECT_EQ(uint64_t(3), req.send_reject_stall);
+  EXPECT_EQ(uint64_t(1), req.serialization_busy_stall);
   EXPECT_EQ(uint64_t(1), snapshot.conn.total[0].pipeline_full_stall);
   ASSERT_EQ(size_t(1), snapshot.top_busy_conns(TmRingSubnet::REQ, 1).size());
   EXPECT_EQ(uint64_t(1),
             snapshot.top_busy_conns(TmRingSubnet::REQ, 1)[0].busy_cycles);
   EXPECT_EQ(uint64_t(1), snapshot.cross_station.total.tagged_empty_slots);
   EXPECT_EQ(uint64_t(1), snapshot.cross_station.total.e_tag_claims);
+  EXPECT_EQ(uint64_t(1), snapshot.cross_station.total.transit_slots);
+  EXPECT_EQ(uint64_t(1), snapshot.cross_station.total.injected_packets);
+  EXPECT_EQ(uint64_t(1), snapshot.cross_station.total.ejected_packets);
+  EXPECT_EQ(uint64_t(1), snapshot.cross_station.total.slot_pool_full_stalls);
+  EXPECT_EQ(uint64_t(1), snapshot.cross_station.total.i_tag_sets);
+  EXPECT_EQ(uint64_t(1), snapshot.cross_station.total.i_tag_claims);
+  EXPECT_EQ(uint64_t(1), snapshot.cross_station.total.e_tag_sets);
+  EXPECT_EQ(uint64_t(1), snapshot.cross_station.total.deflection[0].events);
+  EXPECT_EQ(uint64_t(1),
+            snapshot.cross_station.total.deflection[0]
+                .fanout_recipient_retry_events);
   for (uint32_t i = 0; i < 4; ++i) {
-    EXPECT_EQ(uint64_t(1), snapshot.rbrg.instances[0].paths[i].packets);
+    const TmRingRbrgPathStats& path = snapshot.rbrg.instances[0].paths[i];
+    EXPECT_EQ(uint64_t(1), path.packets);
+    EXPECT_EQ(uint64_t(128), path.bytes);
+    EXPECT_EQ(uint64_t(3), path.busy_cycles);
+    EXPECT_EQ(uint64_t(1), path.queue_occupancy_peak);
+    EXPECT_EQ(uint64_t(1), path.queue_full_stalls);
+    EXPECT_EQ(uint64_t(1), path.destination_inject_stalls);
   }
+  EXPECT_EQ(uint64_t(5), snapshot.ha.total.rd_requests);
+  EXPECT_EQ(uint64_t(320), snapshot.ha.total.useful_bytes);
   EXPECT_EQ(uint64_t(1), snapshot.ha.total.rd_merged_pending);
+  EXPECT_EQ(uint64_t(1), snapshot.ha.total.rd_merged_inflight);
+  EXPECT_EQ(uint64_t(1), snapshot.ha.total.rd_merged_responding);
+  EXPECT_EQ(uint64_t(3), snapshot.ha.total.backend_read_saved);
+  EXPECT_EQ(uint64_t(2), snapshot.ha.total.rd_entries_allocated);
   EXPECT_EQ(uint64_t(1), snapshot.ha.total.l2_hit_transactions);
+  EXPECT_EQ(uint64_t(1), snapshot.ha.total.l2_miss_transactions);
   EXPECT_EQ(uint64_t(1), snapshot.ha.total.functional_reads);
+  EXPECT_EQ(uint64_t(2), snapshot.ha.total.write_hazard_stall_cycles);
+  EXPECT_EQ(uint64_t(1), snapshot.ha.total.aggregation_closed_stall_cycles);
+  EXPECT_EQ(uint64_t(1), snapshot.ha.total.waiter_full_stall_cycles);
+  EXPECT_EQ(uint64_t(1), snapshot.ha.total.table_full_stall_cycles);
+  EXPECT_EQ(uint64_t(1), snapshot.ha.total.rd_backend_issued);
+  EXPECT_EQ(uint64_t(128), snapshot.ha.total.backend_read_bytes);
+  EXPECT_EQ(uint64_t(1), snapshot.ha.total.private_l2_full_stall_cycles);
+  EXPECT_EQ(uint64_t(256), snapshot.ha.total.completion_buffer_bytes_peak);
+  EXPECT_EQ(uint64_t(1), snapshot.ha.total.completed_transaction_waiters[64]);
+  EXPECT_EQ(uint64_t(3), snapshot.l2.total.responses_accepted);
   EXPECT_EQ(uint64_t(1), snapshot.l2.total.buffer_full_stall_cycles);
+  EXPECT_EQ(uint64_t(12), snapshot.l2.total.latency_wait_cycles);
+  EXPECT_EQ(uint64_t(4), snapshot.l2.total.buffer_occupancy_peak);
+  EXPECT_EQ(uint64_t(1), snapshot.l2.total.issue_interval_stall_cycles);
+  EXPECT_EQ(uint64_t(1), snapshot.l2.total.dat_inject_full_stall_cycles);
+  EXPECT_EQ(uint64_t(960), snapshot.l2.total.dat_bytes);
+  EXPECT_EQ(uint64_t(6), snapshot.l2.total.h_carrier_recipients);
+  EXPECT_EQ(uint64_t(1), snapshot.l2.total.injected_carrier_128b);
+  EXPECT_EQ(uint64_t(1), snapshot.l2.total.injected_carrier_256b);
+  EXPECT_EQ(uint64_t(1), snapshot.l2.total.injected_carrier_512b);
   EXPECT_EQ(uint64_t(1), snapshot.l2.total.injected_carrier_other);
   EXPECT_EQ(uint64_t(1), snapshot.l2.total.h_unicast_carriers);
   EXPECT_EQ(uint64_t(1), snapshot.l2.total.h_multicast_carriers);

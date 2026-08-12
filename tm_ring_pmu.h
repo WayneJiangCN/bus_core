@@ -182,6 +182,7 @@ struct TmRingCrossStationPmuSnapshot {
 
 struct TmRingRbrgPmuSnapshot {
   std::vector<TmRingRbrgStats> instances;
+  std::vector<uint32_t> instance_ids;
 };
 
 struct TmRingHaPmuSnapshot {

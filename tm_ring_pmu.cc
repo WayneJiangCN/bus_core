@@ -361,11 +361,10 @@ TmRingCrossStationPmuPort TmRingPmu::register_cross_station(
 }
 
 TmRingRbrgPmuPort TmRingPmu::register_rbrg(uint32_t rbrg_id) {
-  if (impl_->rbrgs.size() <= rbrg_id) impl_->rbrgs.resize(rbrg_id + 1);
   Impl::RbrgEntry entry;
   entry.rbrg_id = rbrg_id;
-  impl_->rbrgs[rbrg_id] = entry;
-  return TmRingRbrgPmuPort(this, rbrg_id);
+  impl_->rbrgs.push_back(entry);
+  return TmRingRbrgPmuPort(this, impl_->rbrgs.size() - 1);
 }
 
 TmRingHaPmuPort TmRingPmu::register_home_agent(uint32_t ha_id,
@@ -577,16 +576,22 @@ void TmRingPmu::ha_read_admission(uint32_t id, uint32_t master_id,
       ++stats.table_full_stall_cycles;
       break;
     case TmRingHaReadOutcome::MERGED_PENDING:
+      ++stats.rd_requests;
       ++stats.rd_merged_pending;
       ++stats.backend_read_saved;
+      stats.useful_bytes += bytes;
       break;
     case TmRingHaReadOutcome::MERGED_INFLIGHT:
+      ++stats.rd_requests;
       ++stats.rd_merged_inflight;
       ++stats.backend_read_saved;
+      stats.useful_bytes += bytes;
       break;
     case TmRingHaReadOutcome::MERGED_RESPONDING:
+      ++stats.rd_requests;
       ++stats.rd_merged_responding;
       ++stats.backend_read_saved;
+      stats.useful_bytes += bytes;
       break;
     case TmRingHaReadOutcome::ACCEPTED_L2_HIT:
       ++stats.rd_requests;
@@ -601,8 +606,6 @@ void TmRingPmu::ha_read_admission(uint32_t id, uint32_t master_id,
       stats.useful_bytes += bytes;
       break;
     case TmRingHaReadOutcome::BYPASS:
-      ++stats.rd_requests;
-      stats.useful_bytes += bytes;
       break;
   }
 }
@@ -694,26 +697,28 @@ void TmRingPmu::l2_carrier_injected(uint32_t id, uint32_t bytes,
 TmRingPmuSnapshot TmRingPmu::snapshot(uint64_t cycle) const {
   TmRingPmuSnapshot snapshot;
   snapshot.reset_cycle = impl_->reset_cycle;
+  const auto find_or_append_domain = [&snapshot](TmRingDomainType type,
+                                                 uint32_t ring_id)
+      -> TmRingDomainStats* {
+    for (TmRingDomainStats& domain : snapshot.conn.domains) {
+      if (domain.type == type && domain.ring_id == ring_id) {
+        return &domain;
+      }
+    }
+    TmRingDomainStats domain;
+    domain.type = type;
+    domain.ring_id = ring_id;
+    snapshot.conn.domains.push_back(domain);
+    return &snapshot.conn.domains.back();
+  };
   for (const Impl::QueueEntry& stored : impl_->queues) {
     Impl::QueueEntry entry = stored;
     settle_queue(&entry, cycle);
     snapshot.queue.endpoints.push_back(entry.endpoint);
   }
   for (const Impl::ConnEntry& entry : impl_->conns) {
-    TmRingDomainStats* domain = nullptr;
-    for (TmRingDomainStats& candidate : snapshot.conn.domains) {
-      if (candidate.type == entry.domain && candidate.ring_id == entry.ring_id) {
-        domain = &candidate;
-        break;
-      }
-    }
-    if (domain == nullptr) {
-      TmRingDomainStats created;
-      created.type = entry.domain;
-      created.ring_id = entry.ring_id;
-      snapshot.conn.domains.push_back(created);
-      domain = &snapshot.conn.domains.back();
-    }
+    TmRingDomainStats* domain =
+        find_or_append_domain(entry.domain, entry.ring_id);
     ++domain->directed_edge_count;
     for (uint32_t subnet = 0; subnet < tm_ring_subnet_count(); ++subnet) {
       const TmRingSubnet kind = static_cast<TmRingSubnet>(subnet);
@@ -727,6 +732,7 @@ TmRingPmuSnapshot TmRingPmu::snapshot(uint64_t cycle) const {
     }
   }
   for (TmRingDomainStats& domain : snapshot.conn.domains) {
+    domain.directed_edge_count /= 2;
     std::sort(domain.edges.begin(), domain.edges.end(),
               [](const TmRingConnHotspot& left,
                  const TmRingConnHotspot& right) {
@@ -738,9 +744,13 @@ TmRingPmuSnapshot TmRingPmu::snapshot(uint64_t cycle) const {
   }
   for (const Impl::CrossEntry& entry : impl_->crosses) {
     merge_cross(&snapshot.cross_station.total, entry.stats);
+    merge_cross(&find_or_append_domain(entry.domain, entry.ring_id)
+                     ->cross_station,
+                entry.stats);
   }
   for (const Impl::RbrgEntry& entry : impl_->rbrgs) {
     snapshot.rbrg.instances.push_back(entry.stats);
+    snapshot.rbrg.instance_ids.push_back(entry.rbrg_id);
   }
   for (const Impl::HaEntry& entry : impl_->has) {
     merge_ha(&snapshot.ha.total, entry.stats);
@@ -784,8 +794,10 @@ std::vector<TmRingConnHotspot> TmRingPmuSnapshot::top_busy_conns(
 
 const TmRingRbrgPathStats& TmRingPmuSnapshot::rbrg_path_stats(
     uint32_t rbrg_id, TmRingRbrgPath path) const {
-  if (rbrg_id >= rbrg.instances.size()) {
-    throw std::out_of_range("unknown RBRG PMU id");
+  for (uint32_t index = 0; index < rbrg.instance_ids.size(); ++index) {
+    if (rbrg.instance_ids[index] == rbrg_id) {
+      return rbrg.instances[index].paths[static_cast<uint32_t>(path)];
+    }
   }
-  return rbrg.instances[rbrg_id].paths[static_cast<uint32_t>(path)];
+  throw std::out_of_range("unknown RBRG PMU id");
 }
