@@ -693,6 +693,18 @@ TmRingHomeAgentStats TmRingFabric::home_agent_stats() const {
   return total;
 }
 
+std::vector<TmRingHaSourceStats> TmRingFabric::ha_source_stats() const {
+  std::vector<TmRingHaSourceStats> result;
+  for (const auto& mem_port : mem_ports_) {
+    for (const TmRingHaSourceStats& source : mem_port->ha_source_stats()) {
+      if (source.rd_packets != 0 || source.wr_packets != 0) {
+        result.push_back(source);
+      }
+    }
+  }
+  return result;
+}
+
 const TmRingRbrgPathStats& TmRingFabric::rbrg_path_stats(
     uint32_t v_ring_id, TmRingRbrgPath path) const {
   return rbrgs_.at(v_ring_id)->path_stats(path);

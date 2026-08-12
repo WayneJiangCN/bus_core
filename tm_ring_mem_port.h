@@ -38,6 +38,7 @@ class TmRingMemPort : public tm_engine::TmModule {
   void attach_l2_buffer(p_tm_ring_l2_buffer_node_t l2_buffer);
   p_tm_ring_node_interface_t node_interface() const;
   TmRingHomeAgentStats home_agent_stats() const;
+  const std::vector<TmRingHaSourceStats>& ha_source_stats() const;
   void clear_stats();
 
   void send_rd_cmd();
@@ -83,6 +84,7 @@ class TmRingMemPort : public tm_engine::TmModule {
   p_tm_com_que_t wr_req_q_ = nullptr;
   p_tm_com_que_t wr_dat_q_ = nullptr;
   std::shared_ptr<TmRingHomeAgent> home_agent_ = nullptr;
+  std::vector<TmRingHaSourceStats> ha_source_stats_;
   p_tm_ring_l2_buffer_node_t l2_buffer_ = nullptr;
   // Original read requests accepted by this endpoint but not returned to Ring.
   uint32_t pending_rd_rsp_ = 0;

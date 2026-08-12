@@ -161,6 +161,7 @@ struct TmRingPerfResult {
   std::array<TmRingConnStats, 3> conn_stats;
   TmRingCrossStationStats cross_station_stats;
   TmRingHomeAgentStats home_agent_stats;
+  std::vector<TmRingHaSourceStats> ha_source_stats;
   TmRingL2BufferStats l2_buffer_stats;
   TmMemStats memory_stats;
   std::vector<TmRingDomainStats> ring_domain_stats;

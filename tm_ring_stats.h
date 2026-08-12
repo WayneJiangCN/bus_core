@@ -101,6 +101,13 @@ struct TmRingHomeAgentStats {
   void merge_from(const TmRingHomeAgentStats& other);
 };
 
+struct TmRingHaSourceStats {
+  uint32_t ha_id = 0;
+  uint32_t master_id = 0;
+  uint64_t rd_packets = 0;
+  uint64_t wr_packets = 0;
+};
+
 struct TmRingDeflectionStats {
   uint64_t events = 0;
   uint64_t unique_packets = 0;

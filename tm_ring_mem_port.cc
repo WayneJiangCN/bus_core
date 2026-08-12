@@ -17,6 +17,11 @@ TmRingMemPort::TmRingMemPort(const std::string& name, p_tm_clk_t clk,
   PEM_LOG_INFO(log_, "[{0:d}] config rd_rsp_ports:{1:d}", time(),
                rd_rsp_port_num_);
 
+  ha_source_stats_.resize(ring_cfg.num_masters);
+  for (uint32_t master = 0; master < ring_cfg.num_masters; ++master) {
+    ha_source_stats_[master].master_id = master;
+  }
+
   const uint32_t request_chan_num = std::max<uint32_t>(
       tm_ring_cmd_bus_channel(PldCmd::RD) + 1,
       tm_ring_cmd_bus_channel(PldCmd::WR_DAT) + 1);
@@ -84,12 +89,16 @@ void TmRingMemPort::reset() {
   pending_rd_rsp_ = 0;
   next_rsp_class_ = 0;
   next_rd_rsp_lane_ = 0;
+  clear_stats();
 }
 
 void TmRingMemPort::attach(uint32_t target_id,
                            std::shared_ptr<TmRingTopology> topology) {
   target_id_ = target_id;
   topology_ = topology;
+  for (auto& source : ha_source_stats_) {
+    source.ha_id = target_id;
+  }
   PEM_LOG_INFO(log_, "[{0:d}] attach_mem_port target:{1:d}", time(),
                target_id_);
 }
@@ -130,9 +139,17 @@ TmRingHomeAgentStats TmRingMemPort::home_agent_stats() const {
                                 : home_agent_->stats();
 }
 
+const std::vector<TmRingHaSourceStats>& TmRingMemPort::ha_source_stats() const {
+  return ha_source_stats_;
+}
+
 void TmRingMemPort::clear_stats() {
   if (home_agent_ != nullptr) {
     home_agent_->clear_stats();
+  }
+  for (auto& source : ha_source_stats_) {
+    source.rd_packets = 0;
+    source.wr_packets = 0;
   }
 }
 
@@ -183,6 +200,12 @@ void TmRingMemPort::recv_ring_req() {
 
   q->push_back(pld);
   node_interface_->pop_eject(TmRingSubnet::REQ);
+  TmRingHaSourceStats& source = ha_source_stats_[pld->mst_id];
+  if (cmd == PldCmd::RD) {
+    ++source.rd_packets;
+  } else {
+    ++source.wr_packets;
+  }
   PEM_LOG_INFO(log_,
                "[{0:d}] recv_ring_cmd target:{1:d} cmd:{2:d} "
                "gid:{3:d} addr:0x{4:x} size:{5:d}",

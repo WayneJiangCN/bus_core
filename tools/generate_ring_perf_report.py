@@ -102,6 +102,7 @@ _REQUIRED_NUMERIC_FIELDS = {
     "RESULT": ("protocol_errors",),
 }
 _REPEATED_SECTIONS = (
+    "HA_SOURCE",
     "RING_DOMAIN",
     "RBRG",
     "RING_BUFFER",
@@ -718,6 +719,14 @@ def _topology_node_details(scenario):
             continue
         groups.setdefault("{}-{}".format(node_type, node), []).append(record)
 
+    sources_by_ha = {}
+    for record in scenario.records("HA_SOURCE"):
+        ha = record.get("ha")
+        if ha is None:
+            continue
+        sources_by_ha.setdefault(ha, []).append(record)
+        groups.setdefault("home_agent-{}".format(ha), [])
+
     details = []
     for node_id, records in sorted(groups.items()):
         rows = []
@@ -733,16 +742,49 @@ def _topology_node_details(scenario):
                     _format_number(_record_number(record, "push_rejects")),
                 )
             )
+        source_table = ""
+        if node_id.startswith("home_agent-"):
+            ha = node_id.split("-", 1)[1]
+            source_records = sources_by_ha.get(ha, [])
+            source_total = sum(
+                _record_number(record, "total_packets")
+                for record in source_records
+            )
+            source_rows = []
+            for record in sorted(
+                source_records,
+                key=lambda item: _record_number(item, "master"),
+            ):
+                total = _record_number(record, "total_packets")
+                share = 0.0 if source_total == 0 else 100.0 * total / source_total
+                source_rows.append(
+                    '<tr><td>M{}</td><td>{}</td><td>{}</td><td>{}</td><td>{:.1f}</td></tr>'.format(
+                        html_lib.escape(record["master"]),
+                        _format_number(_record_number(record, "rd_packets")),
+                        _format_number(_record_number(record, "wr_packets")),
+                        _format_number(total),
+                        share,
+                    )
+                )
+            if source_rows:
+                source_table = (
+                    '<strong>REQ 来源 Master</strong><div class="table-wrap"><table>'
+                    '<thead><tr><th>Master</th><th>RD</th><th>WR</th>'
+                    '<th>Total</th><th>Share (%)</th></tr></thead><tbody>{}</tbody>'
+                    '</table></div>'
+                ).format("".join(source_rows))
+
         details.append(
             '<div class="topology-detail" data-node-detail="{}" '
             'data-topology-detail="node-{}" hidden><strong>{}</strong>'
             '<div class="table-wrap"><table><thead><tr><th>Queue</th>'
             '<th>Direction</th><th>Peak</th><th>Full (%)</th>'
-            '<th>Pushes</th><th>Push rejects</th></tr></thead><tbody>{}</tbody></table></div></div>'.format(
+            '<th>Pushes</th><th>Push rejects</th></tr></thead><tbody>{}</tbody></table></div>{}</div>'.format(
                 html_lib.escape(node_id),
                 html_lib.escape(node_id),
                 html_lib.escape(node_id),
                 "".join(rows),
+                source_table,
             )
         )
     return "".join(details)

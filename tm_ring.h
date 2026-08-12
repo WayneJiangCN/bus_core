@@ -112,6 +112,7 @@ class TmRingFabric : public tm_engine::TmModule {
   uint64_t ring_conn_stalls() const;
   TmRingCrossStationStats csstats() const;
   TmRingHomeAgentStats home_agent_stats() const;
+  std::vector<TmRingHaSourceStats> ha_source_stats() const;
   const TmRingRbrgPathStats& rbrg_path_stats(
       uint32_t v_ring_id, TmRingRbrgPath path) const;
 

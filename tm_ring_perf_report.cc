@@ -408,6 +408,14 @@ std::string tm_ring_format_perf_result(const TmRingPerfResult& result) {
       << " total_segment_packets_saved="
       << h_ring_saved_packets + v_ring_saved_packets << '\n';
 
+  for (const TmRingHaSourceStats& source : result.ha_source_stats) {
+    out << "PERF_HA_SOURCE ha=" << source.ha_id
+        << " master=" << source.master_id
+        << " rd_packets=" << source.rd_packets
+        << " wr_packets=" << source.wr_packets
+        << " total_packets=" << source.rd_packets + source.wr_packets << '\n';
+  }
+
   out << "PERF_HOME_AGENT rd_requests="
       << result.home_agent_stats.rd_requests
       << " backend_reads=" << result.home_agent_stats.rd_backend_issued

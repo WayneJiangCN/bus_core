@@ -315,6 +315,17 @@ TEST_F(TmRingMultiRingFabricTest, UnicastReadWriteCrossesOneBridge) {
   EXPECT_GT(result.perf_result.ring_domain_stats[0].directed_edge_count,
             uint32_t(0));
 
+  ASSERT_EQ(size_t(3), result.perf_result.ha_source_stats.size());
+  EXPECT_EQ(uint32_t(0), result.perf_result.ha_source_stats[0].master_id);
+  EXPECT_EQ(uint64_t(1), result.perf_result.ha_source_stats[0].rd_packets);
+  EXPECT_EQ(uint64_t(0), result.perf_result.ha_source_stats[0].wr_packets);
+  EXPECT_EQ(uint32_t(1), result.perf_result.ha_source_stats[1].master_id);
+  EXPECT_EQ(uint64_t(0), result.perf_result.ha_source_stats[1].rd_packets);
+  EXPECT_EQ(uint64_t(1), result.perf_result.ha_source_stats[1].wr_packets);
+  EXPECT_EQ(uint32_t(3), result.perf_result.ha_source_stats[2].master_id);
+  EXPECT_EQ(uint64_t(1), result.perf_result.ha_source_stats[2].rd_packets);
+  EXPECT_EQ(uint64_t(0), result.perf_result.ha_source_stats[2].wr_packets);
+
   for (uint32_t ring = 0; ring < 2; ++ring) {
     const TmRingRbrgPath paths[] = {
         TmRingRbrgPath::V_TO_H_REQ,

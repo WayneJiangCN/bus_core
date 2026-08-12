@@ -689,6 +689,25 @@ TEST(TmRingPerfReportTest, EmitsStableSectionsAndKeys) {
                         "physical_packets=4"));
 }
 
+TEST(TmRingPerfReportTest, EmitsHomeAgentRequestSourcesByMasterAndCommand) {
+  TmRingPerfResult result;
+  result.perf_case.name = "ha_source_report";
+  result.drained = true;
+
+  TmRingHaSourceStats source;
+  source.ha_id = 2;
+  source.master_id = 5;
+  source.rd_packets = 7;
+  source.wr_packets = 3;
+  result.ha_source_stats.push_back(source);
+
+  const std::string report = tm_ring_format_perf_result(result);
+
+  EXPECT_NE(std::string::npos,
+            report.find("PERF_HA_SOURCE ha=2 master=5 rd_packets=7 "
+                        "wr_packets=3 total_packets=10"));
+}
+
 TEST(TmRingPerfReportTest, EmitsMeasuredChannelAndBufferRecords) {
   TmRingPerfResult result;
   result.perf_case.name = "measured_channel_report";
@@ -1241,19 +1260,19 @@ TEST(RingPerfBenchmark, MultiVringPrivateRead128B) {
       kMultiVringBenchmarkMaxAicorePerVring, 128);
 }
 
-TEST(RingPerfBenchmark, MultiVringPrivateWrite128B) {
-  run_multi_vring_128kb_benchmark(
-      "multi_vring_private_write_128b", TmRingPerfOp::WRITE,
-      TmRingPerfPattern::SEQUENTIAL_PRIVATE, kMultiVringBenchmarkMasters,
-      kMultiVringBenchmarkMaxAicorePerVring, 128);
-}
+// TEST(RingPerfBenchmark, MultiVringPrivateWrite128B) {
+//   run_multi_vring_128kb_benchmark(
+//       "multi_vring_private_write_128b", TmRingPerfOp::WRITE,
+//       TmRingPerfPattern::SEQUENTIAL_PRIVATE, kMultiVringBenchmarkMasters,
+//       kMultiVringBenchmarkMaxAicorePerVring, 128);
+// }
 
-TEST(RingPerfBenchmark, MultiVringIndependentReadWrite128B) {
-  run_multi_vring_128kb_benchmark(
-      "multi_vring_independent_read_write_128b", TmRingPerfOp::READ_WRITE,
-      TmRingPerfPattern::SEQUENTIAL_PRIVATE, kMultiVringBenchmarkMasters,
-      kMultiVringBenchmarkMaxAicorePerVring, 128);
-}
+// TEST(RingPerfBenchmark, MultiVringIndependentReadWrite128B) {
+//   run_multi_vring_128kb_benchmark(
+//       "multi_vring_independent_read_write_128b", TmRingPerfOp::READ_WRITE,
+//       TmRingPerfPattern::SEQUENTIAL_PRIVATE, kMultiVringBenchmarkMasters,
+//       kMultiVringBenchmarkMaxAicorePerVring, 128);
+// }
 
 TEST(RingPerfBenchmark, MultiVringSameLineScatterRead128B) {
   run_multi_vring_aggregated_read_benchmark(

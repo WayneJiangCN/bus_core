@@ -696,6 +696,7 @@ TmRingPerfResult tm_ring_collect_perf_result(
   }
   result.cross_station_stats = fabric.csstats();
   result.home_agent_stats = fabric.home_agent_stats();
+  result.ha_source_stats = fabric.ha_source_stats();
   result.l2_buffer_stats = fabric.l2_buffer_stats();
   for (const TmMemStats& stats : memory_stats) {
     result.memory_stats.merge_from(stats);

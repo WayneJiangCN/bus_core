@@ -214,7 +214,19 @@ def fixed_topology_perf_block():
             "queue_full_stalls=2 destination_inject_stalls=3".format(rbrg)
         )
 
-    records = "\n".join(channel_records + edge_records + buffer_records + rbrg_records)
+    ha_source_records = [
+        "PERF_HA_SOURCE ha=0 master=0 rd_packets=64 wr_packets=4 total_packets=68",
+        "PERF_HA_SOURCE ha=0 master=3 rd_packets=32 wr_packets=0 total_packets=32",
+        "PERF_HA_SOURCE ha=1 master=4 rd_packets=16 wr_packets=8 total_packets=24",
+    ]
+
+    records = "\n".join(
+        channel_records
+        + edge_records
+        + buffer_records
+        + rbrg_records
+        + ha_source_records
+    )
     return (
         perf_block("fixed_topology", 128, 160.0, ceiling_bpc=256.0)
         .replace(
@@ -444,6 +456,20 @@ class RingPerfHtmlTest(unittest.TestCase):
             "<td>64</td><td>2</td>",
             document,
         )
+
+    def test_home_agent_node_detail_shows_request_sources_by_master(self):
+        document = render_html(
+            parse_perf_results(fixed_topology_perf_block()), "fixed.txt"
+        )
+
+        ha0_start = document.index('data-node-detail="home_agent-0"')
+        ha0_end = document.index("</div></div>", ha0_start)
+        ha0_detail = document[ha0_start:ha0_end]
+        self.assertIn("REQ 来源 Master", ha0_detail)
+        self.assertIn("<th>Master</th><th>RD</th><th>WR</th>", ha0_detail)
+        self.assertIn("<td>M0</td><td>64</td><td>4</td><td>68</td>", ha0_detail)
+        self.assertIn("<td>M3</td><td>32</td><td>0</td><td>32</td>", ha0_detail)
+        self.assertNotIn("<td>M4</td>", ha0_detail)
 
     def test_details_table_aligns_the_four_latency_columns(self):
         document = render_html(parse_perf_results(SAMPLE_RESULTS), "sample.txt")
