@@ -317,7 +317,8 @@ TEST_F(TmRingMultiRingFabricTest, UnicastReadWriteCrossesOneBridge) {
 
   const TmRingPmuSnapshot rbrg_pmu = result.fabric->snapshot_pmu(
       result.perf_result.measurement_end_time);
-  const std::vector<TmRingHaSourceStats>& ha_sources = rbrg_pmu.ha.sources;
+  const std::vector<TmRingHaSourceStats>& ha_sources =
+      result.perf_result.ha_source_stats;
   ASSERT_EQ(size_t(3), ha_sources.size());
   EXPECT_EQ(uint32_t(0), ha_sources[0].master_id);
   EXPECT_EQ(uint64_t(1), ha_sources[0].rd_packets);

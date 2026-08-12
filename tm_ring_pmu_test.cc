@@ -97,6 +97,27 @@ TEST(TmRingPmuTest, HaAndL2EventsPopulateBucketsAndSources) {
   EXPECT_EQ(uint64_t(1), snapshot.l2.total.injected_carrier_128b);
 }
 
+TEST(TmRingPmuTest, SnapshotSortsHaSourcesByHaThenMaster) {
+  TmRingPmu pmu;
+  TmRingHaPmuPort later_ha = pmu.register_home_agent(2, 8);
+  TmRingHaPmuPort earlier_ha = pmu.register_home_agent(1, 8);
+  later_ha.source_request_received(5, PldCmd::RD);
+  later_ha.source_request_received(2, PldCmd::WR);
+  earlier_ha.source_request_received(4, PldCmd::RD);
+
+  const TmRingPmuSnapshot snapshot = pmu.snapshot(0);
+
+  ASSERT_EQ(size_t(3), snapshot.ha.sources.size());
+  EXPECT_EQ(uint32_t(1), snapshot.ha.sources[0].ha_id);
+  EXPECT_EQ(uint32_t(4), snapshot.ha.sources[0].master_id);
+  EXPECT_EQ(uint32_t(2), snapshot.ha.sources[1].ha_id);
+  EXPECT_EQ(uint32_t(2), snapshot.ha.sources[1].master_id);
+  EXPECT_EQ(uint64_t(1), snapshot.ha.sources[1].wr_packets);
+  EXPECT_EQ(uint32_t(2), snapshot.ha.sources[2].ha_id);
+  EXPECT_EQ(uint32_t(5), snapshot.ha.sources[2].master_id);
+  EXPECT_EQ(uint64_t(1), snapshot.ha.sources[2].rd_packets);
+}
+
 TEST(TmRingPmuTest, ResetClearsCountersButKeepsRegisteredPorts) {
   TmRingPmu pmu;
   TmRingRbrgPmuPort rbrg = pmu.register_rbrg(0);

@@ -769,6 +769,12 @@ TmRingPmuSnapshot TmRingPmu::snapshot(uint64_t cycle) const {
     snapshot.ha.sources.insert(snapshot.ha.sources.end(), entry.sources.begin(),
                                entry.sources.end());
   }
+  std::sort(snapshot.ha.sources.begin(), snapshot.ha.sources.end(),
+            [](const TmRingHaSourceStats& left,
+               const TmRingHaSourceStats& right) {
+              if (left.ha_id != right.ha_id) return left.ha_id < right.ha_id;
+              return left.master_id < right.master_id;
+            });
   for (const Impl::L2Entry& entry : impl_->l2s) {
     merge_l2(&snapshot.l2.total, entry.stats);
   }
