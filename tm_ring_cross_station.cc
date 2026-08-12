@@ -6,10 +6,8 @@
 
 using namespace tm_engine;
 
-TmRingCrossStation::TmRingCrossStation(const std::string& name,
-                                       p_tm_clk_t clk)
+TmRingCrossStation::TmRingCrossStation(const std::string& name, p_tm_clk_t clk)
     : TmModule(name) {
-
   for (uint32_t subnet = 0; subnet < tm_ring_subnet_count(); ++subnet) {
     for (uint32_t direction = 0; direction < 2; ++direction) {
       transit_regs_[subnet][direction] =
@@ -38,7 +36,6 @@ TmRingCrossStation::TmRingCrossStation(const std::string& name,
             ->vld);
   }
 
-  e_tag_txn_keys_.assign(tm_ring_subnet_count(), TmPldTxnKey());
   reset();
 }
 
@@ -48,16 +45,14 @@ void TmRingCrossStation::reset() {
       transit_regs_[subnet][direction]->clear();
       i_tag_pending_[subnet][direction] = false;
       next_output_source_[subnet][direction] = OutputSource::LOCAL;
+      e_tag_reserved_[subnet][direction] = false;
+      e_tag_txn_keys_[subnet][direction] = TmPldTxnKey();
     }
   }
-  std::fill(e_tag_reserved_.begin(), e_tag_reserved_.end(), false);
-  std::fill(e_tag_txn_keys_.begin(), e_tag_txn_keys_.end(), TmPldTxnKey());
   clear_stats();
 }
 
-void TmRingCrossStation::clear_stats() {
-  stats_.clear();
-}
+void TmRingCrossStation::clear_stats() { stats_.clear(); }
 
 bool TmRingCrossStation::idle() const {
   for (uint32_t subnet = 0; subnet < tm_ring_subnet_count(); ++subnet) {
@@ -137,8 +132,8 @@ void TmRingCrossStation::schedule_output(TmRingSubnet subnet,
     return;
   }
 
-  OutputSource winner = transit_ready ? OutputSource::TRANSIT
-                                      : OutputSource::LOCAL;
+  OutputSource winner =
+      transit_ready ? OutputSource::TRANSIT : OutputSource::LOCAL;
   if (transit_ready && local_ready) {
     winner = next_output_source_[subnet_idx][out_idx];
   }
@@ -217,14 +212,14 @@ TmRingCrossStation::OutputSource TmRingCrossStation::process_transit(
     return OutputSource::NONE;
   }
 
-  if (is_destination(slot) && can_eject(slot, subnet)) {
+  if (is_destination(slot) && can_eject(slot, subnet, out_dir)) {
     bool replacement_sent = false;
     if (!try_preserve_or_replace_i_tag(slot, subnet, out_dir, output_used,
                                        &replacement_sent)) {
       return OutputSource::NONE;
     }
 
-    commit_eject(slot, subnet);
+    commit_eject(slot, subnet, out_dir);
     if (!replacement_sent) {
       if (slot->ring_i_tag_owner == station_id_ &&
           !local_waiting_for_output(subnet, out_dir)) {
@@ -247,7 +242,7 @@ TmRingCrossStation::OutputSource TmRingCrossStation::process_transit(
                          !slot_pool_->can_acquire(subnet, out_dir) &&
                          slot->ring_i_tag_owner == tm_ring_invalid_tag_owner();
   const bool set_e_tag =
-      is_destination(slot) && mark_e_tag_for_forward(slot, subnet);
+      is_destination(slot) && mark_e_tag_for_forward(slot, subnet, out_dir);
   if (set_i_tag) {
     slot->ring_i_tag_owner = station_id_;
   }
@@ -273,8 +268,9 @@ TmRingCrossStation::OutputSource TmRingCrossStation::process_transit(
     ++stats.events;
     slot->ring_deflection_count++;
     if (set_e_tag) {
-      e_tag_reserved_[subnet_idx] = true;
-      e_tag_txn_keys_[subnet_idx] = tm_ring_packet_txn_key(slot);
+      const uint32_t eject_idx = ejection_bank_index(out_dir);
+      e_tag_reserved_[subnet_idx][eject_idx] = true;
+      e_tag_txn_keys_[subnet_idx][eject_idx] = tm_ring_packet_txn_key(slot);
       stats_.e_tag_sets++;
     }
   }
@@ -288,10 +284,8 @@ TmRingCrossStation::OutputSource TmRingCrossStation::process_transit(
   return OutputSource::TRANSIT;
 }
 
-TmRingCrossStation::OutputSource
-TmRingCrossStation::process_fanout_transit(
-    TmRingPortDir in_dir, TmRingSubnet subnet,
-    OutputUsed& output_used) {
+TmRingCrossStation::OutputSource TmRingCrossStation::process_fanout_transit(
+    TmRingPortDir in_dir, TmRingSubnet subnet, OutputUsed& output_used) {
   auto reg = transit_reg(in_dir, subnet);
   auto envelope = reg->front();
   const TmRingPortDir out_dir = slot_direction(envelope);
@@ -310,9 +304,9 @@ TmRingCrossStation::process_fanout_transit(
     return OutputSource::NONE;
   }
 
-  if (!can_eject(envelope, subnet)) {
+  if (!can_eject(envelope, subnet, out_dir)) {
     const uint32_t subnet_idx = static_cast<uint32_t>(subnet);
-    const bool set_e_tag = mark_e_tag_for_forward(envelope, subnet);
+    const bool set_e_tag = mark_e_tag_for_forward(envelope, subnet, out_dir);
     if (!forward_slot(envelope, out_dir)) {
       rollback_e_tag_mark(envelope, set_e_tag);
       output_used[out_idx] = true;
@@ -323,8 +317,9 @@ TmRingCrossStation::process_fanout_transit(
     ++stats_.deflection[tm_ring_subnet_index(subnet)]
           .fanout_recipient_retry_events;
     if (set_e_tag) {
-      e_tag_reserved_[subnet_idx] = true;
-      e_tag_txn_keys_[subnet_idx] = tm_ring_packet_txn_key(envelope);
+      const uint32_t eject_idx = ejection_bank_index(out_dir);
+      e_tag_reserved_[subnet_idx][eject_idx] = true;
+      e_tag_txn_keys_[subnet_idx][eject_idx] = tm_ring_packet_txn_key(envelope);
       stats_.e_tag_sets++;
     }
     reg->pop_front();
@@ -333,21 +328,19 @@ TmRingCrossStation::process_fanout_transit(
     return OutputSource::TRANSIT;
   }
 
-  p_tm_pld_t response =
-      make_fanout_response(envelope, recipient_index);
+  p_tm_pld_t response = make_fanout_response(envelope, recipient_index);
   const uint32_t remaining_stations =
       tm_ring_fanout_remaining_stations(*envelope->ring_fanout);
   if (remaining_stations > 1) {
-    p_tm_pld_t forward =
-        make_fanout_forward(envelope, recipient_index);
-    if (owns_e_tag(envelope, subnet)) {
+    p_tm_pld_t forward = make_fanout_forward(envelope, recipient_index);
+    if (owns_e_tag(envelope, subnet, out_dir)) {
       forward->ring_e_tag_owner = tm_ring_invalid_tag_owner();
     }
     if (!forward_slot(forward, out_dir)) {
       output_used[out_idx] = true;
       return OutputSource::NONE;
     }
-    commit_fanout_eject(envelope, response, subnet);
+    commit_fanout_eject(envelope, response, subnet, out_dir);
     reg->pop_front();
     stats_.transit_slots++;
     output_used[out_idx] = true;
@@ -360,7 +353,7 @@ TmRingCrossStation::process_fanout_transit(
     return OutputSource::NONE;
   }
 
-  commit_fanout_eject(envelope, response, subnet);
+  commit_fanout_eject(envelope, response, subnet, out_dir);
   if (!replacement_sent) {
     if (envelope->ring_i_tag_owner == station_id_ &&
         !local_waiting_for_output(subnet, out_dir)) {
@@ -377,14 +370,11 @@ TmRingCrossStation::process_fanout_transit(
   return OutputSource::NONE;
 }
 
-TmRingCrossStation::OutputSource
-TmRingCrossStation::try_normal_injection(TmRingSubnet subnet,
-                                         TmRingPortDir out_dir,
-                                         OutputUsed& output_used) {
+TmRingCrossStation::OutputSource TmRingCrossStation::try_normal_injection(
+    TmRingSubnet subnet, TmRingPortDir out_dir, OutputUsed& output_used) {
   const uint32_t out_idx = direction_index(out_dir);
   if (i_tag_pending_[static_cast<uint32_t>(subnet)][out_idx] ||
-      output_used[out_idx] ||
-      !local_waiting_for_output(subnet, out_dir)) {
+      output_used[out_idx] || !local_waiting_for_output(subnet, out_dir)) {
     return OutputSource::NONE;
   }
 
@@ -436,13 +426,14 @@ bool TmRingCrossStation::try_slot_replacement(p_tm_pld_t transit_slot,
   return true;
 }
 
-bool TmRingCrossStation::try_preserve_or_replace_i_tag(
-    p_tm_pld_t slot, TmRingSubnet subnet, TmRingPortDir out_dir,
-    OutputUsed& output_used, bool* replacement_sent) {
+bool TmRingCrossStation::try_preserve_or_replace_i_tag(p_tm_pld_t slot,
+                                                       TmRingSubnet subnet,
+                                                       TmRingPortDir out_dir,
+                                                       OutputUsed& output_used,
+                                                       bool* replacement_sent) {
   const uint32_t out_idx = direction_index(out_dir);
-  const bool owner_still_waiting =
-      slot->ring_i_tag_owner == station_id_ &&
-      local_waiting_for_output(subnet, out_dir);
+  const bool owner_still_waiting = slot->ring_i_tag_owner == station_id_ &&
+                                   local_waiting_for_output(subnet, out_dir);
   const bool must_preserve_tag =
       slot->ring_i_tag_owner != tm_ring_invalid_tag_owner() &&
       (slot->ring_i_tag_owner != station_id_ || owner_still_waiting);
@@ -463,25 +454,31 @@ bool TmRingCrossStation::forward_slot(p_tm_pld_t slot, TmRingPortDir out_dir) {
   return output_conn(out_dir)->accept_slot(slot);
 }
 
-bool TmRingCrossStation::can_eject(p_tm_pld_t slot, TmRingSubnet subnet) const {
+bool TmRingCrossStation::can_eject(p_tm_pld_t slot, TmRingSubnet subnet,
+                                   TmRingPortDir arrival_direction) const {
   const uint32_t idx = tm_ring_subnet_index(subnet);
-  if (!e_tag_reserved_[idx] || owns_e_tag(slot, subnet)) {
-    return node_interface_->has_eject_capacity(subnet);
+  const uint32_t eject_idx = ejection_bank_index(arrival_direction);
+  if (!e_tag_reserved_[idx][eject_idx] ||
+      owns_e_tag(slot, subnet, arrival_direction)) {
+    return node_interface_->has_eject_capacity(subnet, arrival_direction);
   }
-  return node_interface_->has_eject_capacity(subnet, 1);
+  return node_interface_->has_eject_capacity(subnet, arrival_direction, 1);
 }
 
-bool TmRingCrossStation::owns_e_tag(p_tm_pld_t slot,
-                                    TmRingSubnet subnet) const {
+bool TmRingCrossStation::owns_e_tag(p_tm_pld_t slot, TmRingSubnet subnet,
+                                    TmRingPortDir arrival_direction) const {
   const uint32_t idx = tm_ring_subnet_index(subnet);
-  return e_tag_reserved_[idx] && slot->ring_e_tag_owner == station_id_ &&
-         e_tag_txn_keys_[idx] == tm_ring_packet_txn_key(slot);
+  const uint32_t eject_idx = ejection_bank_index(arrival_direction);
+  return e_tag_reserved_[idx][eject_idx] &&
+         slot->ring_e_tag_owner == station_id_ &&
+         e_tag_txn_keys_[idx][eject_idx] == tm_ring_packet_txn_key(slot);
 }
 
-bool TmRingCrossStation::mark_e_tag_for_forward(p_tm_pld_t slot,
-                                                TmRingSubnet subnet) {
+bool TmRingCrossStation::mark_e_tag_for_forward(
+    p_tm_pld_t slot, TmRingSubnet subnet, TmRingPortDir arrival_direction) {
   const uint32_t idx = tm_ring_subnet_index(subnet);
-  const bool marked = !e_tag_reserved_[idx] &&
+  const uint32_t eject_idx = ejection_bank_index(arrival_direction);
+  const bool marked = !e_tag_reserved_[idx][eject_idx] &&
                       slot->ring_e_tag_owner == tm_ring_invalid_tag_owner();
   if (marked) {
     slot->ring_e_tag_owner = station_id_;
@@ -495,19 +492,22 @@ void TmRingCrossStation::rollback_e_tag_mark(p_tm_pld_t slot, bool marked) {
   }
 }
 
-void TmRingCrossStation::claim_e_tag(p_tm_pld_t slot, TmRingSubnet subnet) {
+void TmRingCrossStation::claim_e_tag(p_tm_pld_t slot, TmRingSubnet subnet,
+                                     TmRingPortDir arrival_direction) {
   const uint32_t idx = tm_ring_subnet_index(subnet);
-  if (owns_e_tag(slot, subnet)) {
-    e_tag_reserved_[idx] = false;
-    e_tag_txn_keys_[idx] = TmPldTxnKey();
+  const uint32_t eject_idx = ejection_bank_index(arrival_direction);
+  if (owns_e_tag(slot, subnet, arrival_direction)) {
+    e_tag_reserved_[idx][eject_idx] = false;
+    e_tag_txn_keys_[idx][eject_idx] = TmPldTxnKey();
     slot->ring_e_tag_owner = tm_ring_invalid_tag_owner();
     stats_.e_tag_claims++;
   }
 }
 
-void TmRingCrossStation::commit_eject(p_tm_pld_t slot, TmRingSubnet subnet) {
-  claim_e_tag(slot, subnet);
-  node_interface_->push_eject(subnet, slot);
+void TmRingCrossStation::commit_eject(p_tm_pld_t slot, TmRingSubnet subnet,
+                                      TmRingPortDir arrival_direction) {
+  claim_e_tag(slot, subnet, arrival_direction);
+  node_interface_->push_eject(subnet, arrival_direction, slot);
   stats_.ejected_packets++;
 
   TmRingDeflectionStats& stats =
@@ -526,13 +526,14 @@ void TmRingCrossStation::commit_eject(p_tm_pld_t slot, TmRingSubnet subnet) {
 
 void TmRingCrossStation::commit_fanout_eject(p_tm_pld_t envelope,
                                              p_tm_pld_t response,
-                                             TmRingSubnet subnet) {
-  claim_e_tag(envelope, subnet);
+                                             TmRingSubnet subnet,
+                                             TmRingPortDir arrival_direction) {
+  claim_e_tag(envelope, subnet, arrival_direction);
   response->ring_slot_empty = false;
   response->ring_direction = static_cast<uint32_t>(TmRingPortDir::LOCAL);
   response->ring_i_tag_owner = tm_ring_invalid_tag_owner();
   response->ring_e_tag_owner = tm_ring_invalid_tag_owner();
-  node_interface_->push_eject(subnet, response);
+  node_interface_->push_eject(subnet, arrival_direction, response);
   stats_.ejected_packets++;
 }
 
@@ -573,11 +574,10 @@ bool TmRingCrossStation::fanout_recipient_for_station(
 p_tm_pld_t TmRingCrossStation::make_fanout_forward(
     p_tm_pld_t slot, size_t recipient_index) const {
   p_tm_pld_t forward = tm_make_pld(slot);
-  forward->ring_fanout =
-      tm_ring_clone_fanout_state(slot->ring_fanout);
-  tm_ring_fanout_clear_station(forward->ring_fanout.get(),
-                               forward->ring_fanout->recipients[recipient_index]
-                                   .dst_node);
+  forward->ring_fanout = tm_ring_clone_fanout_state(slot->ring_fanout);
+  tm_ring_fanout_clear_station(
+      forward->ring_fanout.get(),
+      forward->ring_fanout->recipients[recipient_index].dst_node);
   return forward;
 }
 
@@ -594,8 +594,8 @@ p_tm_pld_t TmRingCrossStation::make_fanout_response(
   const uint32_t response_size = recipient.response_template->size;
   response->size = response_size;
   tm_pld_set_ring_route(response, tm_pld_req_type(envelope),
-                        tm_pld_target_id(envelope),
-                        tm_pld_src_node(envelope), recipient.dst_node);
+                        tm_pld_target_id(envelope), tm_pld_src_node(envelope),
+                        recipient.dst_node);
   // Recipient responses share the physical carrier; each response points at
   // its own carrier slice while retaining the original request range.
   response->buf_u8 = envelope->buf_u8;
@@ -620,6 +620,11 @@ uint32_t TmRingCrossStation::direction_index(TmRingPortDir dir) const {
   return dir == TmRingPortDir::CW ? 0 : 1;
 }
 
+uint32_t TmRingCrossStation::ejection_bank_index(
+    TmRingPortDir direction) const {
+  return node_interface_->directional_eject() ? direction_index(direction) : 0;
+}
+
 bool TmRingCrossStation::transit_waiting_for_output(
     TmRingSubnet subnet, TmRingPortDir out_dir) const {
   p_tm_com_que_t reg = transit_reg(tm_ring_opposite_dir(out_dir), subnet);
@@ -627,8 +632,8 @@ bool TmRingCrossStation::transit_waiting_for_output(
          slot_direction(reg->front()) == out_dir;
 }
 
-bool TmRingCrossStation::normal_injection_ready(
-    TmRingSubnet subnet, TmRingPortDir out_dir) const {
+bool TmRingCrossStation::normal_injection_ready(TmRingSubnet subnet,
+                                                TmRingPortDir out_dir) const {
   const uint32_t subnet_idx = static_cast<uint32_t>(subnet);
   const uint32_t out_idx = direction_index(out_dir);
   return !i_tag_pending_[subnet_idx][out_idx] &&
@@ -637,7 +642,7 @@ bool TmRingCrossStation::normal_injection_ready(
 }
 
 bool TmRingCrossStation::local_waiting_for_output(TmRingSubnet subnet,
-                                                   TmRingPortDir out_dir) const {
+                                                  TmRingPortDir out_dir) const {
   if (node_interface_ == nullptr) {
     return false;
   }

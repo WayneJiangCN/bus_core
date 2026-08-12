@@ -7,8 +7,6 @@
 #include <cstddef>
 #include <memory>
 #include <string>
-#include <vector>
-
 #include "tm_clock.h"
 #include "tm_engine.h"
 #include "tm_pld.h"
@@ -66,14 +64,20 @@ class TmRingCrossStation : public tm_engine::TmModule {
                                      bool* replacement_sent);
   bool forward_slot(p_tm_pld_t slot, TmRingPortDir out_dir);
 
-  bool can_eject(p_tm_pld_t slot, TmRingSubnet subnet) const;
-  bool owns_e_tag(p_tm_pld_t slot, TmRingSubnet subnet) const;
-  bool mark_e_tag_for_forward(p_tm_pld_t slot, TmRingSubnet subnet);
+  bool can_eject(p_tm_pld_t slot, TmRingSubnet subnet,
+                 TmRingPortDir arrival_direction) const;
+  bool owns_e_tag(p_tm_pld_t slot, TmRingSubnet subnet,
+                  TmRingPortDir arrival_direction) const;
+  bool mark_e_tag_for_forward(p_tm_pld_t slot, TmRingSubnet subnet,
+                              TmRingPortDir arrival_direction);
   void rollback_e_tag_mark(p_tm_pld_t slot, bool marked);
-  void claim_e_tag(p_tm_pld_t slot, TmRingSubnet subnet);
-  void commit_eject(p_tm_pld_t slot, TmRingSubnet subnet);
+  void claim_e_tag(p_tm_pld_t slot, TmRingSubnet subnet,
+                   TmRingPortDir arrival_direction);
+  void commit_eject(p_tm_pld_t slot, TmRingSubnet subnet,
+                    TmRingPortDir arrival_direction);
   void commit_fanout_eject(p_tm_pld_t envelope, p_tm_pld_t response,
-                           TmRingSubnet subnet);
+                           TmRingSubnet subnet,
+                           TmRingPortDir arrival_direction);
 
   p_tm_com_que_t transit_reg(TmRingPortDir in_dir, TmRingSubnet subnet) const;
   p_tm_ring_conn_t output_conn(TmRingPortDir out_dir) const;
@@ -88,6 +92,7 @@ class TmRingCrossStation : public tm_engine::TmModule {
                                   size_t recipient_index) const;
   TmRingPortDir slot_direction(p_tm_pld_t slot) const;
   uint32_t direction_index(TmRingPortDir dir) const;
+  uint32_t ejection_bank_index(TmRingPortDir direction) const;
   bool transit_waiting_for_output(TmRingSubnet subnet,
                                   TmRingPortDir out_dir) const;
   bool normal_injection_ready(TmRingSubnet subnet,
@@ -104,8 +109,8 @@ class TmRingCrossStation : public tm_engine::TmModule {
   // One outstanding I-tag protects each directional Inject Bank head.
   std::array<std::array<bool, 2>, 3> i_tag_pending_;
   std::array<std::array<OutputSource, 2>, 3> next_output_source_;
-  std::array<bool, 3> e_tag_reserved_;
-  std::vector<TmPldTxnKey> e_tag_txn_keys_;
+  std::array<std::array<bool, 2>, 3> e_tag_reserved_;
+  std::array<std::array<TmPldTxnKey, 2>, 3> e_tag_txn_keys_;
 
   uint32_t station_id_ = 0;
   p_tm_ring_conn_t cw_out_conn_ = nullptr;
