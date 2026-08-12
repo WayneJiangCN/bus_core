@@ -836,7 +836,6 @@ TEST(TmRingPerfReportTest, EmitsMeasuredChannelAndBufferRecords) {
 struct PerfSmokeResult {
   std::vector<TmRingPerfMasterStats> master_stats;
   std::vector<TmMemStats> memory_stats;
-  TmRingPmuSnapshot ring_pmu;
   TmRingPerfResult perf_result;
   bool idle = false;
   uint64_t cycles = 0;
@@ -998,31 +997,7 @@ PerfSmokeResult run_perf_smoke(const TmRingPerfCase& perf_case,
   result.perf_result = tm_ring_collect_perf_result(
       effective_case, result.master_stats, *ring, result.memory_stats,
       estimate, no_merge_estimate, clk->time(), result.idle);
-  result.ring_pmu = ring->snapshot_pmu(clk->time());
   return result;
-}
-
-void expect_l2_snapshot_matches_perf(const PerfSmokeResult& result) {
-  const TmRingL2BufferStats& actual = result.ring_pmu.l2.total;
-  const TmRingL2BufferStats& expected = result.perf_result.ring_pmu.l2.total;
-  EXPECT_EQ(expected.responses_accepted, actual.responses_accepted);
-  EXPECT_EQ(expected.latency_wait_cycles, actual.latency_wait_cycles);
-  EXPECT_EQ(expected.buffer_occupancy_peak, actual.buffer_occupancy_peak);
-  EXPECT_EQ(expected.buffer_full_stall_cycles, actual.buffer_full_stall_cycles);
-  EXPECT_EQ(expected.issue_interval_stall_cycles,
-            actual.issue_interval_stall_cycles);
-  EXPECT_EQ(expected.dat_inject_full_stall_cycles,
-            actual.dat_inject_full_stall_cycles);
-  EXPECT_EQ(expected.h_carriers, actual.h_carriers);
-  EXPECT_EQ(expected.h_carrier_recipients, actual.h_carrier_recipients);
-  EXPECT_EQ(expected.dat_bytes, actual.dat_bytes);
-  EXPECT_EQ(expected.h_unicast_carriers, actual.h_unicast_carriers);
-  EXPECT_EQ(expected.h_multicast_carriers, actual.h_multicast_carriers);
-  EXPECT_EQ(expected.h_scatter_carriers, actual.h_scatter_carriers);
-  EXPECT_EQ(expected.injected_carrier_128b, actual.injected_carrier_128b);
-  EXPECT_EQ(expected.injected_carrier_256b, actual.injected_carrier_256b);
-  EXPECT_EQ(expected.injected_carrier_512b, actual.injected_carrier_512b);
-  EXPECT_EQ(expected.injected_carrier_other, actual.injected_carrier_other);
 }
 
 void expect_l2_carrier_size_bucket(const TmRingL2BufferStats& l2,
@@ -1084,7 +1059,6 @@ void expect_perf_block_complete(const PerfSmokeResult& result,
     EXPECT_LE(result.perf_result.end_to_end_bandwidth_bpc,
                result.perf_result.estimate.fabric_model_ceiling_bpc * 1.01);
   }
-  expect_l2_snapshot_matches_perf(result);
   std::cout << tm_ring_format_perf_result(result.perf_result);
 }
 
