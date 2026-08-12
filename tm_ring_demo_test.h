@@ -650,7 +650,7 @@ inline int print_demo_performance(
       ring_pmu.conn_stall_breakdown();
   const auto& csstats = ring_pmu.cross_station.total;
   const auto& home_agent_stats = ring_pmu.ha.total;
-  const auto l2_buffer_stats = ring->l2_buffer_stats();
+  const auto& l2_buffer_stats = ring_pmu.l2.total;
   const std::vector<TmRingDomainStats> ring_domain_stats =
       ring_pmu.conn.domains;
   const auto& rbrg_stats = ring_pmu.rbrg.instances;

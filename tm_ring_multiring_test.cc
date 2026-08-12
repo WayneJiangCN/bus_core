@@ -371,8 +371,7 @@ TEST_F(TmRingMultiRingFabricTest,
   const TmRingHomeAgentStats& home_agent_stats = rbrg_pmu.ha.total;
   const uint64_t backend_or_functional_line_reads =
       home_agent_stats.rd_backend_issued + home_agent_stats.functional_reads;
-  const uint64_t l2_h_ring_carriers =
-      result.fabric->l2_buffer_stats().h_carriers;
+  const uint64_t l2_h_ring_carriers = rbrg_pmu.l2.total.h_carriers;
   uint64_t rbrg_v_ring_dat_carriers = 0;
   for (uint32_t ring = 0; ring < 2; ++ring) {
     rbrg_v_ring_dat_carriers +=

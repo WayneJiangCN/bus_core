@@ -1024,6 +1024,20 @@ void expect_l2_snapshot_matches_perf(const PerfSmokeResult& result) {
   EXPECT_EQ(expected.injected_carrier_other, actual.injected_carrier_other);
 }
 
+void expect_l2_carrier_size_bucket(const TmRingL2BufferStats& l2,
+                                   uint32_t request_bytes,
+                                   uint64_t expected_carriers) {
+  EXPECT_EQ(expected_carriers, l2.h_carriers);
+  EXPECT_EQ(request_bytes * expected_carriers, l2.dat_bytes);
+  EXPECT_EQ(request_bytes == 128 ? expected_carriers : uint64_t(0),
+            l2.injected_carrier_128b);
+  EXPECT_EQ(request_bytes == 256 ? expected_carriers : uint64_t(0),
+            l2.injected_carrier_256b);
+  EXPECT_EQ(request_bytes == 512 ? expected_carriers : uint64_t(0),
+            l2.injected_carrier_512b);
+  EXPECT_EQ(uint64_t(0), l2.injected_carrier_other);
+}
+
 void expect_perf_block_complete(const PerfSmokeResult& result,
                                 const TmRingPerfCase& perf_case) {
   ASSERT_TRUE(result.idle);
@@ -1178,17 +1192,21 @@ void run_multi_vring_no_merge_read_benchmark(
   for (const TmRingRbrgStats& stats : result.perf_result.rbrg_stats) {
     ASSERT_GT(rbrg_packets(stats), uint64_t(0));
   }
+  const uint64_t expected_responses =
+      static_cast<uint64_t>(masters) * perf_case.bytes_per_master /
+      request_bytes;
+  const TmRingL2BufferStats& l2 = result.perf_result.l2_buffer_stats;
   ASSERT_EQ(uint64_t(0),
             result.perf_result.home_agent_stats.backend_read_saved);
   ASSERT_EQ(uint64_t(0),
-            result.perf_result.l2_buffer_stats.h_multicast_carriers);
+            l2.h_multicast_carriers);
   ASSERT_EQ(uint64_t(0),
-            result.perf_result.l2_buffer_stats.h_scatter_carriers);
-  ASSERT_EQ(result.perf_result.completed_packets,
-            result.perf_result.l2_buffer_stats.h_carriers);
-  ASSERT_EQ(result.perf_result.completed_packets,
-            result.perf_result.l2_buffer_stats.h_unicast_carriers);
-  ASSERT_EQ(result.perf_result.completed_packets,
+            l2.h_scatter_carriers);
+  ASSERT_EQ(expected_responses, l2.responses_accepted);
+  ASSERT_EQ(expected_responses, l2.h_carrier_recipients);
+  ASSERT_EQ(expected_responses, l2.h_unicast_carriers);
+  expect_l2_carrier_size_bucket(l2, request_bytes, expected_responses);
+  ASSERT_EQ(expected_responses,
             v_ring_dat_carriers(result.perf_result));
   expect_perf_block_complete(result, perf_case);
 }
@@ -1286,17 +1304,26 @@ void run_aggregation_wave_test(
   ASSERT_LE(actual_v_carriers, v_near_ideal_limit);
   ASSERT_GE(ha.backend_read_saved,
             (ideal.backend_read_saved * 3 + 3) / 4);
-  ASSERT_EQ(no_merge.h_carrier_recipients, l2.h_carrier_recipients);
+  const uint64_t expected_logical_responses =
+      static_cast<uint64_t>(masters) * perf_case.bytes_per_master /
+      request_bytes;
+  ASSERT_EQ(expected_logical_responses, ha.rd_requests);
+  ASSERT_EQ(ha.rd_entries_allocated, l2.responses_accepted);
+  ASSERT_EQ(expected_logical_responses, l2.h_carrier_recipients);
   ASSERT_EQ(uint64_t(0), ha.table_full_stall_cycles);
   ASSERT_EQ(uint64_t(0), ha.waiter_full_stall_cycles);
   ASSERT_EQ(uint64_t(0), ha.aggregation_closed_stall_cycles);
   if (expectation == PerfAggregationExpectation::SCATTER) {
     ASSERT_GT(l2.h_scatter_carriers, uint64_t(0));
+    ASSERT_EQ(l2.h_carriers, l2.h_scatter_carriers);
     ASSERT_EQ(uint64_t(0), l2.h_multicast_carriers);
   } else {
     ASSERT_GT(l2.h_multicast_carriers, uint64_t(0));
+    ASSERT_EQ(l2.h_carriers, l2.h_multicast_carriers);
     ASSERT_EQ(uint64_t(0), l2.h_scatter_carriers);
   }
+  ASSERT_EQ(uint64_t(0), l2.h_unicast_carriers);
+  expect_l2_carrier_size_bucket(l2, request_bytes, l2.h_carriers);
   expect_perf_block_complete(result, perf_case);
 }
 
