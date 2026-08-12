@@ -93,4 +93,87 @@ TEST(TmRingNodeInterfaceTest, CountsInjectRejectWithoutChangingOccupancy) {
   EXPECT_EQ(uint32_t(1), req_cw_inject.occupancy_peak);
 }
 
+TEST(TmRingNodeInterfaceTest, KeepsRbrgDirectionalEjectHeadsIndependent) {
+  tm_init();
+  const p_tm_clk_t clk = tm_make_clk();
+  TmRingEndpointQueueDepths depths;
+  depths.inject = {{2, 2, 2}};
+  depths.eject = {{1, 1, 1}};
+  const p_tm_ring_node_interface_t node_interface =
+      tm_make_ring_node_interface(
+          clk, "rbrg_directional_eject", depths,
+          TmRingNodeInterfaceMode::RBRG_DIRECTIONAL, 0);
+
+  const p_tm_pld_t cw_packet = make_packet(PldCmd::RD);
+  const p_tm_pld_t ccw_packet = make_packet(PldCmd::RD);
+  ASSERT_TRUE(node_interface->push_eject(TmRingSubnet::REQ,
+                                         TmRingPortDir::CW, cw_packet));
+  ASSERT_TRUE(node_interface->push_eject(TmRingSubnet::REQ,
+                                         TmRingPortDir::CCW, ccw_packet));
+  EXPECT_EQ(cw_packet, node_interface->front_eject(TmRingSubnet::REQ,
+                                                    TmRingPortDir::CW));
+  EXPECT_EQ(ccw_packet, node_interface->front_eject(TmRingSubnet::REQ,
+                                                     TmRingPortDir::CCW));
+  EXPECT_FALSE(node_interface->has_eject_capacity(TmRingSubnet::REQ,
+                                                   TmRingPortDir::CW));
+  EXPECT_FALSE(node_interface->has_eject_capacity(TmRingSubnet::REQ,
+                                                   TmRingPortDir::CCW));
+
+  node_interface->pop_eject(TmRingSubnet::REQ, TmRingPortDir::CW);
+  EXPECT_EQ(nullptr, node_interface->front_eject(TmRingSubnet::REQ,
+                                                 TmRingPortDir::CW));
+  EXPECT_EQ(ccw_packet, node_interface->front_eject(TmRingSubnet::REQ,
+                                                     TmRingPortDir::CCW));
+  EXPECT_TRUE(node_interface->has_eject_capacity(TmRingSubnet::REQ,
+                                                  TmRingPortDir::CW));
+  EXPECT_FALSE(node_interface->has_eject_capacity(TmRingSubnet::REQ,
+                                                   TmRingPortDir::CCW));
+}
+
+TEST(TmRingNodeInterfaceTest,
+     KeepsOrdinaryEndpointEjectQueueSharedAcrossDirections) {
+  tm_init();
+  const p_tm_clk_t clk = tm_make_clk();
+  TmRingEndpointQueueDepths depths;
+  depths.inject = {{2, 2, 2}};
+  depths.eject = {{1, 1, 1}};
+  const p_tm_ring_node_interface_t node_interface =
+      tm_make_ring_node_interface(clk, "ordinary_shared_eject", depths);
+
+  const p_tm_pld_t first = make_packet(PldCmd::RD);
+  ASSERT_TRUE(node_interface->push_eject(TmRingSubnet::REQ,
+                                         TmRingPortDir::CW, first));
+  EXPECT_FALSE(node_interface->push_eject(TmRingSubnet::REQ,
+                                          TmRingPortDir::CCW,
+                                          make_packet(PldCmd::RD)));
+  EXPECT_EQ(first, node_interface->front_eject(TmRingSubnet::REQ,
+                                                TmRingPortDir::CW));
+  EXPECT_EQ(first, node_interface->front_eject(TmRingSubnet::REQ,
+                                                TmRingPortDir::CCW));
+}
+
+TEST(TmRingNodeInterfaceTest, DelaysRbrgSplitVisibilityUntilLatencyExpires) {
+  tm_init();
+  const p_tm_clk_t clk = tm_make_clk();
+  TmRingEndpointQueueDepths depths;
+  depths.inject = {{1, 1, 1}};
+  depths.eject = {{1, 1, 1}};
+  const p_tm_ring_node_interface_t node_interface =
+      tm_make_ring_node_interface(
+          clk, "rbrg_split_latency", depths,
+          TmRingNodeInterfaceMode::RBRG_DIRECTIONAL, 2);
+
+  const p_tm_pld_t packet = make_packet(PldCmd::RD);
+  ASSERT_TRUE(node_interface->push_inject(TmRingSubnet::REQ,
+                                          TmRingPortDir::CW, packet));
+  EXPECT_EQ(nullptr, node_interface->front_inject(TmRingSubnet::REQ,
+                                                   TmRingPortDir::CW));
+  tm_start(1);
+  EXPECT_EQ(nullptr, node_interface->front_inject(TmRingSubnet::REQ,
+                                                   TmRingPortDir::CW));
+  tm_start(1);
+  EXPECT_EQ(packet, node_interface->front_inject(TmRingSubnet::REQ,
+                                                  TmRingPortDir::CW));
+}
+
 }  // namespace
