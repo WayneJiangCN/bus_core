@@ -188,13 +188,15 @@ TmRingFabric::TmRingDomain TmRingFabric::create_domain(
       const uint32_t dst_station = topology_->neighbor_station(
           type, ring_id, station_id, direction);
       const TmRingPortDir dst_direction = tm_ring_opposite_dir(direction);
+      const TmRingConnPmuPort conn_pmu = pmu_->register_conn(
+          type, ring_id, station_id, direction, dst_station, dst_direction);
       const std::string connection_name =
           domain_name + "_conn_" + std::to_string(station_id) + "_" +
           ring_dir_name(direction) + "_" + std::to_string(dst_station) +
           "_" + ring_dir_name(dst_direction);
       domain.connections.push_back(tm_make_ring_conn(
           connection_name, clk_, cfg_->ring_link_latency,
-          cfg_->ring_link_width_bytes, dst_station, dst_direction));
+          cfg_->ring_link_width_bytes, dst_station, dst_direction, conn_pmu));
     }
   }
   return domain;
@@ -387,15 +389,9 @@ void TmRingFabric::clear_stats() {
   for (const p_tm_ring_cs_t& ring_station : h_ring_.stations) {
     ring_station->clear_stats();
   }
-  for (const p_tm_ring_conn_t& connection : h_ring_.connections) {
-    connection->clear_stats();
-  }
   for (const TmRingDomain& domain : v_rings_) {
     for (const p_tm_ring_cs_t& ring_station : domain.stations) {
       ring_station->clear_stats();
-    }
-    for (const p_tm_ring_conn_t& connection : domain.connections) {
-      connection->clear_stats();
     }
   }
   for (const p_tm_ring_rbrg_l1_t& rbrg : rbrgs_) {
@@ -460,16 +456,7 @@ bool TmRingFabric::idle() {
 
 TmRingConnStallBreakdown
 TmRingFabric::ring_conn_stall_breakdown() const {
-  TmRingConnStats total;
-  total.merge_from(conn_stats(TmRingSubnet::REQ));
-  total.merge_from(conn_stats(TmRingSubnet::RSP));
-  total.merge_from(conn_stats(TmRingSubnet::DAT));
-
-  TmRingConnStallBreakdown stalls;
-  stalls.serialization_busy = total.serialization_busy_stall;
-  stalls.pipeline_full = total.pipeline_full_stall;
-  stalls.downstream_register_full = total.downstream_register_full_stall;
-  return stalls;
+  return snapshot_pmu(clk_->time()).conn_stall_breakdown();
 }
 
 TmRingPmuSnapshot TmRingFabric::snapshot_pmu(uint64_t cycle) const {
@@ -477,72 +464,31 @@ TmRingPmuSnapshot TmRingFabric::snapshot_pmu(uint64_t cycle) const {
 }
 
 std::vector<TmRingDomainStats> TmRingFabric::ring_domain_stats() const {
-  std::vector<TmRingDomainStats> result;
-  result.reserve(1 + v_rings_.size());
+  const TmRingPmuSnapshot snapshot = snapshot_pmu(clk_->time());
+  return ring_domain_stats(snapshot);
+}
 
-  const auto append_domain = [&result](const TmRingDomain& domain) {
-    TmRingDomainStats domain_stats;
-    domain_stats.type = domain.type;
-    domain_stats.ring_id = domain.ring_id;
-    domain_stats.directed_edge_count =
-        static_cast<uint32_t>(domain.connections.size() / 2);
+std::vector<TmRingDomainStats> TmRingFabric::ring_domain_stats(
+    const TmRingPmuSnapshot& snapshot) const {
+  std::vector<TmRingDomainStats> result = snapshot.conn.domains;
+
+  const auto merge_cross_station_stats = [&result](const TmRingDomain& domain) {
+    auto domain_stats = std::find_if(
+        result.begin(), result.end(),
+        [&domain](const TmRingDomainStats& stats) {
+          return stats.type == domain.type && stats.ring_id == domain.ring_id;
+        });
+    if (domain_stats == result.end()) {
+      return;
+    }
     for (const p_tm_ring_cs_t& station : domain.stations) {
-      domain_stats.cross_station.merge_from(station->stats());
+      domain_stats->cross_station.merge_from(station->stats());
     }
-    bool has_hottest = false;
-
-    for (uint32_t index = 0; index < domain.connections.size(); ++index) {
-      const p_tm_ring_conn_t& connection = domain.connections[index];
-      const TmRingPortDir direction =
-          index % 2 == 0 ? TmRingPortDir::CW : TmRingPortDir::CCW;
-      for (uint32_t subnet_index = 0; subnet_index < 3; ++subnet_index) {
-        const TmRingSubnet subnet =
-            static_cast<TmRingSubnet>(subnet_index);
-        const TmRingConnStats& stats = connection->subnet_stats(subnet);
-        std::array<TmRingConnStats, 3>& direction_stats =
-            direction == TmRingPortDir::CW ? domain_stats.cw
-                                           : domain_stats.ccw;
-        direction_stats[subnet_index].merge_from(stats);
-
-        TmRingConnHotspot candidate;
-        candidate.src_station = index / 2;
-        candidate.src_dir = direction;
-        candidate.dst_station = connection->dst_station();
-        candidate.dst_dir = connection->dst_dir();
-        candidate.subnet = subnet;
-        candidate.packets = stats.packets;
-        candidate.bytes = stats.bytes;
-        candidate.busy_cycles = stats.busy_cycles;
-        candidate.serialization_busy_stall =
-            stats.serialization_busy_stall;
-        candidate.total_stalls = tm_ring_conn_total_stalls(stats);
-        candidate.inflight_peak = stats.inflight_peak;
-        domain_stats.edges.push_back(candidate);
-
-        const TmRingConnHotspot& hottest = domain_stats.hottest;
-        const bool is_hotter =
-            !has_hottest ||
-            candidate.serialization_busy_stall >
-                hottest.serialization_busy_stall ||
-            (candidate.serialization_busy_stall ==
-                 hottest.serialization_busy_stall &&
-             candidate.busy_cycles > hottest.busy_cycles) ||
-            (candidate.serialization_busy_stall ==
-                 hottest.serialization_busy_stall &&
-             candidate.busy_cycles == hottest.busy_cycles &&
-             candidate.bytes > hottest.bytes);
-        if (is_hotter) {
-          domain_stats.hottest = candidate;
-          has_hottest = true;
-        }
-      }
-    }
-    result.push_back(domain_stats);
   };
 
-  append_domain(h_ring_);
+  merge_cross_station_stats(h_ring_);
   for (const TmRingDomain& domain : v_rings_) {
-    append_domain(domain);
+    merge_cross_station_stats(domain);
   }
   return result;
 }
@@ -564,71 +510,10 @@ uint32_t TmRingFabric::rbrg_width_bytes() const {
   return cfg_->rbrg_width_bytes;
 }
 
-TmRingConnStats TmRingFabric::conn_stats(TmRingSubnet subnet) const {
-  TmRingConnStats total;
-  const uint32_t subnet_index = static_cast<uint32_t>(subnet);
-  const std::vector<TmRingDomainStats> domains = ring_domain_stats();
-  for (const TmRingDomainStats& domain : domains) {
-    total.merge_from(domain.cw[subnet_index]);
-    total.merge_from(domain.ccw[subnet_index]);
-  }
-  return total;
-}
-
 std::vector<TmRingConnHotspot>
 TmRingFabric::ring_top_busy_conns(TmRingSubnet subnet,
                                   uint32_t limit) const {
-  std::vector<TmRingConnHotspot> hot_conns;
-  const auto append_domain = [&hot_conns, subnet](const TmRingDomain& domain) {
-    for (uint32_t index = 0; index < domain.connections.size(); ++index) {
-      const p_tm_ring_conn_t& connection = domain.connections[index];
-      const TmRingConnStats& stats = connection->subnet_stats(subnet);
-
-      TmRingConnHotspot hot;
-      hot.src_station = index / 2;
-      hot.src_dir = index % 2 == 0 ? TmRingPortDir::CW : TmRingPortDir::CCW;
-      hot.dst_station = connection->dst_station();
-      hot.dst_dir = connection->dst_dir();
-      hot.subnet = subnet;
-      hot.packets = stats.packets;
-      hot.bytes = stats.bytes;
-      hot.busy_cycles = stats.busy_cycles;
-      hot.serialization_busy_stall = stats.serialization_busy_stall;
-      hot.total_stalls = tm_ring_conn_total_stalls(stats);
-      hot.inflight_peak = stats.inflight_peak;
-      hot_conns.push_back(hot);
-    }
-  };
-  append_domain(h_ring_);
-  for (const TmRingDomain& domain : v_rings_) {
-    append_domain(domain);
-  }
-
-  std::sort(
-      hot_conns.begin(), hot_conns.end(),
-      [](const TmRingConnHotspot& lhs,
-         const TmRingConnHotspot& rhs) {
-        if (lhs.serialization_busy_stall != rhs.serialization_busy_stall) {
-          return lhs.serialization_busy_stall >
-                 rhs.serialization_busy_stall;
-        }
-        if (lhs.busy_cycles != rhs.busy_cycles) {
-          return lhs.busy_cycles > rhs.busy_cycles;
-        }
-        if (lhs.bytes != rhs.bytes) {
-          return lhs.bytes > rhs.bytes;
-        }
-        if (lhs.src_station != rhs.src_station) {
-          return lhs.src_station < rhs.src_station;
-        }
-        return static_cast<uint32_t>(lhs.src_dir) <
-               static_cast<uint32_t>(rhs.src_dir);
-      });
-
-  if (hot_conns.size() > limit) {
-    hot_conns.resize(limit);
-  }
-  return hot_conns;
+  return snapshot_pmu(clk_->time()).top_busy_conns(subnet, limit);
 }
 
 uint64_t TmRingFabric::ring_conn_stalls() const {

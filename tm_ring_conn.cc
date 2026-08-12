@@ -6,9 +6,10 @@ using namespace tm_engine;
 
 TmRingConn::TmRingConn(
     const std::string& name, p_tm_clk_t clk, uint32_t latency,
-    uint32_t width_bytes, uint32_t dst_station, TmRingPortDir dst_dir)
+    uint32_t width_bytes, uint32_t dst_station, TmRingPortDir dst_dir,
+    TmRingConnPmuPort pmu)
     : TmModule(name), latency_(latency), dst_station_(dst_station),
-      dst_dir_(dst_dir) {
+      dst_dir_(dst_dir), pmu_(pmu) {
   pipeline_depth_ = std::max<uint32_t>(1, latency_ + 1);
   width_bytes_ = std::max<uint32_t>(1, width_bytes);
 
@@ -23,8 +24,6 @@ TmRingConn::TmRingConn(
   retired_serializer_to_pipeline_event_pending_.assign(lanes, false);
   serializer_release_events_.clear();
   serializer_to_pipeline_events_.clear();
-  lane_stats_.assign(lanes, TmRingConnStats());
-
   dst_req_transit_reg_ = nullptr;
   dst_rsp_transit_reg_ = nullptr;
   dst_dat_transit_reg_ = nullptr;
@@ -77,23 +76,6 @@ TmRingSubnet TmRingConn::slot_subnet(p_tm_pld_t slot) const {
   return TmRingSubnet::REQ;
 }
 
-void TmRingConn::record_stall(
-    uint32_t lane_idx, uint64_t TmRingConnStats::*field) {
-  lane_stats_[lane_idx].*field += 1;
-}
-
-void TmRingConn::record_slot(uint32_t lane_idx,
-                                         uint32_t bytes,
-                                         uint32_t serialization_cycles) {
-  auto& lane_stats = lane_stats_[lane_idx];
-  lane_stats.packets++;
-  lane_stats.bytes += bytes;
-  lane_stats.busy_cycles += serialization_cycles;
-  lane_stats.inflight_peak =
-      std::max(lane_stats.inflight_peak, inflight_count_[lane_idx]);
-
-}
-
 void TmRingConn::reset() {
   std::fill(inflight_count_.begin(), inflight_count_.end(), 0);
   std::fill(serializer_available_.begin(), serializer_available_.end(), true);
@@ -108,15 +90,8 @@ void TmRingConn::reset() {
     serializer_release_event_pending_[lane] = false;
     serializer_to_pipeline_event_pending_[lane] = false;
   }
-  clear_stats();
   for (auto& pipeline : slot_pipelines_) {
     pipeline->clear();
-  }
-}
-
-void TmRingConn::clear_stats() {
-  for (TmRingConnStats& stats : lane_stats_) {
-    stats.clear();
   }
 }
 
@@ -131,30 +106,31 @@ bool TmRingConn::idle() const {
   return true;
 }
 
-bool TmRingConn::can_accept(p_tm_pld_t slot) {
+bool TmRingConn::can_accept(
+    p_tm_pld_t slot, TmRingConnRejectReason* reject_reason) const {
   const TmRingSubnet subnet = slot_subnet(slot);
   const uint32_t idx = tm_ring_subnet_index(subnet);
   if (retired_serializer_release_event_pending_[idx] ||
       retired_serializer_to_pipeline_event_pending_[idx]) {
-    record_stall(idx, &TmRingConnStats::send_reject_stall);
+    *reject_reason = TmRingConnRejectReason::RETIRED_EVENT_PENDING;
     return false;
   }
   if (!serializer_available_[idx]) {
-    record_stall(idx, &TmRingConnStats::serialization_busy_stall);
-    record_stall(idx, &TmRingConnStats::send_reject_stall);
+    *reject_reason = TmRingConnRejectReason::SERIALIZER_BUSY;
     return false;
   }
   if (inflight_count_[idx] >= pipeline_depth_ ||
       slot_pipelines_[idx]->full()) {
-    record_stall(idx, &TmRingConnStats::pipeline_full_stall);
-    record_stall(idx, &TmRingConnStats::send_reject_stall);
+    *reject_reason = TmRingConnRejectReason::PIPELINE_FULL;
     return false;
   }
   return true;
 }
 
 bool TmRingConn::accept_slot(p_tm_pld_t slot) {
-  if (!can_accept(slot)) {
+  TmRingConnRejectReason reason;
+  if (!can_accept(slot, &reason)) {
+    pmu_.rejected(slot_subnet(slot), reason);
     return false;
   }
   reserve_slot(slot);
@@ -173,15 +149,10 @@ void TmRingConn::reserve_slot(p_tm_pld_t slot) {
   serializer_release_event_pending_[idx] = true;
   serializer_to_pipeline_event_pending_[idx] = true;
   inflight_count_[idx]++;
-  record_slot(idx, bytes, serialization_cycles);
+  pmu_.accepted(subnet, bytes, serialization_cycles, inflight_count_[idx]);
   serializer_to_pipeline_events_[idx]->notify_after(
       serialization_cycles - 1);
   serializer_release_events_[idx]->notify_after(serialization_cycles);
-}
-
-const TmRingConnStats&
-TmRingConn::subnet_stats(TmRingSubnet subnet) const {
-  return lane_stats_[tm_ring_subnet_index(subnet)];
 }
 
 bool TmRingConn::has_ready_slot(TmRingSubnet subnet) {
@@ -264,7 +235,7 @@ void TmRingConn::drain_ready_slots() {
             : subnet == TmRingSubnet::RSP ? dst_rsp_transit_reg_
                                           : dst_dat_transit_reg_;
     if (dst_reg->full()) {
-      record_stall(idx, &TmRingConnStats::downstream_register_full_stall);
+      pmu_.downstream_blocked(subnet);
       continue;
     }
 

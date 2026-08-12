@@ -42,16 +42,24 @@ class TmRingCrossStationFixture {
 
     cw_source_to_destination = tm_make_ring_conn(
         "deflection_cw_source_to_destination", clk, 1, 16, 1,
-        TmRingPortDir::CCW);
+        TmRingPortDir::CCW,
+        pmu.register_conn(TmRingDomainType::V_RING, 0, 0,
+                          TmRingPortDir::CW, 1, TmRingPortDir::CCW));
     cw_destination_to_source = tm_make_ring_conn(
         "deflection_cw_destination_to_source", clk, 1, 16, 0,
-        TmRingPortDir::CCW);
+        TmRingPortDir::CCW,
+        pmu.register_conn(TmRingDomainType::V_RING, 0, 1,
+                          TmRingPortDir::CW, 0, TmRingPortDir::CCW));
     ccw_source_to_destination = tm_make_ring_conn(
         "deflection_ccw_source_to_destination", clk, 1, 16, 1,
-        TmRingPortDir::CW);
+        TmRingPortDir::CW,
+        pmu.register_conn(TmRingDomainType::V_RING, 0, 0,
+                          TmRingPortDir::CCW, 1, TmRingPortDir::CW));
     ccw_destination_to_source = tm_make_ring_conn(
         "deflection_ccw_destination_to_source", clk, 1, 16, 0,
-        TmRingPortDir::CW);
+        TmRingPortDir::CW,
+        pmu.register_conn(TmRingDomainType::V_RING, 0, 1,
+                          TmRingPortDir::CCW, 0, TmRingPortDir::CW));
 
     source->attach(0, cw_source_to_destination, ccw_source_to_destination,
                    slot_pool);

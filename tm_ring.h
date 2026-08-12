@@ -67,10 +67,11 @@ class TmRingFabric : public tm_engine::TmModule {
   TmRingPmuSnapshot snapshot_pmu(uint64_t cycle) const;
   TmRingConnStallBreakdown ring_conn_stall_breakdown() const;
   std::vector<TmRingDomainStats> ring_domain_stats() const;
+  std::vector<TmRingDomainStats> ring_domain_stats(
+      const TmRingPmuSnapshot& snapshot) const;
   std::vector<TmRingRbrgStats> rbrg_stats() const;
   uint32_t ring_link_width_bytes() const;
   uint32_t rbrg_width_bytes() const;
-  TmRingConnStats conn_stats(TmRingSubnet subnet) const;
   std::vector<TmRingConnHotspot> ring_top_busy_conns(
       TmRingSubnet subnet, uint32_t limit) const;
   uint64_t ring_conn_stalls() const;

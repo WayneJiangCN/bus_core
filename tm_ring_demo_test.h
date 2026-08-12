@@ -645,13 +645,14 @@ inline int print_demo_performance(
   const uint64_t endpoint_stalls =
       total_read_stalls + total_read_response_stalls + total_write_stalls +
       total_write_buffer_stalls;
+  const TmRingPmuSnapshot ring_pmu = ring->snapshot_pmu(clk->time());
   const TmRingConnStallBreakdown ring_conn_breakdown =
-      ring->ring_conn_stall_breakdown();
+      ring_pmu.conn_stall_breakdown();
   const auto csstats = ring->csstats();
   const auto home_agent_stats = ring->home_agent_stats();
   const auto l2_buffer_stats = ring->l2_buffer_stats();
   const std::vector<TmRingDomainStats> ring_domain_stats =
-      ring->ring_domain_stats();
+      ring->ring_domain_stats(ring_pmu);
   const std::vector<TmRingRbrgStats> rbrg_stats = ring->rbrg_stats();
   const uint64_t l2_classified_transactions =
       home_agent_stats.l2_hit_transactions +
@@ -1028,11 +1029,11 @@ inline int print_demo_performance(
   };
   if (detailed_output) {
     print_hot_conns(
-        "req", ring->ring_top_busy_conns(TmRingSubnet::REQ, 5));
+        "req", ring_pmu.top_busy_conns(TmRingSubnet::REQ, 5));
     print_hot_conns(
-        "rsp", ring->ring_top_busy_conns(TmRingSubnet::RSP, 5));
+        "rsp", ring_pmu.top_busy_conns(TmRingSubnet::RSP, 5));
     print_hot_conns(
-        "dat", ring->ring_top_busy_conns(TmRingSubnet::DAT, 5));
+        "dat", ring_pmu.top_busy_conns(TmRingSubnet::DAT, 5));
   }
   std::cout << "TEST_FAIRNESS jain_index=" << fairness << std::endl;
   std::cout << "TEST_FAIRNESS_CN Jain公平性指数=" << fairness << std::endl;

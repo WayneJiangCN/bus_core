@@ -3,6 +3,15 @@
 #include <vector>
 
 #include "tm_ring_conn.h"
+#include "tm_ring_pmu.h"
+
+class TmRingConnTestAccess {
+ public:
+  static bool can_accept(const TmRingConn& conn, tm_engine::p_tm_pld_t slot) {
+    TmRingConnRejectReason reason;
+    return conn.can_accept(slot, &reason);
+  }
+};
 
 namespace {
 
@@ -19,8 +28,12 @@ class TmRingConnFixture {
     req = tm_make_com_que(clk, "conn_test_req", 1);
     rsp = tm_make_com_que(clk, "conn_test_rsp", 1);
     dat = tm_make_com_que(clk, "conn_test_dat", dat_capacity);
+    pmu = std::make_shared<TmRingPmu>();
     conn = tm_make_ring_conn("conn_test", clk, latency(), width_bytes(), 1,
-                             TmRingPortDir::CW);
+                             TmRingPortDir::CW,
+                             pmu->register_conn(TmRingDomainType::V_RING, 0,
+                                                0, TmRingPortDir::CW, 1,
+                                                TmRingPortDir::CW));
     conn->attach(req, rsp, dat);
   }
 
@@ -60,6 +73,7 @@ class TmRingConnFixture {
   p_tm_com_que_t req;
   p_tm_com_que_t rsp;
   p_tm_com_que_t dat;
+  std::shared_ptr<TmRingPmu> pmu;
   p_tm_ring_conn_t conn;
 };
 
@@ -97,6 +111,26 @@ TEST(TmRingConnTest, BusyDatSerializerDoesNotBlockReq) {
   EXPECT_TRUE(fixture.conn->accept_slot(fixture.make_req()));
 }
 
+TEST(TmRingPmuTest, ConnReadinessProbeDoesNotRecordRejectUntilAcceptFails) {
+  TmRingConnFixture fixture;
+  ASSERT_TRUE(fixture.conn->accept_slot(fixture.make_dat()));
+  const auto candidate = fixture.make_dat();
+
+  EXPECT_FALSE(TmRingConnTestAccess::can_accept(*fixture.conn, candidate));
+  EXPECT_FALSE(TmRingConnTestAccess::can_accept(*fixture.conn, candidate));
+  EXPECT_EQ(uint64_t(0),
+            fixture.pmu->snapshot(fixture.clk->time())
+                .conn.total[tm_ring_subnet_index(TmRingSubnet::DAT)]
+                .send_reject_stall);
+
+  EXPECT_FALSE(fixture.conn->accept_slot(candidate));
+  const TmRingConnStats& dat =
+      fixture.pmu->snapshot(fixture.clk->time())
+          .conn.total[tm_ring_subnet_index(TmRingSubnet::DAT)];
+  EXPECT_EQ(uint64_t(1), dat.send_reject_stall);
+  EXPECT_EQ(uint64_t(1), dat.serialization_busy_stall);
+}
+
 TEST(TmRingConnTest, ReadySlotWaitsForDownstreamSpace) {
   TmRingConnFixture fixture;
   fixture.dat->push_back(fixture.make_dat());
@@ -106,7 +140,8 @@ TEST(TmRingConnTest, ReadySlotWaitsForDownstreamSpace) {
 
   tm_start(arrival_cycles);
   EXPECT_FALSE(fixture.conn->idle());
-  EXPECT_GT(fixture.conn->subnet_stats(TmRingSubnet::DAT)
+  EXPECT_GT(fixture.pmu->snapshot(fixture.clk->time())
+                .conn.total[tm_ring_subnet_index(TmRingSubnet::DAT)]
                 .downstream_register_full_stall,
             uint64_t(0));
 
