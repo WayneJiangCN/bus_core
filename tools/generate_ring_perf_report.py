@@ -500,6 +500,463 @@ def _utilization_bar(value, css_class):
     return _bar("", value, 100.0, css_class)
 
 
+_FIXED_TOPOLOGY = {
+    "h0": {
+        "domain": "h",
+        "ring": "0",
+        "nodes": (
+            ("rbrg", 0, 0, 220, 310),
+            ("home_agent", 0, 1, 380, 220),
+            ("l2_buffer", 0, 2, 540, 220),
+            ("home_agent", 1, 3, 700, 220),
+            ("l2_buffer", 1, 4, 860, 220),
+            ("rbrg", 1, 5, 980, 310),
+            ("home_agent", 2, 6, 860, 400),
+            ("l2_buffer", 2, 7, 700, 400),
+            ("home_agent", 3, 8, 540, 400),
+            ("l2_buffer", 3, 9, 380, 400),
+        ),
+    },
+    "v0": {
+        "domain": "v",
+        "ring": "0",
+        "nodes": (
+            ("rbrg", 0, 0, 220, 310),
+            ("master", 0, 1, 90, 130),
+            ("master", 1, 2, 45, 230),
+            ("master", 2, 3, 45, 390),
+            ("master", 3, 4, 90, 490),
+        ),
+    },
+    "v1": {
+        "domain": "v",
+        "ring": "1",
+        "nodes": (
+            ("rbrg", 1, 0, 980, 310),
+            ("master", 4, 1, 1110, 130),
+            ("master", 5, 2, 1155, 230),
+            ("master", 6, 3, 1155, 390),
+            ("master", 7, 4, 1110, 490),
+        ),
+    },
+}
+
+
+def _fixed_node_label(node_type, node):
+    if node_type == "master":
+        name = "M{}".format(node)
+    elif node_type == "home_agent":
+        name = "HA{}".format(node)
+    elif node_type == "l2_buffer":
+        name = "L2_{}".format(node)
+    else:
+        name = "RBRG{}".format(node)
+    return name
+
+
+def _supports_fixed_topology(scenario):
+    if (
+        scenario.number("CONFIG", "active_masters") != 8
+        or _optional_number(scenario, "CONFIG", "max_aicore_per_vring") != 4
+    ):
+        return False
+
+    expected_nodes = {
+        "master": set(range(8)),
+        "home_agent": set(range(4)),
+        "l2_buffer": set(range(4)),
+    }
+    observed_nodes = {node_type: set() for node_type in expected_nodes}
+    for record in scenario.records("RING_BUFFER"):
+        node_type = record.get("node_type")
+        if node_type in observed_nodes:
+            observed_nodes[node_type].add(_record_number(record, "node"))
+    if observed_nodes != expected_nodes:
+        return False
+
+    expected_rings = {("h", "0"), ("v", "0"), ("v", "1")}
+    observed_rings = {
+        (record.get("domain"), record.get("ring"))
+        for record in scenario.records("HW_CHANNEL")
+    }
+    if observed_rings != expected_rings:
+        return False
+
+    observed_edge_rings = {
+        (record.get("domain"), record.get("ring"))
+        for record in scenario.records("RING_EDGE")
+    }
+    if observed_edge_rings != expected_rings:
+        return False
+
+    rbrg_ids = {
+        record.get("rbrg", record.get("id"))
+        for record in scenario.records("RBRG_CHANNEL")
+    }
+    return rbrg_ids == {"0", "1"}
+
+
+def _topology_segment_path(source, target, offset):
+    x1, y1 = source[3], source[4]
+    x2, y2 = target[3], target[4]
+    delta_x = x2 - x1
+    delta_y = y2 - y1
+    length = max((delta_x * delta_x + delta_y * delta_y) ** 0.5, 1.0)
+    normal_x = -delta_y / length
+    normal_y = delta_x / length
+    return "M {:.1f} {:.1f} L {:.1f} {:.1f}".format(
+        x1 + normal_x * offset,
+        y1 + normal_y * offset,
+        x2 + normal_x * offset,
+        y2 + normal_y * offset,
+    )
+
+
+def _topology_edge_path(ring_key, index, station_count, direction):
+    ring = _FIXED_TOPOLOGY[ring_key]
+    source = ring["nodes"][index]
+    target_index = (
+        (index + 1) % station_count
+        if direction == "cw"
+        else (index + station_count - 1) % station_count
+    )
+    target = ring["nodes"][target_index]
+    return _topology_segment_path(source, target, -3)
+
+
+def _topology_node_label_position(ring_key, station, x, y):
+    if ring_key == "h0":
+        if station in (6, 7, 8, 9):
+            return x, y + 30, "middle"
+        return x, y - 20, "middle"
+    if ring_key == "v0":
+        return x + 20, y + 4, "start"
+    return x - 20, y + 4, "end"
+
+
+def _topology_edge_record(scenario, ring_key, subnet, direction, source, target):
+    ring = _FIXED_TOPOLOGY[ring_key]
+    for record in scenario.records("RING_EDGE"):
+        if (
+            record.get("domain") == ring["domain"]
+            and record.get("ring") == ring["ring"]
+            and record.get("subnet") == subnet
+            and record.get("direction") == direction
+            and _record_number(record, "src_station") == source
+            and _record_number(record, "dst_station") == target
+        ):
+            return record
+    return None
+
+
+def _topology_edge_classes(record):
+    if record is None:
+        return "topology-edge-idle topology-edge-thin"
+
+    cycle_utilization = _record_number(record, "cycle_util_pct")
+    payload_utilization = _record_number(record, "payload_util_pct")
+    if cycle_utilization >= 70:
+        heat = "hot"
+    elif cycle_utilization >= 40:
+        heat = "warm"
+    elif cycle_utilization > 0:
+        heat = "low"
+    else:
+        heat = "idle"
+
+    if payload_utilization >= 60:
+        width = "wide"
+    elif payload_utilization >= 25:
+        width = "medium"
+    else:
+        width = "thin"
+    return "topology-edge-{} topology-edge-{}".format(heat, width)
+
+
+def _topology_edge_detail(edge_id, ring_key, subnet, direction, source, target, record):
+    if record is None:
+        body = '<div class="topology-detail-empty">该物理边没有活动记录。</div>'
+    else:
+        rows = (
+            ("Packet", _record_number(record, "packets")),
+            ("Bytes", _record_number(record, "bytes")),
+            ("Busy cycles", _record_number(record, "busy_cycles")),
+            ("Stalls", _record_number(record, "stalls")),
+            ("Cycle utilization", _record_number(record, "cycle_util_pct")),
+            ("Payload utilization", _record_number(record, "payload_util_pct")),
+            (
+                "Serialization efficiency",
+                _record_number(record, "serialization_efficiency_pct"),
+            ),
+        )
+        body = "".join(
+            '<div class="topology-detail-row"><span>{}</span><strong>{}</strong></div>'.format(
+                label, _format_number(value)
+            )
+            for label, value in rows
+        )
+    return (
+        '<div class="topology-detail" data-topology-detail="edge-{}" hidden>'
+        '<strong>{} · {} · {} · st{} → st{}</strong>{}</div>'
+    ).format(
+        edge_id,
+        ring_key.upper(),
+        subnet.upper(),
+        direction.upper(),
+        source,
+        target,
+        body,
+    )
+
+
+def _topology_node_details(scenario):
+    groups = {}
+    for record in scenario.records("RING_BUFFER"):
+        node_type = record.get("node_type")
+        node = record.get("node")
+        if node_type is None or node is None:
+            continue
+        groups.setdefault("{}-{}".format(node_type, node), []).append(record)
+
+    details = []
+    for node_id, records in sorted(groups.items()):
+        rows = []
+        for record in records:
+            rows.append(
+                '<tr><td>{} {}</td><td>{}</td><td>{}</td><td>{}</td><td>{}</td></tr>'.format(
+                    html_lib.escape(record["subnet"].upper()),
+                    html_lib.escape(record["side"]),
+                    html_lib.escape(record["direction"]),
+                    _format_number(_record_number(record, "peak")),
+                    _format_number(_record_number(record, "full_pct")),
+                    _format_number(_record_number(record, "push_rejects")),
+                )
+            )
+        details.append(
+            '<div class="topology-detail" data-node-detail="{}" '
+            'data-topology-detail="node-{}" hidden><strong>{}</strong>'
+            '<div class="table-wrap"><table><thead><tr><th>Queue</th>'
+            '<th>Direction</th><th>Peak</th><th>Full (%)</th>'
+            '<th>Push rejects</th></tr></thead><tbody>{}</tbody></table></div></div>'.format(
+                html_lib.escape(node_id),
+                html_lib.escape(node_id),
+                html_lib.escape(node_id),
+                "".join(rows),
+            )
+        )
+    return "".join(details)
+
+
+def _topology_rbrg_details(scenario):
+    details = []
+    for record in scenario.records("RBRG_CHANNEL"):
+        rbrg_id = record.get("rbrg", record.get("id", "?"))
+        rows = (
+            ("Path", record.get("path", "-")),
+            ("Cycle utilization", _record_number(record, "cycle_util_pct")),
+            ("Payload utilization", _record_number(record, "payload_util_pct")),
+            ("Queue peak", _record_number(record, "queue_peak")),
+            ("Queue full stalls", _record_number(record, "queue_full_stalls")),
+        )
+        body = "".join(
+            '<div class="topology-detail-row"><span>{}</span><strong>{}</strong></div>'.format(
+                label, value if isinstance(value, str) else _format_number(value)
+            )
+            for label, value in rows
+        )
+        details.append(
+            '<div class="topology-detail" data-node-detail="rbrg-{}" '
+            'data-topology-detail="node-rbrg-{}" hidden><strong>RBRG{}</strong>{}</div>'.format(
+                html_lib.escape(rbrg_id),
+                html_lib.escape(rbrg_id),
+                html_lib.escape(rbrg_id),
+                body,
+            )
+        )
+    return "".join(details)
+
+
+def _topology_path_summary(scenario):
+    rbrg_records = scenario.records("RBRG_CHANNEL")
+    rbrg = max(
+        rbrg_records,
+        key=lambda record: _record_number(record, "cycle_util_pct"),
+    )
+    buffer = max(
+        scenario.records("RING_BUFFER"),
+        key=lambda record: _record_number(record, "full_pct"),
+    )
+    edge = max(
+        scenario.records("RING_EDGE"),
+        key=lambda record: _record_number(record, "cycle_util_pct"),
+    )
+    rbrg_id = rbrg.get("rbrg", rbrg.get("id", "?"))
+    rbrg_path = rbrg["path"]
+    return (
+        '<div class="topology-path-summary">'
+        '<div><span>最热物理边</span><strong>{}{} · {} · {}%</strong></div>'
+        '<div><span>最满 endpoint Buffer</span><strong>{} {} · {}%</strong></div>'
+        '<div data-rbrg-path="{}-{}"><span>最忙 RBRG</span>'
+        '<strong>RBRG{} · {} · {}%</strong></div></div>'.format(
+            edge["domain"].upper(),
+            edge["ring"],
+            edge["subnet"].upper(),
+            _format_number(_record_number(edge, "cycle_util_pct")),
+            html_lib.escape(buffer["node_type"]),
+            html_lib.escape(buffer["node"]),
+            _format_number(_record_number(buffer, "full_pct")),
+            html_lib.escape(rbrg_id),
+            html_lib.escape(rbrg_path),
+            html_lib.escape(rbrg_id),
+            html_lib.escape(rbrg_path),
+            _format_number(_record_number(rbrg, "cycle_util_pct")),
+        )
+    )
+
+
+def _render_topology_overview(scenario, profile_index):
+    if not _supports_fixed_topology(scenario):
+        return (
+            '<div class="topology-unavailable">当前拓扑不受支持：此视图要求 '
+            '8 Master、4 HA/L2、2 V-Ring 和 2 RBRG 的完整 PERF 记录。</div>'
+        )
+
+    skeletons = []
+    edges = []
+    edge_details = []
+    nodes = []
+    private_links = []
+    for ring_key, ring in _FIXED_TOPOLOGY.items():
+        station_count = len(ring["nodes"])
+        for index, source in enumerate(ring["nodes"]):
+            target = ring["nodes"][(index + 1) % station_count]
+            skeletons.append(
+                '<path class="topology-skeleton" data-ring="{}" d="{}" />'.format(
+                    ring_key, _topology_segment_path(source, target, 0)
+                )
+            )
+        for subnet in ("req", "rsp", "dat"):
+            for direction in ("cw", "ccw"):
+                for index, source in enumerate(ring["nodes"]):
+                    target = ring["nodes"][(index + 1) % station_count]
+                    if direction == "ccw":
+                        target = ring["nodes"][(index + station_count - 1) % station_count]
+                    record = _topology_edge_record(
+                        scenario,
+                        ring_key,
+                        subnet,
+                        direction,
+                        source[2],
+                        target[2],
+                    )
+                    edge_id = "{}-{}-{}-{}-{}".format(
+                        ring_key, subnet, direction, source[2], target[2]
+                    )
+                    edges.append(
+                        '<path class="topology-edge topology-edge-{} {}" '
+                        'data-ring="{}" data-subnet="{}" '
+                        'data-direction="{}" data-edge="{}" '
+                        'data-detail-target="edge-{}" '
+                        'd="{}"{} />'.format(
+                            subnet,
+                            _topology_edge_classes(record),
+                            ring_key,
+                            subnet,
+                            direction,
+                            edge_id,
+                            edge_id,
+                            _topology_edge_path(
+                                ring_key, index, station_count, direction
+                            ),
+                            "" if record is not None else ' data-missing="true"',
+                        )
+                    )
+                    edge_details.append(
+                        _topology_edge_detail(
+                            edge_id,
+                            ring_key,
+                            subnet,
+                            direction,
+                            source[2],
+                            target[2],
+                            record,
+                        )
+                    )
+        for node_type, node, station, x, y in ring["nodes"]:
+            if node_type == "rbrg" and ring_key != "h0":
+                continue
+            node_id = "{}-{}".format(node_type, node)
+            label_x, label_y, text_anchor = _topology_node_label_position(
+                ring_key, station, x, y
+            )
+            label = _fixed_node_label(node_type, node)
+            nodes.append(
+                '<g class="topology-node topology-node-{}" data-node="{}" '
+                'data-station="{}" data-detail-target="node-{}" tabindex="0" '
+                'role="button" aria-label="{} · station {}">'
+                '<circle cx="{}" cy="{}" r="12" />'
+                '<text x="{}" y="{}" text-anchor="{}">{}</text></g>'.format(
+                    node_type,
+                    node_id,
+                    station,
+                    node_id,
+                    html_lib.escape(label),
+                    station,
+                    x,
+                    y,
+                    label_x,
+                    label_y,
+                    text_anchor,
+                    html_lib.escape(label),
+                )
+            )
+        if ring_key == "h0":
+            for index in (1, 3, 6, 8):
+                source = ring["nodes"][index]
+                target = ring["nodes"][index + 1]
+                offset = 16 if source[4] < 310 else -16
+                private_links.append(
+                    '<line class="topology-private-link" x1="{}" y1="{}" '
+                    'x2="{}" y2="{}" />'.format(
+                        source[3], source[4] + offset, target[3], target[4] + offset
+                    )
+                )
+
+    return (
+        '<div class="topology-overview" data-topology-profile="{}" '
+        'data-active-subnet="dat" data-active-ring="all">'
+        '<div class="topology-heading"><div><strong>固定 Ring 拓扑</strong>'
+        '<span>8 Master · 4 HA/L2 · 2 V-Ring</span></div>'
+        '<div class="topology-subnets">'
+        '<button class="topology-subnet" data-subnet="req">REQ</button>'
+        '<button class="topology-subnet" data-subnet="rsp">RSP</button>'
+        '<button class="topology-subnet active" data-subnet="dat">DAT</button>'
+        '</div></div><div class="topology-rings">'
+        '<button class="topology-ring active" data-ring="all">All</button>'
+        '<button class="topology-ring" data-ring="h0">H0</button>'
+        '<button class="topology-ring" data-ring="v0">V0</button>'
+        '<button class="topology-ring" data-ring="v1">V1</button>'
+        '</div><div class="topology-legend">'
+        '<span><i class="topology-legend-hot"></i>颜色：cycle 利用率</span>'
+        '<span><i class="topology-legend-wide"></i>线宽：payload 利用率</span>'
+        '<span><i class="topology-legend-private"></i>HA-L2 私有接口</span>'
+        '</div><div class="topology-canvas">'
+        '<svg id="ring-topology-{}" viewBox="0 0 1200 620" '
+        'role="img" aria-label="H0 与 V0/V1 Ring 拓扑">{}</svg>'
+        '</div>{}<div class="topology-detail-panel">'
+        '<div class="topology-detail active" data-topology-detail="summary">'
+        '选择物理边或节点查看详细统计。</div>{}{}{}</div></div>'
+    ).format(
+        profile_index,
+        profile_index,
+        "".join(skeletons + edges + private_links + nodes),
+        _topology_path_summary(scenario),
+        "".join(edge_details),
+        _topology_node_details(scenario),
+        _topology_rbrg_details(scenario),
+    )
+
+
 def _physical_channel_view(scenario):
     groups = _ring_groups(scenario.records("HW_CHANNEL"))
     if not groups:
@@ -594,11 +1051,9 @@ def _endpoint_buffer_view(scenario):
     for record in records:
         rows.append(
             (
-                '<tr><th>{}{}</th><td>{} {}</td><td>{} {}</td><td>{}</td>'
+                '<tr><th>{} {}</th><td>{} {}</td><td>{}</td><td>{}</td>'
                 '<td>{}</td><td>{}</td><td>{}</td><td>{}</td></tr>'
             ).format(
-                html_lib.escape(record["domain"].upper()),
-                html_lib.escape(record["ring"]),
                 html_lib.escape(record["node_type"]),
                 html_lib.escape(record["node"]),
                 html_lib.escape(record["subnet"].upper()),
@@ -612,8 +1067,8 @@ def _endpoint_buffer_view(scenario):
             )
         )
     return (
-        '<div class="table-wrap"><table><thead><tr><th>Ring</th><th>Node</th>'
-        '<th>Queue</th><th>Direction</th><th>Depth</th><th>Peak</th>'
+        '<div class="table-wrap"><table><thead><tr><th>Node</th><th>Queue</th>'
+        '<th>Direction</th><th>Depth</th><th>Peak</th>'
         '<th>Average occupancy (%)</th><th>Full cycles</th><th>Full (%)</th>'
         '</tr></thead><tbody>{}</tbody></table></div>'
     ).format("".join(rows))
@@ -693,12 +1148,13 @@ def _rbrg_channel_view(scenario):
 
 def _single_scenario_metric_views(scenario):
     return (
+        '<details class="topology-data"><summary>详细 Ring 数据</summary>'
         '<div class="profile-grid">'
         '<div class="profile-pane"><h3>Physical Channel Utilization（物理通道利用率）</h3>{}</div>'
         '<div class="profile-pane"><h3>Deflection Recovery（绕圈恢复）</h3>{}</div>'
         '<div class="profile-pane"><h3>RBRG Channel（RBRG 路径）</h3>{}</div>'
         '</div><div class="profile-pane"><h3>Per-Edge Hotspots（逐边热点）</h3>{}</div>'
-        '<div class="profile-pane"><h3>Endpoint Buffer</h3>{}</div>'
+        '<div class="profile-pane"><h3>Endpoint Buffer</h3>{}</div></details>'
     ).format(
         _physical_channel_view(scenario),
         _deflection_recovery_view(scenario),
@@ -868,7 +1324,7 @@ def _scenario_profile_section(scenarios):
         profiles.append(
             (
                 '<div class="scenario-profile" data-profile="{}"{}>'
-                '<div class="profile-stats">{}</div>'
+                '<div class="profile-stats">{}</div>{}'
                 '<div class="profile-grid">'
                 '<div class="profile-pane"><h3>Ring 双向负载</h3>{}'
                 '<div class="hottest-edge"><span>最热边</span><strong>{}</strong></div></div>'
@@ -880,6 +1336,7 @@ def _scenario_profile_section(scenarios):
                 index,
                 "" if index == 0 else " hidden",
                 profile_stats,
+                _render_topology_overview(scenario, index),
                 direction_body,
                 html_lib.escape(hottest),
                 stall_body,
@@ -1242,8 +1699,8 @@ def _details_section(scenarios):
         rows.append(
             (
                 '<tr><th>{}</th><td>{}</td><td>{}</td><td>{}</td><td>{}</td>'
-                '<td>{}</td><td>{}</td><td>{}</td><td>{}/{}/{}/{}</td>'
-                '<td>{}</td><td>{}</td><td>{}</td>'
+                '<td>{}</td><td>{}</td><td>{}</td><td>{}</td><td>{}</td><td>{}</td><td>{}</td>'
+                '<td>{}</td><td>{}</td><td>{}</td><td>{}</td>'
                 '<td><span class="state {}">{}</span></td></tr>'
             ).format(
                 html_lib.escape(scenario.case_name),
@@ -1370,6 +1827,62 @@ h2 { margin:0; font-size:19px; letter-spacing:0; }
 .profile-stat:last-child { border-right:0; }
 .profile-stat span,.profile-stat small { display:block; color:var(--muted); font-size:12px; }
 .profile-stat strong { display:block; margin:3px 0; font-size:18px; overflow-wrap:anywhere; }
+.topology-overview { margin-top:20px; border:1px solid var(--line); background:#fbfcfc; }
+.topology-heading { display:flex; justify-content:space-between; gap:12px; align-items:center; padding:12px 14px; border-bottom:1px solid var(--line); }
+.topology-heading strong,.topology-heading span { display:block; }
+.topology-heading span { color:var(--muted); font-size:12px; }
+.topology-subnets { display:flex; border:1px solid var(--line); background:var(--paper); }
+.topology-subnet { min-width:48px; padding:6px 9px; border:0; border-right:1px solid var(--line); background:var(--paper); color:var(--ink); font:inherit; font-size:12px; cursor:pointer; }
+.topology-subnet:last-child { border-right:0; }
+.topology-subnet.active { background:#182329; color:#fff; }
+.topology-rings { display:flex; gap:6px; padding:10px 14px 0; }
+.topology-ring { padding:4px 8px; border:1px solid var(--line); background:var(--paper); color:var(--muted); font:inherit; font-size:12px; cursor:pointer; }
+.topology-ring.active { border-color:var(--teal); color:var(--teal); }
+.topology-legend { display:flex; flex-wrap:wrap; gap:14px; padding:10px 14px 0; color:var(--muted); font-size:12px; }
+.topology-legend span { display:flex; align-items:center; gap:6px; }
+.topology-legend i { display:inline-block; }
+.topology-legend-hot { width:16px; height:3px; background:var(--red); }
+.topology-legend-wide { width:16px; height:5px; background:var(--teal); }
+.topology-legend-private { width:16px; border-top:2px dashed #9faab1; }
+.topology-canvas { overflow-x:auto; }
+.topology-canvas svg { display:block; min-width:1040px; width:100%; height:auto; }
+.topology-skeleton { fill:none; stroke:#d9e1e5; stroke-width:2; stroke-linecap:round; }
+.topology-edge { fill:none; stroke:#c9d1d6; stroke-width:2; stroke-linecap:round; opacity:0; cursor:pointer; }
+.topology-overview[data-active-subnet="req"] .topology-edge[data-subnet="req"],
+.topology-overview[data-active-subnet="rsp"] .topology-edge[data-subnet="rsp"],
+.topology-overview[data-active-subnet="dat"] .topology-edge[data-subnet="dat"] { opacity:.92; }
+.topology-edge.topology-edge-idle { stroke:#b7c2c9; opacity:.42 !important; }
+.topology-edge.topology-edge-low { stroke:var(--teal); }
+.topology-edge.topology-edge-warm { stroke:var(--amber); }
+.topology-edge.topology-edge-hot { stroke:var(--red); }
+.topology-edge.topology-edge-thin { stroke-width:2; }
+.topology-edge.topology-edge-medium { stroke-width:3.5; }
+.topology-edge.topology-edge-wide { stroke-width:5; }
+.topology-overview[data-active-ring="h0"] .topology-edge:not([data-ring="h0"]),
+.topology-overview[data-active-ring="v0"] .topology-edge:not([data-ring="v0"]),
+.topology-overview[data-active-ring="v1"] .topology-edge:not([data-ring="v1"]) { opacity:.08 !important; }
+.topology-overview[data-active-ring="h0"] .topology-skeleton:not([data-ring="h0"]),
+.topology-overview[data-active-ring="v0"] .topology-skeleton:not([data-ring="v0"]),
+.topology-overview[data-active-ring="v1"] .topology-skeleton:not([data-ring="v1"]) { opacity:.16; }
+.topology-edge[data-missing="true"] { stroke-dasharray:3 4; }
+.topology-private-link { stroke:#9faab1; stroke-width:1.5; stroke-dasharray:4 4; }
+.topology-node { cursor:pointer; }
+.topology-node circle { fill:var(--paper); stroke-width:4; stroke:#6d7880; }
+.topology-node text { fill:#45535c; font-size:12px; font-weight:600; }
+.topology-node-rbrg circle { stroke:#865aa3; }
+.topology-node-home_agent circle { stroke:var(--blue); }
+.topology-node-l2_buffer circle { stroke:var(--teal); }
+.topology-path-summary { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:10px; padding:12px 14px; border-top:1px solid var(--line); }
+.topology-path-summary div { min-width:0; padding:8px 10px; border-left:3px solid var(--teal); background:var(--paper); }
+.topology-path-summary span,.topology-path-summary strong { display:block; }
+.topology-path-summary span { color:var(--muted); font-size:11px; }
+.topology-path-summary strong { margin-top:2px; font-size:13px; overflow-wrap:anywhere; }
+.topology-detail-panel { min-height:78px; padding:12px 14px; border-top:1px solid var(--line); background:var(--paper); }
+.topology-detail[hidden] { display:none; }
+.topology-detail.active { display:block; }
+.topology-detail-row { display:flex; justify-content:space-between; gap:12px; padding:3px 0; }
+.topology-detail-row span,.topology-detail-empty { color:var(--muted); }
+.topology-unavailable { margin-top:20px; padding:14px; border:1px dashed #bdc6cc; color:var(--muted); }
 .profile-grid { display:grid; grid-template-columns:1.2fr 1fr .9fr; gap:24px; margin-top:20px; }
 .profile-pane { min-width:0; }
 .profile-pane h3 { margin:0 0 12px; font-size:15px; }
@@ -1417,6 +1930,7 @@ pre { overflow:auto; padding:12px; background:#151d21; color:#dbe4e8; font-size:
   .profile-stats { grid-template-columns:repeat(2,minmax(0,1fr)); }
   .profile-stat { border-bottom:1px solid var(--line); }
   .profile-grid { grid-template-columns:1fr; }
+  .topology-path-summary { grid-template-columns:1fr; }
 }
 @media print {
   body { background:#fff; }
@@ -1445,13 +1959,57 @@ pre { overflow:auto; padding:12px; background:#151d21; color:#dbe4e8; font-size:
 <script>
 (function () {
   var select = document.getElementById("scenario-select");
-  if (!select) return;
-  var profiles = document.querySelectorAll("[data-profile]");
-  select.addEventListener("change", function () {
-    for (var index = 0; index < profiles.length; ++index) {
-      profiles[index].hidden = profiles[index].getAttribute("data-profile") !== select.value;
-    }
-  });
+  if (select) {
+    var profiles = document.querySelectorAll("[data-profile]");
+    select.addEventListener("change", function () {
+      for (var index = 0; index < profiles.length; ++index) {
+        profiles[index].hidden = profiles[index].getAttribute("data-profile") !== select.value;
+      }
+    });
+  }
+
+  var topologies = document.querySelectorAll(".topology-overview");
+  for (var topologyIndex = 0; topologyIndex < topologies.length; ++topologyIndex) {
+    (function (topology) {
+      function showDetail(target) {
+        var details = topology.querySelectorAll("[data-topology-detail]");
+        for (var detailIndex = 0; detailIndex < details.length; ++detailIndex) {
+          var detail = details[detailIndex];
+          var active = detail.getAttribute("data-topology-detail") === target;
+          detail.hidden = !active;
+          if (active) detail.classList.add("active");
+          else detail.classList.remove("active");
+        }
+      }
+
+      var subnetButtons = topology.querySelectorAll(".topology-subnet");
+      for (var subnetIndex = 0; subnetIndex < subnetButtons.length; ++subnetIndex) {
+        subnetButtons[subnetIndex].addEventListener("click", function () {
+          topology.setAttribute("data-active-subnet", this.getAttribute("data-subnet"));
+          for (var itemIndex = 0; itemIndex < subnetButtons.length; ++itemIndex) {
+            subnetButtons[itemIndex].classList.toggle("active", subnetButtons[itemIndex] === this);
+          }
+        });
+      }
+
+      var ringButtons = topology.querySelectorAll(".topology-ring");
+      for (var ringIndex = 0; ringIndex < ringButtons.length; ++ringIndex) {
+        ringButtons[ringIndex].addEventListener("click", function () {
+          topology.setAttribute("data-active-ring", this.getAttribute("data-ring"));
+          for (var itemIndex = 0; itemIndex < ringButtons.length; ++itemIndex) {
+            ringButtons[itemIndex].classList.toggle("active", ringButtons[itemIndex] === this);
+          }
+        });
+      }
+
+      var drillTargets = topology.querySelectorAll("[data-detail-target]");
+      for (var targetIndex = 0; targetIndex < drillTargets.length; ++targetIndex) {
+        drillTargets[targetIndex].addEventListener("click", function () {
+          showDetail(this.getAttribute("data-detail-target"));
+        });
+      }
+    }(topologies[topologyIndex]));
+  }
 }());
 </script>
 """

@@ -116,8 +116,8 @@ PERF_HW_CHANNEL domain=v ring=0 subnet=dat direction=cw window_cycles=100 edge_c
 PERF_HW_CHANNEL domain=v ring=0 subnet=req direction=ccw window_cycles=100 edge_count=4 busy_cycles=20 cycle_util_pct=5 payload_util_pct=2.5 serialization_efficiency_pct=50 imbalance_pct=10
 PERF_RING_EDGE domain=v ring=0 subnet=dat direction=cw src_station=1 dst_station=2 cycle_util_pct=75 payload_util_pct=60
 PERF_RING_EDGE domain=v ring=0 subnet=req direction=ccw src_station=2 dst_station=1 cycle_util_pct=10 payload_util_pct=5
-PERF_RING_BUFFER domain=v ring=0 node_type=master node=1 subnet=dat side=eject direction=shared depth=8 peak=8 avg_occupancy_pct=62.5 full_cycles=12 full_pct=12
-PERF_RING_BUFFER domain=v ring=0 node_type=target node=0 subnet=req side=inject direction=cw depth=4 peak=2 avg_occupancy_pct=25 full_cycles=0 full_pct=0
+PERF_RING_BUFFER node_type=master node=1 subnet=dat side=eject direction=shared depth=8 peak=8 avg_occupancy_pct=62.5 full_cycles=12 full_pct=12.5
+PERF_RING_BUFFER node_type=target node=0 subnet=req side=inject direction=cw depth=4 peak=2 avg_occupancy_pct=25 full_cycles=0 full_pct=0
 PERF_DEFLECTION domain=v ring=0 subnet=dat events=9 unique_packets=3 completed_packets=3 avg_rounds=3 max_rounds=4 avg_delay_cycles=18 max_delay_cycles=24 fanout_recipient_retry_events=2
 PERF_DEFLECTION domain=v ring=0 subnet=req events=0 unique_packets=0 completed_packets=0 avg_rounds=0 max_rounds=0 avg_delay_cycles=0 max_delay_cycles=0 fanout_recipient_retry_events=0
 PERF_RBRG_CHANNEL rbrg=0 path=h_to_v_dat cycle_util_pct=55 payload_util_pct=50 queue_peak=4 queue_full_stalls=2 destination_inject_stalls=1
@@ -156,6 +156,73 @@ def current_ring_perf_block():
             "cycle_util_pct=50 payload_util_pct=40 "
             "serialization_efficiency_pct=80\nPERF_HOME_AGENT",
         )
+    )
+
+
+def fixed_topology_perf_block():
+    channel_records = []
+    edge_records = []
+    for domain, ring, station_count in (("h", 0, 10), ("v", 0, 5), ("v", 1, 5)):
+        for subnet in ("req", "rsp", "dat"):
+            for direction in ("cw", "ccw"):
+                channel_records.append(
+                    "PERF_HW_CHANNEL domain={} ring={} subnet={} direction={} "
+                    "window_cycles=100 edge_count={} width_bytes=128 packets=8 "
+                    "bytes=1024 busy_cycles=40 cycle_util_pct=40 "
+                    "payload_util_pct=40 serialization_efficiency_pct=100 "
+                    "cw_busy_cycles=40 ccw_busy_cycles=20 subnet_imbalance_pct=33.3".format(
+                        domain, ring, subnet, direction, station_count
+                    )
+                )
+            for station in range(station_count):
+                next_station = (station + 1) % station_count
+                edge_records.append(
+                    "PERF_RING_EDGE domain={} ring={} subnet={} direction=cw "
+                    "src_station={} dst_station={} window_cycles=100 "
+                    "width_bytes=128 packets=8 bytes=1024 busy_cycles={} "
+                    "serialization_busy_stalls=2 stalls=3 inflight_peak=1 "
+                    "cycle_util_pct={} payload_util_pct={} "
+                    "serialization_efficiency_pct=100".format(
+                        domain,
+                        ring,
+                        subnet,
+                        station,
+                        next_station,
+                        80 if subnet == "dat" else 20,
+                        80 if subnet == "dat" else 20,
+                        80 if subnet == "dat" else 10,
+                    )
+                )
+
+    buffer_records = []
+    for node_type, count in (("master", 8), ("home_agent", 4), ("l2_buffer", 4)):
+        for node in range(count):
+            buffer_records.append(
+                "PERF_RING_BUFFER node_type={} node={} subnet=dat side=inject "
+                "direction=cw depth=12 pushes=64 pops=64 push_rejects=2 "
+                "occupancy=0 peak=8 occupancy_area=400 avg_occupancy_pct=33.3 "
+                "full_cycles=4 full_pct=4".format(node_type, node)
+            )
+
+    rbrg_records = []
+    for rbrg in range(2):
+        rbrg_records.append(
+            "PERF_RBRG_CHANNEL id={} path=h_to_v_dat window_cycles=100 "
+            "width_bytes=128 packets=16 bytes=2048 busy_cycles=80 "
+            "cycle_util_pct=80 payload_util_pct=80 "
+            "serialization_efficiency_pct=100 queue_peak=8 "
+            "queue_full_stalls=2 destination_inject_stalls=3".format(rbrg)
+        )
+
+    records = "\n".join(channel_records + edge_records + buffer_records + rbrg_records)
+    return (
+        perf_block("fixed_topology", 128, 160.0, ceiling_bpc=256.0)
+        .replace(
+            "burst_bytes=128",
+            "burst_bytes=128 run_mode=free_running max_aicore_per_vring=4 "
+            "home_agent_waiters_per_entry=8 l2_response_latency=64",
+        )
+        .replace("PERF_HOME_AGENT", records + "\nPERF_HOME_AGENT")
     )
 
 
@@ -233,11 +300,25 @@ class RingPerfParserTest(unittest.TestCase):
              for record in scenario.records("RING_EDGE")],
             [("1", "2"), ("2", "1")],
         )
+        endpoint_buffers = scenario.records("RING_BUFFER")
         self.assertEqual(
             [(record["node_type"], record["node"])
-             for record in scenario.records("RING_BUFFER")],
+             for record in endpoint_buffers],
             [("master", "1"), ("target", "0")],
         )
+        self.assertEqual(
+            [(record["subnet"], record["side"], record["direction"],
+              record["depth"], record["peak"],
+              record["avg_occupancy_pct"], record["full_cycles"],
+              record["full_pct"])
+             for record in endpoint_buffers],
+            [
+                ("dat", "eject", "shared", "8", "8", "62.5", "12", "12.5"),
+                ("req", "inject", "cw", "4", "2", "25", "0", "0"),
+            ],
+        )
+        self.assertNotIn("domain", endpoint_buffers[0])
+        self.assertNotIn("ring", endpoint_buffers[0])
         self.assertEqual(
             [record["subnet"] for record in scenario.records("DEFLECTION")],
             ["dat", "req"],
@@ -294,6 +375,79 @@ class RingPerfParserTest(unittest.TestCase):
 
 
 class RingPerfHtmlTest(unittest.TestCase):
+    def test_renders_fixed_topology_with_ring_closures(self):
+        document = render_html(
+            parse_perf_results(fixed_topology_perf_block()), "fixed.txt"
+        )
+
+        self.assertIn('id="ring-topology-0"', document)
+        self.assertIn('data-ring="h0"', document)
+        self.assertIn('data-ring="v0"', document)
+        self.assertIn('data-ring="v1"', document)
+        self.assertIn('data-node="master-0"', document)
+        self.assertIn('data-node="l2_buffer-3"', document)
+        self.assertIn('data-edge="h0-dat-cw-9-0"', document)
+        self.assertIn('data-edge="v0-dat-cw-4-0"', document)
+
+    def test_topology_encodes_edge_heat_and_node_details(self):
+        document = render_html(
+            parse_perf_results(fixed_topology_perf_block()), "fixed.txt"
+        )
+
+        self.assertIn('data-edge="v0-dat-cw-1-2"', document)
+        self.assertIn("topology-edge-hot", document)
+        self.assertIn("topology-edge-wide", document)
+        self.assertIn('data-node-detail="master-0"', document)
+        self.assertIn('data-node-detail="rbrg-0"', document)
+        self.assertIn('data-rbrg-path="0-h_to_v_dat"', document)
+        self.assertIn(
+            'class="topology-subnet active" data-subnet="dat"', document
+        )
+
+    def test_topology_keeps_detailed_tables_collapsed(self):
+        topology_document = render_html(
+            parse_perf_results(fixed_topology_perf_block()), "fixed.txt"
+        )
+        unsupported_document = render_html(
+            parse_perf_results(SAMPLE_RESULTS), "sample.txt"
+        )
+
+        self.assertIn('<details class="topology-data">', topology_document)
+        self.assertIn("详细 Ring 数据", topology_document)
+        self.assertIn("当前拓扑不受支持", unsupported_document)
+        self.assertNotIn('id="ring-topology-0"', unsupported_document)
+
+    def test_topology_uses_compact_closed_ring_layout(self):
+        document = render_html(
+            parse_perf_results(fixed_topology_perf_block()), "fixed.txt"
+        )
+
+        self.assertIn('class="topology-skeleton"', document)
+        self.assertIn('viewBox="0 0 1200 620"', document)
+        self.assertIn('class="topology-legend"', document)
+        self.assertIn('aria-label="M0 · station 1"', document)
+        self.assertIn(">M0</text>", document)
+        self.assertNotIn(">M0 · st1</text>", document)
+
+    def test_details_table_aligns_the_four_latency_columns(self):
+        document = render_html(parse_perf_results(SAMPLE_RESULTS), "sample.txt")
+
+        details_start = document.index('<section id="details">')
+        details_end = document.index("</section>", details_start)
+        details = document[details_start:details_end]
+        self.assertIn('<th colspan="4">延迟</th>', details)
+        self.assertIn("<td>20</td><td>30</td><td>40</td><td>50</td>", details)
+        self.assertNotIn("<td>4.250/9.000/20/30/40</td>", details)
+
+        header = re.search(r"<thead><tr>(.*?)</tr></thead>", details).group(1)
+        row = re.search(r"<tbody><tr>(.*?)</tr>", details).group(1)
+        header_columns = sum(
+            int(match.group(1) or 1)
+            for match in re.finditer(r"<th(?: colspan=\"(\d+)\")?>", header)
+        )
+        row_columns = len(re.findall(r"<t[hd](?: [^>]*)?>", row))
+        self.assertEqual(header_columns, row_columns)
+
     def test_renders_one_offline_comparison_report(self):
         document = render_html(
             parse_perf_results(SAMPLE_RESULTS), "ring_perf_result.txt"
@@ -401,6 +555,15 @@ class RingPerfHtmlTest(unittest.TestCase):
         self.assertIn("Physical Channel Utilization", document)
         self.assertIn("Per-Edge Hotspots", document)
         self.assertIn("Endpoint Buffer", document)
+        self.assertIn("<th>Node</th>", document)
+        self.assertNotIn("<th>Ring</th><th>Node</th>", document)
+        self.assertIn("<th>master 1</th>", document)
+        self.assertIn("<td>DAT eject</td>", document)
+        self.assertIn("<td>shared</td>", document)
+        self.assertIn("<td>8</td>", document)
+        self.assertIn("<td>62.500</td>", document)
+        self.assertIn("<td>12</td>", document)
+        self.assertIn("<td>12.500</td>", document)
         self.assertIn("Deflection Recovery", document)
         self.assertIn("RBRG Channel", document)
         self.assertIn("cycle utilization", document)
