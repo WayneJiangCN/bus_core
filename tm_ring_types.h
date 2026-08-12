@@ -53,6 +53,13 @@ enum class TmRingSubnet : uint32_t {
   DAT = 2,
 };
 
+enum class TmRingRbrgPath : uint32_t {
+  V_TO_H_REQ = 0,
+  V_TO_H_DAT = 1,
+  H_TO_V_RSP = 2,
+  H_TO_V_DAT = 3,
+};
+
 enum class TmRingNodeType : uint32_t {
   MASTER = 0,
   HOME_AGENT,

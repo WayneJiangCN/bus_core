@@ -14,13 +14,6 @@
 #include "tm_ring_topology.h"
 #include "tm_ring_types.h"
 
-enum class TmRingRbrgPath : uint32_t {
-  V_TO_H_REQ = 0,
-  V_TO_H_DAT = 1,
-  H_TO_V_RSP = 2,
-  H_TO_V_DAT = 3,
-};
-
 class TmRingRbrgL1 : public tm_engine::TmModule {
  public:
   TmRingRbrgL1(const std::string& name, tm_engine::p_tm_clk_t clk,

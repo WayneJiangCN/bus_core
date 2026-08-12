@@ -15,6 +15,7 @@
 #include "tm_inf.h"
 #include "tm_que.h"
 #include "tm_ring_l2_buffer_node.h"
+#include "tm_ring_pmu.h"
 #include "tm_ring_rbrg_l1.h"
 #include "tm_ring_topology.h"
 #include "tm_ring_types.h"
@@ -42,42 +43,6 @@ using p_tm_ring_mem_port_t = std::shared_ptr<tm_ring_mem_port_t>;
 class TmRingSlotPool;
 using tm_ring_slot_pool_t = TmRingSlotPool;
 using p_tm_ring_slot_pool_t = std::shared_ptr<tm_ring_slot_pool_t>;
-
-struct TmRingConnStallBreakdown {
-  uint64_t serialization_busy = 0;
-  uint64_t pipeline_full = 0;
-  uint64_t downstream_register_full = 0;
-
-  uint64_t total() const {
-    return serialization_busy + pipeline_full + downstream_register_full;
-  }
-};
-
-struct TmRingConnHotspot {
-  uint32_t src_station = 0;
-  TmRingPortDir src_dir = TmRingPortDir::LOCAL;
-  uint32_t dst_station = 0;
-  TmRingPortDir dst_dir = TmRingPortDir::LOCAL;
-  TmRingSubnet subnet = TmRingSubnet::REQ;
-
-  uint64_t packets = 0;
-  uint64_t bytes = 0;
-  uint64_t busy_cycles = 0;
-  uint64_t serialization_busy_stall = 0;
-  uint64_t total_stalls = 0;
-  uint32_t inflight_peak = 0;
-};
-
-struct TmRingDomainStats {
-  TmRingDomainType type = TmRingDomainType::V_RING;
-  uint32_t ring_id = 0;
-  std::array<TmRingConnStats, 3> cw;
-  std::array<TmRingConnStats, 3> ccw;
-  TmRingConnHotspot hottest;
-  uint32_t directed_edge_count = 0;
-  std::vector<TmRingConnHotspot> edges;
-  TmRingCrossStationStats cross_station;
-};
 
 /*
  * Top-level ring interconnect model.
