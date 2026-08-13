@@ -4,7 +4,7 @@
 
 #include "tm_ring_conn.h"
 #include "tm_ring_pmu.h"
-
+using namespace tm_engine;
 class TmRingConnTestAccess {
  public:
   static bool can_accept(const TmRingConn& conn, tm_engine::p_tm_pld_t slot) {
