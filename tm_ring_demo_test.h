@@ -351,6 +351,7 @@ inline int print_demo_performance(
     const p_tm_ring_fabric_t& ring, const std::vector<p_pem_biu_t>& bius,
     const std::vector<std::shared_ptr<DemoT>>& demos,
     const std::vector<p_tm_mem_t>& targets,
+    uint64_t measurement_cycle,
     std::vector<std::string>* failures) {
   const std::string& case_name = demo_case.case_name;
   const uint32_t uops_per_master = demo_case.uops_per_master;
@@ -647,7 +648,7 @@ inline int print_demo_performance(
   const uint64_t endpoint_stalls =
       total_read_stalls + total_read_response_stalls + total_write_stalls +
       total_write_buffer_stalls;
-  const TmRingPmuSnapshot ring_pmu = ring->snapshot_pmu(clk->time());
+  const TmRingPmuSnapshot ring_pmu = ring->snapshot_pmu(measurement_cycle);
   const TmRingConnStallBreakdown ring_conn_breakdown =
       ring_pmu.conn_stall_breakdown();
   const auto& csstats = ring_pmu.cross_station.total;
@@ -1155,7 +1156,7 @@ inline int run_demo(const std::string& config_file) {
   stats::stat->dump();
 
   return print_demo_performance(config_file, demo_case, ring_cfg, ddr_cfg, ring,
-                                bius, demos, targets, &failures);
+                                bius, demos, targets, clk->time(), &failures);
 }
 
 class ScopedStreamRedirect {
