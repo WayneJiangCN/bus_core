@@ -18,7 +18,7 @@
 #include "tm_ring_rbrg_l1.h"
 #include "tm_ring_topology.h"
 #include "tm_ring_types.h"
-
+// Core
 class PemBiu;
 using p_tm_ring_biu_t = std::shared_ptr<PemBiu>;
 
