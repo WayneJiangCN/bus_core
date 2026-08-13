@@ -1193,15 +1193,21 @@ void run_multi_vring_aggregated_read_benchmark(
     ASSERT_EQ(l2.h_unicast_carriers + l2.h_scatter_carriers,
               l2.h_carriers);
     ASSERT_EQ(l2.h_carriers, l2.responses_accepted);
-    ASSERT_EQ(request_bytes * l2.h_unicast_carriers +
-                  kMultiVringBenchmarkLineBytes * l2.h_scatter_carriers,
-              l2.dat_bytes);
-    ASSERT_EQ(request_bytes == 128 ? l2.h_unicast_carriers : uint64_t(0),
-              l2.injected_carrier_128b);
-    ASSERT_EQ(request_bytes == 256 ? l2.h_unicast_carriers : uint64_t(0),
-              l2.injected_carrier_256b);
-    ASSERT_EQ(l2.h_scatter_carriers, l2.injected_carrier_512b);
     ASSERT_EQ(uint64_t(0), l2.injected_carrier_other);
+    ASSERT_EQ(l2.h_carriers,
+              l2.injected_carrier_128b + l2.injected_carrier_256b +
+                  l2.injected_carrier_512b);
+    ASSERT_EQ(uint64_t(128) * l2.injected_carrier_128b +
+                  uint64_t(256) * l2.injected_carrier_256b +
+                  uint64_t(512) * l2.injected_carrier_512b,
+              l2.dat_bytes);
+    ASSERT_EQ(l2.h_unicast_carriers,
+              request_bytes == 128 ? l2.injected_carrier_128b
+                                   : l2.injected_carrier_256b);
+    ASSERT_EQ(l2.h_scatter_carriers,
+              request_bytes == 128
+                  ? l2.injected_carrier_256b + l2.injected_carrier_512b
+                  : l2.injected_carrier_512b);
   } else {
     ASSERT_GT(l2.h_multicast_carriers, uint64_t(0));
     ASSERT_EQ(uint64_t(0), l2.h_scatter_carriers);
