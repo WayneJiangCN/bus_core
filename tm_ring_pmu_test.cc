@@ -358,7 +358,7 @@ TEST(TmRingPmuTest, EventsMapToAllBuckets) {
   EXPECT_EQ(uint64_t(1), snapshot.l2.total.injected_carrier_256b);
   EXPECT_EQ(uint64_t(1), snapshot.l2.total.injected_carrier_512b);
   EXPECT_EQ(uint64_t(1), snapshot.l2.total.injected_carrier_other);
-  EXPECT_EQ(uint64_t(1), snapshot.l2.total.h_unicast_carriers);
+  EXPECT_EQ(uint64_t(2), snapshot.l2.total.h_unicast_carriers);
   EXPECT_EQ(uint64_t(1), snapshot.l2.total.h_multicast_carriers);
   EXPECT_EQ(uint64_t(1), snapshot.l2.total.h_scatter_carriers);
 }

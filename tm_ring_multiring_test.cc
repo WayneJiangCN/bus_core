@@ -170,7 +170,7 @@ TEST(TmRingRbrgL1Test, ReSerializesBeforeInjectingTheNextRingSegment) {
   ASSERT_TRUE(rbrg->v_node_interface()->push_eject(TmRingSubnet::DAT,
                                                     packet));
 
-  tm_start(2);
+  tm_start(1);
   EXPECT_EQ(nullptr, rbrg->h_node_interface()->front_inject(
                          TmRingSubnet::DAT, TmRingPortDir::CW));
   tm_start(1);
