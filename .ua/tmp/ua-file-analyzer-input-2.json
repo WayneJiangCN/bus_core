@@ -1,0 +1,85 @@
+{
+  "projectRoot": "C:\\Users\\wayne\\Downloads\\gem5-stable\\BUS\\aicore\\code",
+  "batchFiles": [
+    {
+      "path": "tm_ring_conn.cc",
+      "language": "cpp",
+      "sizeLines": 289,
+      "fileCategory": "code"
+    },
+    {
+      "path": "tm_ring_conn.h",
+      "language": "c",
+      "sizeLines": 84,
+      "fileCategory": "code"
+    },
+    {
+      "path": "tm_ring_conn_test.cc",
+      "language": "cpp",
+      "sizeLines": 210,
+      "fileCategory": "code"
+    },
+    {
+      "path": "tm_ring_core.cc",
+      "language": "cpp",
+      "sizeLines": 735,
+      "fileCategory": "code"
+    },
+    {
+      "path": "tm_ring_master_niu.cc",
+      "language": "cpp",
+      "sizeLines": 157,
+      "fileCategory": "code"
+    },
+    {
+      "path": "tm_ring_master_niu.h",
+      "language": "c",
+      "sizeLines": 66,
+      "fileCategory": "code"
+    },
+    {
+      "path": "tm_ring_mem_port.cc",
+      "language": "cpp",
+      "sizeLines": 643,
+      "fileCategory": "code"
+    },
+    {
+      "path": "tm_ring_mem_port.h",
+      "language": "c",
+      "sizeLines": 108,
+      "fileCategory": "code"
+    },
+    {
+      "path": "tm_ring_slot_pool.h",
+      "language": "c",
+      "sizeLines": 79,
+      "fileCategory": "code"
+    }
+  ],
+  "batchImportData": {
+    "tm_ring_conn.cc": [
+      "tm_ring_conn.h"
+    ],
+    "tm_ring_conn.h": [],
+    "tm_ring_conn_test.cc": [
+      "tm_ring_conn.h"
+    ],
+    "tm_ring_core.cc": [
+      "tm_ring.h",
+      "tm_ring_conn.h",
+      "tm_ring_cross_station.h",
+      "tm_ring_master_niu.h",
+      "tm_ring_mem_port.h",
+      "tm_ring_slot_pool.h"
+    ],
+    "tm_ring_master_niu.cc": [
+      "tm_ring_master_niu.h"
+    ],
+    "tm_ring_master_niu.h": [],
+    "tm_ring_mem_port.cc": [
+      "tm_ring_mem_port.h"
+    ],
+    "tm_ring_mem_port.h": [],
+    "tm_ring_slot_pool.h": []
+  }
+}

@@ -1,0 +1,1268 @@
+{
+  "schemaVersion": 1,
+  "algorithm": "louvain",
+  "totalFiles": 46,
+  "totalBatches": 5,
+  "exportsByPath": {
+    "pem_trdemo.cc": [
+      "PemTrDemo",
+      "~PemTrDemo",
+      "config",
+      "configure_traffic",
+      "attach",
+      "build",
+      "idle",
+      "reset",
+      "gen_uop",
+      "read_mem",
+      "recv_rsp",
+      "handle_read_response",
+      "record_read_response",
+      "pipeline",
+      "wr_recv_rsp",
+      "allocate_write_buf",
+      "release_write_buf"
+    ],
+    "pem_trdemo.h": [],
+    "tm_bus_types.h": [],
+    "tm_ring.h": [],
+    "tm_ring_conn.cc": [
+      "TmRingConn",
+      "slot_subnet",
+      "record_stall",
+      "record_slot",
+      "reset",
+      "clear_stats",
+      "idle",
+      "can_accept",
+      "accept_slot",
+      "reserve_slot",
+      "has_ready_slot",
+      "release_serializer",
+      "move_serializer_to_pipeline",
+      "release_req_serializer",
+      "release_rsp_serializer",
+      "release_dat_serializer",
+      "move_req_serializer_to_pipeline",
+      "move_rsp_serializer_to_pipeline",
+      "move_dat_serializer_to_pipeline",
+      "attach",
+      "drain_ready_slots",
+      "dst_station",
+      "dst_dir"
+    ],
+    "tm_ring_conn.h": [],
+    "tm_ring_conn_test.cc": [
+      "TmRingConnFixture",
+      "make_dat",
+      "make_req",
+      "serialization_cycles",
+      "arrival_cycles",
+      "TmRingConnFixture",
+      "TEST",
+      "TEST",
+      "TEST",
+      "TEST",
+      "TEST",
+      "TEST",
+      "TEST"
+    ],
+    "tm_ring_core.cc": [
+      "is_power_of_two",
+      "validate_ring_config",
+      "TmRingFabric",
+      "config",
+      "init_topology",
+      "clear_components",
+      "create_domain",
+      "attach_domain",
+      "station",
+      "output_conn",
+      "create_master_nius",
+      "create_mem_ports",
+      "create_l2_buffer_nodes",
+      "create_rbrgs",
+      "bind_master_nius",
+      "bind_master_niu",
+      "bind_mem_ports",
+      "bind_l2_buffer_nodes",
+      "bind_rbrgs",
+      "attach_l2_buffers",
+      "build",
+      "reset",
+      "clear_stats",
+      "idle",
+      "ring_conn_stall_breakdown",
+      "ring_queue_stats",
+      "ring_domain_stats",
+      "rbrg_stats",
+      "ring_link_width_bytes",
+      "rbrg_width_bytes",
+      "conn_stats",
+      "ring_top_busy_conns",
+      "ring_conn_stalls",
+      "l2_buffer_stats",
+      "csstats",
+      "home_agent_stats",
+      "ha_source_stats",
+      "attach_master",
+      "attach_master",
+      "attach_target",
+      "attach_target"
+    ],
+    "tm_ring_cross_station.cc": [
+      "TmRingCrossStation",
+      "reset",
+      "clear_stats",
+      "idle",
+      "attach",
+      "bind_node_interface",
+      "transit_in_reg",
+      "schedule_req",
+      "schedule_rsp",
+      "schedule_dat",
+      "schedule_subnet",
+      "schedule_output",
+      "process_transit",
+      "process_fanout_transit",
+      "try_normal_injection",
+      "try_slot_replacement",
+      "try_preserve_or_replace_i_tag",
+      "forward_slot",
+      "can_eject",
+      "owns_e_tag",
+      "mark_e_tag_for_forward",
+      "rollback_e_tag_mark",
+      "claim_e_tag",
+      "commit_eject",
+      "commit_fanout_eject",
+      "transit_reg",
+      "output_conn",
+      "destination_node",
+      "is_destination",
+      "fanout_recipient_for_station",
+      "make_fanout_forward",
+      "make_fanout_response",
+      "slot_direction",
+      "direction_index",
+      "ejection_bank_index",
+      "transit_waiting_for_output",
+      "normal_injection_ready",
+      "local_waiting_for_output",
+      "release_ring_slot",
+      "make_tagged_empty_slot"
+    ],
+    "tm_ring_cross_station.h": [],
+    "tm_ring_cross_station_test.cc": [
+      "TEST",
+      "TmRingCrossStationFixture",
+      "make_req",
+      "make_dat",
+      "run_until_deflections",
+      "run_until_eject",
+      "TmRingCrossStationFixture",
+      "TEST",
+      "TEST",
+      "TEST",
+      "TEST",
+      "TEST"
+    ],
+    "tm_ring_demo_test.h": [],
+    "tm_ring_fanout.h": [],
+    "tm_ring_home_agent.cc": [
+      "TmRingHomeAgent",
+      "reset",
+      "clear_stats",
+      "accept_read",
+      "reserve_write",
+      "complete_write",
+      "has_backend_request",
+      "front_backend_request",
+      "commit_backend_request",
+      "has_functional_read",
+      "front_functional_read",
+      "commit_functional_read",
+      "record_private_l2_full_stall",
+      "accept_backend_response",
+      "has_l2_response",
+      "front_l2_response",
+      "commit_l2_response",
+      "consume_l2_group_summary",
+      "line_base",
+      "in_one_line",
+      "fanout_waiter_set_supported",
+      "make_waiter",
+      "record_read",
+      "classify_l2_hit",
+      "find_transaction",
+      "find_pending_transaction",
+      "find_pending_functional_transaction",
+      "find_responding_transaction",
+      "has_blocking_read_transaction",
+      "make_backend_request",
+      "make_completion_data",
+      "make_l2_candidate",
+      "current_completion_buffer_bytes",
+      "erase_transaction"
+    ],
+    "tm_ring_home_agent.h": [],
+    "tm_ring_l2_buffer_node.cc": [
+      "TmRingL2BufferNode",
+      "attach",
+      "reset",
+      "clear_stats",
+      "idle",
+      "has_capacity",
+      "fanout_candidate_valid",
+      "allocate_group_token",
+      "accept_response",
+      "take_frozen_summaries",
+      "record_accepted_entry",
+      "make_unicast_response",
+      "make_fanout_envelope",
+      "append_fanout_recipient",
+      "carrier_size",
+      "freeze_fanout_group",
+      "make_frozen_carrier",
+      "materialize_fanout",
+      "node_interface",
+      "prepare_dat_route",
+      "service_ready_response",
+      "release_issue_token",
+      "service"
+    ],
+    "tm_ring_l2_buffer_node.h": [],
+    "tm_ring_master_niu.cc": [
+      "TmRingMasterNiu",
+      "config",
+      "reset",
+      "idle",
+      "attach",
+      "attach",
+      "node_interface",
+      "recv_biu_request",
+      "recv_biu_data",
+      "recv_rsp",
+      "recv_dat",
+      "forward_biu_request",
+      "forward_biu_data",
+      "prepare_ring_request"
+    ],
+    "tm_ring_master_niu.h": [],
+    "tm_ring_mem_port.cc": [
+      "TmRingMemPort",
+      "reset",
+      "attach",
+      "idle",
+      "attach",
+      "attach",
+      "attach_l2_buffer",
+      "node_interface",
+      "home_agent_stats",
+      "clear_stats",
+      "req_q",
+      "prepare_ring_response",
+      "recv_ring_req",
+      "recv_ring_dat",
+      "send_rd_cmd",
+      "send_wr_cmd",
+      "send_wr_dat",
+      "send_cmd",
+      "service_home_agent",
+      "service_home_agent_hit",
+      "accept_rd_into_home_agent",
+      "issue_home_agent_backend_read",
+      "capture_home_agent_backend_rsp",
+      "send_home_agent_l2_rsp",
+      "recv_mem_rsp",
+      "recv_rd_cmd_rsp",
+      "recv_wr_cmd_rsp",
+      "recv_wr_dat_rsp",
+      "has_response",
+      "front_response",
+      "pop_response",
+      "response_channel"
+    ],
+    "tm_ring_mem_port.h": [],
+    "tm_ring_multiring_test.cc": [
+      "make_multiring_cfg",
+      "TEST",
+      "TEST",
+      "TEST",
+      "TEST",
+      "TEST",
+      "TEST",
+      "TmRingMultiRingFabricTest",
+      "TEST_F",
+      "TEST_F"
+    ],
+    "tm_ring_node_interface.h": [],
+    "tm_ring_node_interface_test.cc": [
+      "make_packet",
+      "TEST",
+      "TEST",
+      "TEST",
+      "TEST",
+      "TEST",
+      "TEST",
+      "TEST"
+    ],
+    "tm_ring_packet_cost_test.cc": [
+      "make_packet",
+      "TEST",
+      "TEST",
+      "TEST"
+    ],
+    "tm_ring_perf.cc": [
+      "align_up",
+      "private_span",
+      "base_address",
+      "address_for",
+      "append_transaction",
+      "operator<",
+      "ReadGroupKey",
+      "packet_cycles",
+      "add_edge_cycles",
+      "domain_station_count",
+      "add_directed_path",
+      "add_routed_path",
+      "add_rbrg_path_cycles",
+      "add_fanout_path",
+      "add_v_to_h_packet",
+      "add_h_to_v_packet",
+      "add_unicast_read_response",
+      "power_of_two",
+      "fanout_waiter_set_supported",
+      "fanout_candidate_valid",
+      "request_in_one_line",
+      "fanout_carrier_size",
+      "nearest_rank",
+      "operator==",
+      "operator<",
+      "operator==",
+      "operator<",
+      "tm_ring_build_perf_trace",
+      "tm_ring_estimate_fabric",
+      "tm_ring_collect_perf_result",
+      "tm_ring_scaling_efficiency"
+    ],
+    "tm_ring_perf.h": [],
+    "tm_ring_perf_master.cc": [
+      "TmRingPerfWaveCoordinator",
+      "can_issue",
+      "record_completion",
+      "TmRingPerfMaster",
+      "~TmRingPerfMaster",
+      "config",
+      "attach",
+      "build",
+      "reset",
+      "idle",
+      "issue",
+      "issue_read",
+      "issue_write",
+      "send_read_candidate",
+      "send_write_candidate",
+      "make_candidate",
+      "receive_read_response",
+      "receive_write_response",
+      "receive_response"
+    ],
+    "tm_ring_perf_master.h": [],
+    "tm_ring_perf_report.cc": [
+      "percentage",
+      "average",
+      "cycle_util_pct",
+      "payload_util_pct",
+      "serialization_efficiency_pct",
+      "subnet_imbalance_pct",
+      "saturating_subtract",
+      "append_theory",
+      "tm_ring_format_perf_result"
+    ],
+    "tm_ring_perf_report.h": [],
+    "tm_ring_perf_test.cc": [
+      "set_conn_stats",
+      "make_perf_cfg",
+      "TEST",
+      "TEST",
+      "TEST",
+      "TEST",
+      "TEST",
+      "TEST",
+      "TEST",
+      "TEST",
+      "TEST",
+      "TEST",
+      "TEST",
+      "TEST",
+      "TEST",
+      "TEST",
+      "RetryPerfMaster",
+      "TEST",
+      "TEST",
+      "TEST",
+      "TEST",
+      "TEST",
+      "TEST",
+      "PerfSmokeResult",
+      "PerfOverrides",
+      "perf_config_path",
+      "run_perf_smoke",
+      "expect_perf_block_complete",
+      "make_128kb_case",
+      "rbrg_packets",
+      "v_ring_dat_carriers",
+      "run_multi_vring_aggregated_read_benchmark",
+      "run_multi_vring_128kb_benchmark",
+      "run_multi_vring_no_merge_read_benchmark",
+      "run_aggregation_wave_test",
+      "TEST",
+      "TEST",
+      "TEST",
+      "TEST",
+      "TEST",
+      "TEST",
+      "TEST",
+      "TEST",
+      "TEST",
+      "TEST",
+      "TEST",
+      "TEST",
+      "TEST",
+      "TEST",
+      "TEST",
+      "TEST"
+    ],
+    "tm_ring_rbrg_l1.cc": [
+      "TmRingRbrgL1",
+      "reset",
+      "idle",
+      "clear_stats",
+      "v_node_interface",
+      "h_node_interface",
+      "recv_v_req",
+      "recv_v_dat",
+      "recv_h_rsp",
+      "recv_h_dat",
+      "release_v_req_cw_bandwidth",
+      "release_v_req_ccw_bandwidth",
+      "release_v_dat_cw_bandwidth",
+      "release_v_dat_ccw_bandwidth",
+      "release_h_rsp_cw_bandwidth",
+      "release_h_rsp_ccw_bandwidth",
+      "release_h_dat_cw_bandwidth",
+      "release_h_dat_ccw_bandwidth",
+      "handoff_v_req_cw_serializer",
+      "handoff_v_req_ccw_serializer",
+      "handoff_v_dat_cw_serializer",
+      "handoff_v_dat_ccw_serializer",
+      "handoff_h_rsp_cw_serializer",
+      "handoff_h_rsp_ccw_serializer",
+      "handoff_h_dat_cw_serializer",
+      "handoff_h_dat_ccw_serializer",
+      "schedule_path",
+      "start_serializer",
+      "head_candidate",
+      "preferred_direction",
+      "release_bandwidth",
+      "handoff_serializer",
+      "prepare_h_segment",
+      "prepare_v_segment",
+      "clear_ring_local_state",
+      "path_index",
+      "direction_index",
+      "source_for",
+      "destination_for",
+      "subnet_for"
+    ],
+    "tm_ring_rbrg_l1.h": [],
+    "tm_ring_rbrg_l1_test.cc": [
+      "make_rbrg_test_cfg",
+      "TmRingRbrgL1DirectionalTest",
+      "TEST_F",
+      "TEST_F",
+      "TEST_F",
+      "TEST_F",
+      "TEST_F",
+      "TEST_F",
+      "TEST_F",
+      "TEST_F",
+      "TEST_F",
+      "TEST_F",
+      "TEST_F",
+      "TEST_F"
+    ],
+    "tm_ring_slot_pool.h": [],
+    "tm_ring_stats.cc": [
+      "clear",
+      "merge_from",
+      "clear",
+      "merge_from",
+      "clear",
+      "merge_from",
+      "clear",
+      "merge_from",
+      "clear",
+      "merge_from",
+      "clear",
+      "merge_from",
+      "clear",
+      "merge_from",
+      "clear",
+      "merge_from"
+    ],
+    "tm_ring_stats.h": [],
+    "tm_ring_stats_test.cc": [
+      "TEST",
+      "TEST"
+    ],
+    "tm_ring_topology.cc": [
+      "config",
+      "decode_target",
+      "target_matches",
+      "calc_home_line",
+      "calc_linear_slice",
+      "calc_xor_hash_slice",
+      "calc_interleave_slice",
+      "v_ring_count",
+      "v_ring_station_count",
+      "h_ring_station_count",
+      "master_location",
+      "ha_location",
+      "l2_location",
+      "rbrg_v_location",
+      "rbrg_h_location",
+      "master_vring",
+      "route_direction",
+      "fanout_span",
+      "neighbor_station"
+    ],
+    "tm_ring_topology.h": [],
+    "tm_ring_types.h": [],
+    "tools/generate_ring_demo_report.py": [
+      "_first_record",
+      "_as_int",
+      "_parse_buckets",
+      "_parse_key_values",
+      "parse_result",
+      "_distribution_stats",
+      "_format_number",
+      "_metric",
+      "_bar_chart",
+      "_carrier_chart",
+      "render_html",
+      "generate_report",
+      "main"
+    ],
+    "tools/generate_ring_perf_report.py": [
+      "PerfReportError",
+      "_parse_key_values",
+      "_parse_number",
+      "_validate_required_fields",
+      "PerfScenario",
+      "parse_perf_results",
+      "_format_number",
+      "_scenario_passes",
+      "_fabric_efficiency",
+      "_bar_width",
+      "_metric_card",
+      "_bar",
+      "_optional_number",
+      "_run_mode",
+      "_theory_number",
+      "_scaling_efficiency_text",
+      "_direction_bar",
+      "_profile_stat",
+      "_record_number",
+      "_multiring_profile",
+      "_no_activity",
+      "_ring_groups",
+      "_utilization_bar",
+      "_fixed_node_label",
+      "_supports_fixed_topology",
+      "_topology_segment_path",
+      "_topology_edge_path",
+      "_topology_node_label_position",
+      "_topology_edge_record",
+      "_topology_edge_classes",
+      "_topology_edge_detail",
+      "_topology_node_details",
+      "_topology_rbrg_details",
+      "_topology_path_summary",
+      "_render_topology_overview",
+      "_physical_channel_view",
+      "_edge_hotspot_view",
+      "_endpoint_buffer_view",
+      "_deflection_recovery_view",
+      "_rbrg_channel_view",
+      "_single_scenario_metric_views",
+      "_scenario_profile_section",
+      "_bandwidth_section",
+      "_latency_section",
+      "_shared_section",
+      "_bottleneck_section",
+      "_aggregation_wave_section",
+      "_details_section",
+      "render_html",
+      "generate_report",
+      "main"
+    ],
+    "tools/test_generate_ring_demo_report.py": [
+      "RingDemoReportTest"
+    ],
+    "tools/test_generate_ring_perf_report.py": [
+      "has_external_script",
+      "perf_block",
+      "multi_ring_records",
+      "multi_ring_perf_block",
+      "aggregation_wave_perf_block",
+      "single_scenario_metric_records",
+      "single_scenario_metric_perf_block",
+      "current_ring_perf_block",
+      "fixed_topology_perf_block",
+      "RingPerfParserTest",
+      "RingPerfHtmlTest",
+      "RingPerfFileTest"
+    ]
+  },
+  "batches": [
+    {
+      "batchIndex": 1,
+      "files": [
+        {
+          "path": "tm_ring.h",
+          "language": "c",
+          "sizeLines": 340,
+          "fileCategory": "code"
+        },
+        {
+          "path": "tm_ring_multiring_test.cc",
+          "language": "cpp",
+          "sizeLines": 438,
+          "fileCategory": "code"
+        },
+        {
+          "path": "tm_ring_perf.cc",
+          "language": "cpp",
+          "sizeLines": 718,
+          "fileCategory": "code"
+        },
+        {
+          "path": "tm_ring_perf.h",
+          "language": "c",
+          "sizeLines": 197,
+          "fileCategory": "code"
+        },
+        {
+          "path": "tm_ring_perf_master.cc",
+          "language": "cpp",
+          "sizeLines": 261,
+          "fileCategory": "code"
+        },
+        {
+          "path": "tm_ring_perf_master.h",
+          "language": "c",
+          "sizeLines": 79,
+          "fileCategory": "code"
+        },
+        {
+          "path": "tm_ring_perf_report.cc",
+          "language": "cpp",
+          "sizeLines": 483,
+          "fileCategory": "code"
+        },
+        {
+          "path": "tm_ring_perf_report.h",
+          "language": "c",
+          "sizeLines": 10,
+          "fileCategory": "code"
+        },
+        {
+          "path": "tm_ring_perf_test.cc",
+          "language": "cpp",
+          "sizeLines": 1424,
+          "fileCategory": "code"
+        },
+        {
+          "path": "tm_ring_rbrg_l1_test.cc",
+          "language": "cpp",
+          "sizeLines": 428,
+          "fileCategory": "code"
+        }
+      ],
+      "batchImportData": {
+        "tm_ring.h": [],
+        "tm_ring_multiring_test.cc": [
+          "tm_ring.h",
+          "tm_ring_perf.h",
+          "tm_ring_perf_master.h"
+        ],
+        "tm_ring_perf.cc": [
+          "tm_ring.h",
+          "tm_ring_perf.h",
+          "tm_ring_perf_master.h"
+        ],
+        "tm_ring_perf.h": [],
+        "tm_ring_perf_master.cc": [
+          "tm_ring_perf_master.h"
+        ],
+        "tm_ring_perf_master.h": [],
+        "tm_ring_perf_report.cc": [
+          "tm_ring_perf_report.h"
+        ],
+        "tm_ring_perf_report.h": [],
+        "tm_ring_perf_test.cc": [
+          "tm_ring.h",
+          "tm_ring_home_agent.h",
+          "tm_ring_perf.h",
+          "tm_ring_perf_master.h",
+          "tm_ring_perf_report.h"
+        ],
+        "tm_ring_rbrg_l1_test.cc": [
+          "tm_ring.h",
+          "tm_ring_fanout.h"
+        ]
+      },
+      "neighborMap": {
+        "tm_ring.h": [
+          {
+            "path": "tm_ring_core.cc",
+            "batchIndex": 2,
+            "symbols": [
+              "is_power_of_two",
+              "validate_ring_config",
+              "TmRingFabric",
+              "config",
+              "init_topology",
+              "clear_components",
+              "create_domain",
+              "attach_domain",
+              "station",
+              "output_conn",
+              "create_master_nius",
+              "create_mem_ports",
+              "create_l2_buffer_nodes",
+              "create_rbrgs",
+              "bind_master_nius",
+              "bind_master_niu",
+              "bind_mem_ports",
+              "bind_l2_buffer_nodes",
+              "bind_rbrgs",
+              "attach_l2_buffers",
+              "build",
+              "reset",
+              "clear_stats",
+              "idle",
+              "ring_conn_stall_breakdown",
+              "ring_queue_stats",
+              "ring_domain_stats",
+              "rbrg_stats",
+              "ring_link_width_bytes",
+              "rbrg_width_bytes",
+              "conn_stats",
+              "ring_top_busy_conns",
+              "ring_conn_stalls",
+              "l2_buffer_stats",
+              "csstats",
+              "home_agent_stats",
+              "ha_source_stats",
+              "attach_master",
+              "attach_master",
+              "attach_target",
+              "attach_target"
+            ]
+          }
+        ],
+        "tm_ring_perf_test.cc": [
+          {
+            "path": "tm_ring_home_agent.h",
+            "batchIndex": 5,
+            "symbols": []
+          }
+        ],
+        "tm_ring_rbrg_l1_test.cc": [
+          {
+            "path": "tm_ring_fanout.h",
+            "batchIndex": 3,
+            "symbols": []
+          }
+        ]
+      }
+    },
+    {
+      "batchIndex": 2,
+      "files": [
+        {
+          "path": "tm_ring_conn.cc",
+          "language": "cpp",
+          "sizeLines": 289,
+          "fileCategory": "code"
+        },
+        {
+          "path": "tm_ring_conn.h",
+          "language": "c",
+          "sizeLines": 84,
+          "fileCategory": "code"
+        },
+        {
+          "path": "tm_ring_conn_test.cc",
+          "language": "cpp",
+          "sizeLines": 210,
+          "fileCategory": "code"
+        },
+        {
+          "path": "tm_ring_core.cc",
+          "language": "cpp",
+          "sizeLines": 735,
+          "fileCategory": "code"
+        },
+        {
+          "path": "tm_ring_master_niu.cc",
+          "language": "cpp",
+          "sizeLines": 157,
+          "fileCategory": "code"
+        },
+        {
+          "path": "tm_ring_master_niu.h",
+          "language": "c",
+          "sizeLines": 66,
+          "fileCategory": "code"
+        },
+        {
+          "path": "tm_ring_mem_port.cc",
+          "language": "cpp",
+          "sizeLines": 643,
+          "fileCategory": "code"
+        },
+        {
+          "path": "tm_ring_mem_port.h",
+          "language": "c",
+          "sizeLines": 108,
+          "fileCategory": "code"
+        },
+        {
+          "path": "tm_ring_slot_pool.h",
+          "language": "c",
+          "sizeLines": 79,
+          "fileCategory": "code"
+        }
+      ],
+      "batchImportData": {
+        "tm_ring_conn.cc": [
+          "tm_ring_conn.h"
+        ],
+        "tm_ring_conn.h": [],
+        "tm_ring_conn_test.cc": [
+          "tm_ring_conn.h"
+        ],
+        "tm_ring_core.cc": [
+          "tm_ring.h",
+          "tm_ring_conn.h",
+          "tm_ring_cross_station.h",
+          "tm_ring_master_niu.h",
+          "tm_ring_mem_port.h",
+          "tm_ring_slot_pool.h"
+        ],
+        "tm_ring_master_niu.cc": [
+          "tm_ring_master_niu.h"
+        ],
+        "tm_ring_master_niu.h": [],
+        "tm_ring_mem_port.cc": [
+          "tm_ring_mem_port.h"
+        ],
+        "tm_ring_mem_port.h": [],
+        "tm_ring_slot_pool.h": []
+      },
+      "neighborMap": {
+        "tm_ring_core.cc": [
+          {
+            "path": "tm_ring.h",
+            "batchIndex": 1,
+            "symbols": []
+          },
+          {
+            "path": "tm_ring_cross_station.h",
+            "batchIndex": 3,
+            "symbols": []
+          }
+        ]
+      }
+    },
+    {
+      "batchIndex": 3,
+      "files": [
+        {
+          "path": "tm_ring_cross_station.cc",
+          "language": "cpp",
+          "sizeLines": 666,
+          "fileCategory": "code"
+        },
+        {
+          "path": "tm_ring_cross_station.h",
+          "language": "c",
+          "sizeLines": 130,
+          "fileCategory": "code"
+        },
+        {
+          "path": "tm_ring_cross_station_test.cc",
+          "language": "cpp",
+          "sizeLines": 291,
+          "fileCategory": "code"
+        },
+        {
+          "path": "tm_ring_fanout.h",
+          "language": "c",
+          "sizeLines": 121,
+          "fileCategory": "code"
+        },
+        {
+          "path": "tm_ring_l2_buffer_node.cc",
+          "language": "cpp",
+          "sizeLines": 620,
+          "fileCategory": "code"
+        },
+        {
+          "path": "tm_ring_l2_buffer_node.h",
+          "language": "c",
+          "sizeLines": 94,
+          "fileCategory": "code"
+        },
+        {
+          "path": "tm_ring_rbrg_l1.cc",
+          "language": "cpp",
+          "sizeLines": 594,
+          "fileCategory": "code"
+        },
+        {
+          "path": "tm_ring_rbrg_l1.h",
+          "language": "c",
+          "sizeLines": 137,
+          "fileCategory": "code"
+        }
+      ],
+      "batchImportData": {
+        "tm_ring_cross_station.cc": [
+          "tm_ring_cross_station.h",
+          "tm_ring_fanout.h"
+        ],
+        "tm_ring_cross_station.h": [],
+        "tm_ring_cross_station_test.cc": [
+          "tm_ring_cross_station.h"
+        ],
+        "tm_ring_fanout.h": [],
+        "tm_ring_l2_buffer_node.cc": [
+          "tm_ring_fanout.h",
+          "tm_ring_l2_buffer_node.h"
+        ],
+        "tm_ring_l2_buffer_node.h": [],
+        "tm_ring_rbrg_l1.cc": [
+          "tm_ring_fanout.h",
+          "tm_ring_rbrg_l1.h"
+        ],
+        "tm_ring_rbrg_l1.h": []
+      },
+      "neighborMap": {
+        "tm_ring_cross_station.h": [
+          {
+            "path": "tm_ring_core.cc",
+            "batchIndex": 2,
+            "symbols": [
+              "is_power_of_two",
+              "validate_ring_config",
+              "TmRingFabric",
+              "config",
+              "init_topology",
+              "clear_components",
+              "create_domain",
+              "attach_domain",
+              "station",
+              "output_conn",
+              "create_master_nius",
+              "create_mem_ports",
+              "create_l2_buffer_nodes",
+              "create_rbrgs",
+              "bind_master_nius",
+              "bind_master_niu",
+              "bind_mem_ports",
+              "bind_l2_buffer_nodes",
+              "bind_rbrgs",
+              "attach_l2_buffers",
+              "build",
+              "reset",
+              "clear_stats",
+              "idle",
+              "ring_conn_stall_breakdown",
+              "ring_queue_stats",
+              "ring_domain_stats",
+              "rbrg_stats",
+              "ring_link_width_bytes",
+              "rbrg_width_bytes",
+              "conn_stats",
+              "ring_top_busy_conns",
+              "ring_conn_stalls",
+              "l2_buffer_stats",
+              "csstats",
+              "home_agent_stats",
+              "ha_source_stats",
+              "attach_master",
+              "attach_master",
+              "attach_target",
+              "attach_target"
+            ]
+          }
+        ],
+        "tm_ring_fanout.h": [
+          {
+            "path": "tm_ring_rbrg_l1_test.cc",
+            "batchIndex": 1,
+            "symbols": [
+              "make_rbrg_test_cfg",
+              "TmRingRbrgL1DirectionalTest",
+              "TEST_F",
+              "TEST_F",
+              "TEST_F",
+              "TEST_F",
+              "TEST_F",
+              "TEST_F",
+              "TEST_F",
+              "TEST_F",
+              "TEST_F",
+              "TEST_F",
+              "TEST_F",
+              "TEST_F"
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "batchIndex": 4,
+      "files": [
+        {
+          "path": "pem_trdemo.cc",
+          "language": "cpp",
+          "sizeLines": 368,
+          "fileCategory": "code"
+        },
+        {
+          "path": "pem_trdemo.h",
+          "language": "c",
+          "sizeLines": 178,
+          "fileCategory": "code"
+        },
+        {
+          "path": "tm_ring_packet_cost_test.cc",
+          "language": "cpp",
+          "sizeLines": 38,
+          "fileCategory": "code"
+        },
+        {
+          "path": "tm_ring_stats_test.cc",
+          "language": "cpp",
+          "sizeLines": 22,
+          "fileCategory": "code"
+        },
+        {
+          "path": "tm_ring_types.h",
+          "language": "c",
+          "sizeLines": 220,
+          "fileCategory": "code"
+        }
+      ],
+      "batchImportData": {
+        "pem_trdemo.cc": [
+          "pem_trdemo.h",
+          "tm_ring_types.h"
+        ],
+        "pem_trdemo.h": [],
+        "tm_ring_packet_cost_test.cc": [
+          "tm_ring_types.h"
+        ],
+        "tm_ring_stats_test.cc": [
+          "tm_ring_types.h"
+        ],
+        "tm_ring_types.h": []
+      },
+      "neighborMap": {}
+    },
+    {
+      "batchIndex": 5,
+      "files": [
+        {
+          "path": "tm_bus_types.h",
+          "language": "c",
+          "sizeLines": 62,
+          "fileCategory": "code"
+        },
+        {
+          "path": "tm_ring_demo_test.h",
+          "language": "c",
+          "sizeLines": 1189,
+          "fileCategory": "code"
+        },
+        {
+          "path": "tm_ring_home_agent.cc",
+          "language": "cpp",
+          "sizeLines": 678,
+          "fileCategory": "code"
+        },
+        {
+          "path": "tm_ring_home_agent.h",
+          "language": "c",
+          "sizeLines": 149,
+          "fileCategory": "code"
+        },
+        {
+          "path": "tm_ring_node_interface.h",
+          "language": "c",
+          "sizeLines": 410,
+          "fileCategory": "code"
+        },
+        {
+          "path": "tm_ring_node_interface_test.cc",
+          "language": "cpp",
+          "sizeLines": 202,
+          "fileCategory": "code"
+        },
+        {
+          "path": "tm_ring_stats.cc",
+          "language": "cpp",
+          "sizeLines": 129,
+          "fileCategory": "code"
+        },
+        {
+          "path": "tm_ring_stats.h",
+          "language": "c",
+          "sizeLines": 144,
+          "fileCategory": "code"
+        },
+        {
+          "path": "tm_ring_topology.cc",
+          "language": "cpp",
+          "sizeLines": 255,
+          "fileCategory": "code"
+        },
+        {
+          "path": "tm_ring_topology.h",
+          "language": "c",
+          "sizeLines": 66,
+          "fileCategory": "code"
+        },
+        {
+          "path": "tools/generate_ring_demo_report.py",
+          "language": "python",
+          "sizeLines": 358,
+          "fileCategory": "code"
+        },
+        {
+          "path": "tools/generate_ring_perf_report.py",
+          "language": "python",
+          "sizeLines": 2101,
+          "fileCategory": "code"
+        },
+        {
+          "path": "tools/test_generate_ring_demo_report.py",
+          "language": "python",
+          "sizeLines": 59,
+          "fileCategory": "code"
+        },
+        {
+          "path": "tools/test_generate_ring_perf_report.py",
+          "language": "python",
+          "sizeLines": 714,
+          "fileCategory": "code"
+        }
+      ],
+      "batchImportData": {
+        "tm_bus_types.h": [],
+        "tm_ring_demo_test.h": [],
+        "tm_ring_home_agent.cc": [
+          "tm_ring_home_agent.h"
+        ],
+        "tm_ring_home_agent.h": [],
+        "tm_ring_node_interface.h": [],
+        "tm_ring_node_interface_test.cc": [
+          "tm_ring_node_interface.h"
+        ],
+        "tm_ring_stats.cc": [
+          "tm_ring_stats.h"
+        ],
+        "tm_ring_stats.h": [],
+        "tm_ring_topology.cc": [
+          "tm_ring_topology.h"
+        ],
+        "tm_ring_topology.h": [],
+        "tools/generate_ring_demo_report.py": [],
+        "tools/generate_ring_perf_report.py": [],
+        "tools/test_generate_ring_demo_report.py": [
+          "tools/generate_ring_demo_report.py"
+        ],
+        "tools/test_generate_ring_perf_report.py": [
+          "tools/generate_ring_perf_report.py"
+        ]
+      },
+      "neighborMap": {
+        "tm_ring_home_agent.h": [
+          {
+            "path": "tm_ring_perf_test.cc",
+            "batchIndex": 1,
+            "symbols": [
+              "set_conn_stats",
+              "make_perf_cfg",
+              "TEST",
+              "TEST",
+              "TEST",
+              "TEST",
+              "TEST",
+              "TEST",
+              "TEST",
+              "TEST",
+              "TEST",
+              "TEST",
+              "TEST",
+              "TEST",
+              "TEST",
+              "TEST",
+              "RetryPerfMaster",
+              "TEST",
+              "TEST",
+              "TEST",
+              "TEST",
+              "TEST",
+              "TEST",
+              "PerfSmokeResult",
+              "PerfOverrides",
+              "perf_config_path",
+              "run_perf_smoke",
+              "expect_perf_block_complete",
+              "make_128kb_case",
+              "rbrg_packets",
+              "v_ring_dat_carriers",
+              "run_multi_vring_aggregated_read_benchmark",
+              "run_multi_vring_128kb_benchmark",
+              "run_multi_vring_no_merge_read_benchmark",
+              "run_aggregation_wave_test",
+              "TEST",
+              "TEST",
+              "TEST",
+              "TEST",
+              "TEST",
+              "TEST",
+              "TEST",
+              "TEST",
+              "TEST",
+              "TEST",
+              "TEST",
+              "TEST",
+              "TEST",
+              "TEST",
+              "TEST",
+              "TEST"
+            ]
+          }
+        ]
+      }
+    }
+  ]
+}

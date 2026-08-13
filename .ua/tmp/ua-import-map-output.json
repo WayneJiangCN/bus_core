@@ -1,0 +1,122 @@
+{
+  "scriptCompleted": true,
+  "stats": {
+    "filesScanned": 46,
+    "filesWithImports": 24,
+    "totalEdges": 42
+  },
+  "importMap": {
+    "pem_trdemo.cc": [
+      "pem_trdemo.h",
+      "tm_ring_types.h"
+    ],
+    "pem_trdemo.h": [],
+    "tm_bus_types.h": [],
+    "tm_ring.h": [],
+    "tm_ring_conn.cc": [
+      "tm_ring_conn.h"
+    ],
+    "tm_ring_conn.h": [],
+    "tm_ring_conn_test.cc": [
+      "tm_ring_conn.h"
+    ],
+    "tm_ring_core.cc": [
+      "tm_ring.h",
+      "tm_ring_conn.h",
+      "tm_ring_cross_station.h",
+      "tm_ring_master_niu.h",
+      "tm_ring_mem_port.h",
+      "tm_ring_slot_pool.h"
+    ],
+    "tm_ring_cross_station.cc": [
+      "tm_ring_cross_station.h",
+      "tm_ring_fanout.h"
+    ],
+    "tm_ring_cross_station.h": [],
+    "tm_ring_cross_station_test.cc": [
+      "tm_ring_cross_station.h"
+    ],
+    "tm_ring_demo_test.h": [],
+    "tm_ring_fanout.h": [],
+    "tm_ring_home_agent.cc": [
+      "tm_ring_home_agent.h"
+    ],
+    "tm_ring_home_agent.h": [],
+    "tm_ring_l2_buffer_node.cc": [
+      "tm_ring_fanout.h",
+      "tm_ring_l2_buffer_node.h"
+    ],
+    "tm_ring_l2_buffer_node.h": [],
+    "tm_ring_master_niu.cc": [
+      "tm_ring_master_niu.h"
+    ],
+    "tm_ring_master_niu.h": [],
+    "tm_ring_mem_port.cc": [
+      "tm_ring_mem_port.h"
+    ],
+    "tm_ring_mem_port.h": [],
+    "tm_ring_multiring_test.cc": [
+      "tm_ring.h",
+      "tm_ring_perf.h",
+      "tm_ring_perf_master.h"
+    ],
+    "tm_ring_node_interface.h": [],
+    "tm_ring_node_interface_test.cc": [
+      "tm_ring_node_interface.h"
+    ],
+    "tm_ring_packet_cost_test.cc": [
+      "tm_ring_types.h"
+    ],
+    "tm_ring_perf.cc": [
+      "tm_ring.h",
+      "tm_ring_perf.h",
+      "tm_ring_perf_master.h"
+    ],
+    "tm_ring_perf.h": [],
+    "tm_ring_perf_master.cc": [
+      "tm_ring_perf_master.h"
+    ],
+    "tm_ring_perf_master.h": [],
+    "tm_ring_perf_report.cc": [
+      "tm_ring_perf_report.h"
+    ],
+    "tm_ring_perf_report.h": [],
+    "tm_ring_perf_test.cc": [
+      "tm_ring.h",
+      "tm_ring_home_agent.h",
+      "tm_ring_perf.h",
+      "tm_ring_perf_master.h",
+      "tm_ring_perf_report.h"
+    ],
+    "tm_ring_rbrg_l1.cc": [
+      "tm_ring_fanout.h",
+      "tm_ring_rbrg_l1.h"
+    ],
+    "tm_ring_rbrg_l1.h": [],
+    "tm_ring_rbrg_l1_test.cc": [
+      "tm_ring.h",
+      "tm_ring_fanout.h"
+    ],
+    "tm_ring_slot_pool.h": [],
+    "tm_ring_stats.cc": [
+      "tm_ring_stats.h"
+    ],
+    "tm_ring_stats.h": [],
+    "tm_ring_stats_test.cc": [
+      "tm_ring_types.h"
+    ],
+    "tm_ring_topology.cc": [
+      "tm_ring_topology.h"
+    ],
+    "tm_ring_topology.h": [],
+    "tm_ring_types.h": [],
+    "tools/generate_ring_demo_report.py": [],
+    "tools/generate_ring_perf_report.py": [],
+    "tools/test_generate_ring_demo_report.py": [
+      "tools/generate_ring_demo_report.py"
+    ],
+    "tools/test_generate_ring_perf_report.py": [
+      "tools/generate_ring_perf_report.py"
+    ]
+  }
+}

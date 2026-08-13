@@ -1,0 +1,2168 @@
+{
+  "nodes": [
+    {
+      "id": "file:tm_bus_types.h",
+      "type": "file",
+      "name": "tm_bus_types.h",
+      "filePath": "tm_bus_types.h",
+      "summary": "定义总线目标地址范围、交织方式、时延、链路宽度和 FIFO 深度配置。",
+      "tags": [
+        "type-definition",
+        "configuration",
+        "protocol"
+      ],
+      "complexity": "moderate",
+      "languageNotes": "C++ 头文件集中声明协议数据结构与内联接口。"
+    },
+    {
+      "id": "file:tm_ring_demo_test.h",
+      "type": "file",
+      "name": "tm_ring_demo_test.h",
+      "filePath": "tm_ring_demo_test.h",
+      "summary": "提供 Ring 端到端 demo 与性能场景的共享测试夹具、内存校验、运行控制和结果输出。",
+      "tags": [
+        "test",
+        "validation",
+        "ring"
+      ],
+      "complexity": "complex",
+      "languageNotes": "C++ 头文件集中声明协议数据结构与内联接口。"
+    },
+    {
+      "id": "file:tm_ring_home_agent.cc",
+      "type": "file",
+      "name": "tm_ring_home_agent.cc",
+      "filePath": "tm_ring_home_agent.cc",
+      "summary": "实现 Home Agent 的读合并、写冲突控制、后端请求提交、L2 命中响应和 waiter 完成流程。",
+      "tags": [
+        "home-agent",
+        "aggregation",
+        "state-machine"
+      ],
+      "complexity": "complex"
+    },
+    {
+      "id": "function:tm_ring_home_agent.cc:reset",
+      "type": "function",
+      "name": "reset",
+      "filePath": "tm_ring_home_agent.cc",
+      "lineRange": [
+        14,
+        24
+      ],
+      "summary": "清空运行期状态并恢复组件到初始可运行状态。",
+      "tags": [
+        "home-agent",
+        "aggregation",
+        "processing"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:tm_ring_home_agent.cc:accept_read",
+      "type": "function",
+      "name": "accept_read",
+      "filePath": "tm_ring_home_agent.cc",
+      "lineRange": [
+        38,
+        100
+      ],
+      "summary": "接收读请求，执行跨行与容量检查，并决定新建、合并或旁路事务。",
+      "tags": [
+        "home-agent",
+        "aggregation",
+        "transaction"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:tm_ring_home_agent.cc:reserve_write",
+      "type": "function",
+      "name": "reserve_write",
+      "filePath": "tm_ring_home_agent.cc",
+      "lineRange": [
+        108,
+        143
+      ],
+      "summary": "为写请求建立冲突保护并预留 Home Agent 事务资源。",
+      "tags": [
+        "home-agent",
+        "aggregation",
+        "transaction"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:tm_ring_home_agent.cc:complete_write",
+      "type": "function",
+      "name": "complete_write",
+      "filePath": "tm_ring_home_agent.cc",
+      "lineRange": [
+        145,
+        161
+      ],
+      "summary": "完成写事务并解除关联的地址冲突状态。",
+      "tags": [
+        "home-agent",
+        "aggregation",
+        "processing"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:tm_ring_home_agent.cc:front_backend_request",
+      "type": "function",
+      "name": "front_backend_request",
+      "filePath": "tm_ring_home_agent.cc",
+      "lineRange": [
+        176,
+        185
+      ],
+      "summary": "构造当前可提交给后端内存的请求视图。",
+      "tags": [
+        "home-agent",
+        "aggregation",
+        "processing"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:tm_ring_home_agent.cc:commit_backend_request",
+      "type": "function",
+      "name": "commit_backend_request",
+      "filePath": "tm_ring_home_agent.cc",
+      "lineRange": [
+        187,
+        204
+      ],
+      "summary": "提交后端请求并推进对应事务状态。",
+      "tags": [
+        "home-agent",
+        "aggregation",
+        "transaction"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:tm_ring_home_agent.cc:front_functional_read",
+      "type": "function",
+      "name": "front_functional_read",
+      "filePath": "tm_ring_home_agent.cc",
+      "lineRange": [
+        213,
+        222
+      ],
+      "summary": "返回当前可由私有 L2 功能读取的数据请求。",
+      "tags": [
+        "home-agent",
+        "aggregation",
+        "processing"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:tm_ring_home_agent.cc:commit_functional_read",
+      "type": "function",
+      "name": "commit_functional_read",
+      "filePath": "tm_ring_home_agent.cc",
+      "lineRange": [
+        224,
+        247
+      ],
+      "summary": "提交功能读取结果并转入响应生成阶段。",
+      "tags": [
+        "home-agent",
+        "aggregation",
+        "transaction"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:tm_ring_home_agent.cc:accept_backend_response",
+      "type": "function",
+      "name": "accept_backend_response",
+      "filePath": "tm_ring_home_agent.cc",
+      "lineRange": [
+        259,
+        287
+      ],
+      "summary": "接收后端整行响应并定位对应的在途事务。",
+      "tags": [
+        "home-agent",
+        "aggregation",
+        "transaction"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:tm_ring_home_agent.cc:front_l2_response",
+      "type": "function",
+      "name": "front_l2_response",
+      "filePath": "tm_ring_home_agent.cc",
+      "lineRange": [
+        303,
+        317
+      ],
+      "summary": "生成当前可提交给 L2 Buffer 的响应候选。",
+      "tags": [
+        "home-agent",
+        "aggregation",
+        "transaction"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:tm_ring_home_agent.cc:commit_l2_response",
+      "type": "function",
+      "name": "commit_l2_response",
+      "filePath": "tm_ring_home_agent.cc",
+      "lineRange": [
+        319,
+        370
+      ],
+      "summary": "提交 L2 响应结果，推进 waiter 并在完成时回收事务。",
+      "tags": [
+        "home-agent",
+        "aggregation",
+        "transaction"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:tm_ring_home_agent.cc:consume_l2_group_summary",
+      "type": "function",
+      "name": "consume_l2_group_summary",
+      "filePath": "tm_ring_home_agent.cc",
+      "lineRange": [
+        372,
+        398
+      ],
+      "summary": "消费 L2 fanout 分组摘要并同步 waiter 完成状态。",
+      "tags": [
+        "home-agent",
+        "aggregation",
+        "processing"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:tm_ring_home_agent.cc:in_one_line",
+      "type": "function",
+      "name": "in_one_line",
+      "filePath": "tm_ring_home_agent.cc",
+      "lineRange": [
+        404,
+        413
+      ],
+      "summary": "判断请求负载是否完全落在同一 cache line 内。",
+      "tags": [
+        "home-agent",
+        "aggregation",
+        "processing"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:tm_ring_home_agent.cc:fanout_waiter_set_supported",
+      "type": "function",
+      "name": "fanout_waiter_set_supported",
+      "filePath": "tm_ring_home_agent.cc",
+      "lineRange": [
+        415,
+        434
+      ],
+      "summary": "检查 waiter 集合能否用一次 fanout 响应安全覆盖。",
+      "tags": [
+        "home-agent",
+        "aggregation",
+        "transaction"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:tm_ring_home_agent.cc:classify_l2_hit",
+      "type": "function",
+      "name": "classify_l2_hit",
+      "filePath": "tm_ring_home_agent.cc",
+      "lineRange": [
+        450,
+        466
+      ],
+      "summary": "按配置和事务上下文判定私有 L2 命中类型。",
+      "tags": [
+        "home-agent",
+        "aggregation",
+        "processing"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:tm_ring_home_agent.cc:find_transaction",
+      "type": "function",
+      "name": "find_transaction",
+      "filePath": "tm_ring_home_agent.cc",
+      "lineRange": [
+        468,
+        478
+      ],
+      "summary": "按 cache line 查找匹配的 Home Agent 事务。",
+      "tags": [
+        "home-agent",
+        "aggregation",
+        "transaction"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:tm_ring_home_agent.cc:find_pending_transaction",
+      "type": "function",
+      "name": "find_pending_transaction",
+      "filePath": "tm_ring_home_agent.cc",
+      "lineRange": [
+        480,
+        500
+      ],
+      "summary": "查找可继续聚合 waiter 的待处理事务。",
+      "tags": [
+        "home-agent",
+        "aggregation",
+        "transaction"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:tm_ring_home_agent.cc:find_pending_functional_transaction",
+      "type": "function",
+      "name": "find_pending_functional_transaction",
+      "filePath": "tm_ring_home_agent.cc",
+      "lineRange": [
+        502,
+        523
+      ],
+      "summary": "查找等待功能读取的事务。",
+      "tags": [
+        "home-agent",
+        "aggregation",
+        "transaction"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:tm_ring_home_agent.cc:find_responding_transaction",
+      "type": "function",
+      "name": "find_responding_transaction",
+      "filePath": "tm_ring_home_agent.cc",
+      "lineRange": [
+        525,
+        546
+      ],
+      "summary": "查找处于响应分发阶段的事务。",
+      "tags": [
+        "home-agent",
+        "aggregation",
+        "transaction"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:tm_ring_home_agent.cc:has_blocking_read_transaction",
+      "type": "function",
+      "name": "has_blocking_read_transaction",
+      "filePath": "tm_ring_home_agent.cc",
+      "lineRange": [
+        548,
+        562
+      ],
+      "summary": "判断目标 cache line 是否存在阻塞新请求的读事务。",
+      "tags": [
+        "home-agent",
+        "aggregation",
+        "transaction"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:tm_ring_home_agent.cc:make_backend_request",
+      "type": "function",
+      "name": "make_backend_request",
+      "filePath": "tm_ring_home_agent.cc",
+      "lineRange": [
+        564,
+        588
+      ],
+      "summary": "将聚合事务转换为完整 cache line 的后端请求。",
+      "tags": [
+        "home-agent",
+        "aggregation",
+        "processing"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:tm_ring_home_agent.cc:make_completion_data",
+      "type": "function",
+      "name": "make_completion_data",
+      "filePath": "tm_ring_home_agent.cc",
+      "lineRange": [
+        590,
+        599
+      ],
+      "summary": "依据后端状态构造交付给 Ring 的完成数据。",
+      "tags": [
+        "home-agent",
+        "aggregation",
+        "processing"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:tm_ring_home_agent.cc:make_l2_candidate",
+      "type": "function",
+      "name": "make_l2_candidate",
+      "filePath": "tm_ring_home_agent.cc",
+      "lineRange": [
+        601,
+        638
+      ],
+      "summary": "为指定 waiter 构造 L2 Buffer 响应候选。",
+      "tags": [
+        "home-agent",
+        "aggregation",
+        "processing"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:tm_ring_home_agent.cc:erase_transaction",
+      "type": "function",
+      "name": "erase_transaction",
+      "filePath": "tm_ring_home_agent.cc",
+      "lineRange": [
+        650,
+        678
+      ],
+      "summary": "安全移除已完成事务并回收索引和容量计数。",
+      "tags": [
+        "home-agent",
+        "aggregation",
+        "transaction"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:tm_ring_home_agent.h",
+      "type": "file",
+      "name": "tm_ring_home_agent.h",
+      "filePath": "tm_ring_home_agent.h",
+      "summary": "声明 Home Agent 配置、事务状态机、waiter 聚合结构和可观测统计接口。",
+      "tags": [
+        "home-agent",
+        "aggregation",
+        "state-machine"
+      ],
+      "complexity": "moderate",
+      "languageNotes": "C++ 头文件集中声明协议数据结构与内联接口。"
+    },
+    {
+      "id": "file:tm_ring_node_interface.h",
+      "type": "file",
+      "name": "tm_ring_node_interface.h",
+      "filePath": "tm_ring_node_interface.h",
+      "summary": "实现端点侧按子网与方向分组的注入、弹出 FIFO 资源，以及容量和事件查询。",
+      "tags": [
+        "queue",
+        "flow-control",
+        "endpoint"
+      ],
+      "complexity": "complex",
+      "languageNotes": "C++ 头文件集中声明协议数据结构与内联接口。"
+    },
+    {
+      "id": "file:tm_ring_node_interface_test.cc",
+      "type": "file",
+      "name": "tm_ring_node_interface_test.cc",
+      "filePath": "tm_ring_node_interface_test.cc",
+      "summary": "覆盖 Node Interface 的容量、共享弹出、定向 bank 和注入时延行为。",
+      "tags": [
+        "test",
+        "validation",
+        "ring"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "file:tm_ring_stats.cc",
+      "type": "file",
+      "name": "tm_ring_stats.cc",
+      "filePath": "tm_ring_stats.cc",
+      "summary": "实现各层 Ring 性能计数器的清零与跨实例合并。",
+      "tags": [
+        "statistics",
+        "performance",
+        "telemetry"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:tm_ring_stats.cc:merge_from",
+      "type": "function",
+      "name": "merge_from",
+      "filePath": "tm_ring_stats.cc",
+      "lineRange": [
+        17,
+        26
+      ],
+      "summary": "将同类统计结构逐字段累加到当前实例。",
+      "tags": [
+        "statistics",
+        "performance",
+        "processing"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:tm_ring_stats.h",
+      "type": "file",
+      "name": "tm_ring_stats.h",
+      "filePath": "tm_ring_stats.h",
+      "summary": "定义连接、队列、RBRG、L2 Buffer、Home Agent 和 Cross Station 的统计结构。",
+      "tags": [
+        "statistics",
+        "performance",
+        "telemetry"
+      ],
+      "complexity": "moderate",
+      "languageNotes": "C++ 头文件集中声明协议数据结构与内联接口。"
+    },
+    {
+      "id": "file:tm_ring_topology.cc",
+      "type": "file",
+      "name": "tm_ring_topology.cc",
+      "filePath": "tm_ring_topology.cc",
+      "summary": "实现目标地址译码、节点布置、双向最短路选择、fanout 跨度和相邻站点计算。",
+      "tags": [
+        "topology",
+        "routing",
+        "ring"
+      ],
+      "complexity": "complex"
+    },
+    {
+      "id": "function:tm_ring_topology.cc:config",
+      "type": "function",
+      "name": "config",
+      "filePath": "tm_ring_topology.cc",
+      "lineRange": [
+        5,
+        72
+      ],
+      "summary": "校验并加载配置，建立后续运行所需的派生状态。",
+      "tags": [
+        "topology",
+        "routing",
+        "processing"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:tm_ring_topology.cc:decode_target",
+      "type": "function",
+      "name": "decode_target",
+      "filePath": "tm_ring_topology.cc",
+      "lineRange": [
+        74,
+        93
+      ],
+      "summary": "按地址范围与交织规则解析目标节点，并支持默认目标回退。",
+      "tags": [
+        "topology",
+        "routing",
+        "processing"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:tm_ring_topology.cc:target_matches",
+      "type": "function",
+      "name": "target_matches",
+      "filePath": "tm_ring_topology.cc",
+      "lineRange": [
+        95,
+        106
+      ],
+      "summary": "判断地址是否命中目标的范围和交织 slice。",
+      "tags": [
+        "topology",
+        "routing",
+        "processing"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:tm_ring_topology.cc:route_direction",
+      "type": "function",
+      "name": "route_direction",
+      "filePath": "tm_ring_topology.cc",
+      "lineRange": [
+        174,
+        194
+      ],
+      "summary": "在双向 Ring 上选择从源到目的的最短转发方向。",
+      "tags": [
+        "topology",
+        "routing"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:tm_ring_topology.cc:fanout_span",
+      "type": "function",
+      "name": "fanout_span",
+      "filePath": "tm_ring_topology.cc",
+      "lineRange": [
+        196,
+        238
+      ],
+      "summary": "计算给定方向覆盖所有 fanout 接收者所需的环跨度。",
+      "tags": [
+        "topology",
+        "routing"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:tm_ring_topology.cc:neighbor_station",
+      "type": "function",
+      "name": "neighbor_station",
+      "filePath": "tm_ring_topology.cc",
+      "lineRange": [
+        240,
+        255
+      ],
+      "summary": "按 Ring 类型、编号和方向计算相邻站点。",
+      "tags": [
+        "topology",
+        "routing"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:tm_ring_topology.h",
+      "type": "file",
+      "name": "tm_ring_topology.h",
+      "filePath": "tm_ring_topology.h",
+      "summary": "声明一维双向 Ring 拓扑查询接口以及 Master、HA、L2 和 RBRG 的位置映射。",
+      "tags": [
+        "topology",
+        "routing",
+        "ring"
+      ],
+      "complexity": "moderate",
+      "languageNotes": "C++ 头文件集中声明协议数据结构与内联接口。"
+    },
+    {
+      "id": "file:tools/generate_ring_demo_report.py",
+      "type": "file",
+      "name": "generate_ring_demo_report.py",
+      "filePath": "tools/generate_ring_demo_report.py",
+      "summary": "解析 Ring demo 结果并生成包含分布图和关键指标的单文件离线 HTML 报告。",
+      "tags": [
+        "reporting",
+        "visualization",
+        "offline-html"
+      ],
+      "complexity": "complex"
+    },
+    {
+      "id": "function:tools/generate_ring_demo_report.py:_parse_buckets",
+      "type": "function",
+      "name": "_parse_buckets",
+      "filePath": "tools/generate_ring_demo_report.py",
+      "lineRange": [
+        26,
+        40
+      ],
+      "summary": "解析或校验 demo 报告生成 所需的 parse buckets 数据。",
+      "tags": [
+        "reporting",
+        "visualization",
+        "parsing"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:tools/generate_ring_demo_report.py:parse_result",
+      "type": "function",
+      "name": "parse_result",
+      "filePath": "tools/generate_ring_demo_report.py",
+      "lineRange": [
+        48,
+        88
+      ],
+      "summary": "解析 demo 文本中的统计记录和分布桶。",
+      "tags": [
+        "reporting",
+        "visualization",
+        "parsing"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:tools/generate_ring_demo_report.py:_bar_chart",
+      "type": "function",
+      "name": "_bar_chart",
+      "filePath": "tools/generate_ring_demo_report.py",
+      "lineRange": [
+        114,
+        143
+      ],
+      "summary": "格式化demo 报告生成使用的 bar chart 展示元素。",
+      "tags": [
+        "reporting",
+        "visualization"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:tools/generate_ring_demo_report.py:_carrier_chart",
+      "type": "function",
+      "name": "_carrier_chart",
+      "filePath": "tools/generate_ring_demo_report.py",
+      "lineRange": [
+        146,
+        158
+      ],
+      "summary": "格式化demo 报告生成使用的 carrier chart 展示元素。",
+      "tags": [
+        "reporting",
+        "visualization"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:tools/generate_ring_demo_report.py:render_html",
+      "type": "function",
+      "name": "render_html",
+      "filePath": "tools/generate_ring_demo_report.py",
+      "lineRange": [
+        161,
+        327
+      ],
+      "summary": "将解析结果渲染为自包含的离线 HTML 报告。",
+      "tags": [
+        "reporting",
+        "visualization"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:tools/generate_ring_demo_report.py:generate_report",
+      "type": "function",
+      "name": "generate_report",
+      "filePath": "tools/generate_ring_demo_report.py",
+      "lineRange": [
+        330,
+        339
+      ],
+      "summary": "读取结果文件、生成 HTML 并写入目标路径。",
+      "tags": [
+        "reporting",
+        "visualization",
+        "processing"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:tools/generate_ring_demo_report.py:main",
+      "type": "function",
+      "name": "main",
+      "filePath": "tools/generate_ring_demo_report.py",
+      "lineRange": [
+        342,
+        354
+      ],
+      "summary": "解析命令行参数并驱动报告生成流程。",
+      "tags": [
+        "reporting",
+        "visualization",
+        "processing"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:tools/generate_ring_perf_report.py",
+      "type": "file",
+      "name": "generate_ring_perf_report.py",
+      "filePath": "tools/generate_ring_perf_report.py",
+      "summary": "解析多个 PERF 结果块并生成拓扑热力、带宽、时延、瓶颈和聚合分析的离线 HTML 报告。",
+      "tags": [
+        "reporting",
+        "visualization",
+        "offline-html"
+      ],
+      "complexity": "complex"
+    },
+    {
+      "id": "function:tools/generate_ring_perf_report.py:_validate_required_fields",
+      "type": "function",
+      "name": "_validate_required_fields",
+      "filePath": "tools/generate_ring_perf_report.py",
+      "lineRange": [
+        135,
+        161
+      ],
+      "summary": "解析或校验 性能报告解析与可视化 所需的 validate required fields 数据。",
+      "tags": [
+        "reporting",
+        "visualization",
+        "parsing"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:tools/generate_ring_perf_report.py:parse_perf_results",
+      "type": "function",
+      "name": "parse_perf_results",
+      "filePath": "tools/generate_ring_perf_report.py",
+      "lineRange": [
+        194,
+        268
+      ],
+      "summary": "解析并校验多个 PERF 场景块，同时保留重复明细记录的输入顺序。",
+      "tags": [
+        "reporting",
+        "visualization",
+        "parsing"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:tools/generate_ring_perf_report.py:_metric_card",
+      "type": "function",
+      "name": "_metric_card",
+      "filePath": "tools/generate_ring_perf_report.py",
+      "lineRange": [
+        299,
+        310
+      ],
+      "summary": "格式化性能报告解析与可视化使用的 metric card 展示元素。",
+      "tags": [
+        "reporting",
+        "visualization"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:tools/generate_ring_perf_report.py:_bar",
+      "type": "function",
+      "name": "_bar",
+      "filePath": "tools/generate_ring_perf_report.py",
+      "lineRange": [
+        313,
+        326
+      ],
+      "summary": "格式化性能报告解析与可视化使用的 bar 展示元素。",
+      "tags": [
+        "reporting",
+        "visualization"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:tools/generate_ring_perf_report.py:_direction_bar",
+      "type": "function",
+      "name": "_direction_bar",
+      "filePath": "tools/generate_ring_perf_report.py",
+      "lineRange": [
+        352,
+        372
+      ],
+      "summary": "格式化性能报告解析与可视化使用的 direction bar 展示元素。",
+      "tags": [
+        "reporting",
+        "visualization"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:tools/generate_ring_perf_report.py:_multiring_profile",
+      "type": "function",
+      "name": "_multiring_profile",
+      "filePath": "tools/generate_ring_perf_report.py",
+      "lineRange": [
+        390,
+        485
+      ],
+      "summary": "构建性能报告解析与可视化中的 multiring profile 视图或明细。",
+      "tags": [
+        "reporting",
+        "visualization",
+        "processing"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:tools/generate_ring_perf_report.py:_fixed_node_label",
+      "type": "function",
+      "name": "_fixed_node_label",
+      "filePath": "tools/generate_ring_perf_report.py",
+      "lineRange": [
+        546,
+        555
+      ],
+      "summary": "构建性能报告解析与可视化中的 fixed node label 视图或明细。",
+      "tags": [
+        "reporting",
+        "visualization",
+        "processing"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:tools/generate_ring_perf_report.py:_supports_fixed_topology",
+      "type": "function",
+      "name": "_supports_fixed_topology",
+      "filePath": "tools/generate_ring_perf_report.py",
+      "lineRange": [
+        558,
+        597
+      ],
+      "summary": "构建性能报告解析与可视化中的 supports fixed topology 视图或明细。",
+      "tags": [
+        "reporting",
+        "visualization"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:tools/generate_ring_perf_report.py:_topology_segment_path",
+      "type": "function",
+      "name": "_topology_segment_path",
+      "filePath": "tools/generate_ring_perf_report.py",
+      "lineRange": [
+        600,
+        613
+      ],
+      "summary": "构建性能报告解析与可视化中的 topology segment path 视图或明细。",
+      "tags": [
+        "reporting",
+        "visualization"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:tools/generate_ring_perf_report.py:_topology_edge_path",
+      "type": "function",
+      "name": "_topology_edge_path",
+      "filePath": "tools/generate_ring_perf_report.py",
+      "lineRange": [
+        616,
+        625
+      ],
+      "summary": "构建性能报告解析与可视化中的 topology edge path 视图或明细。",
+      "tags": [
+        "reporting",
+        "visualization"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:tools/generate_ring_perf_report.py:_topology_edge_record",
+      "type": "function",
+      "name": "_topology_edge_record",
+      "filePath": "tools/generate_ring_perf_report.py",
+      "lineRange": [
+        638,
+        650
+      ],
+      "summary": "构建性能报告解析与可视化中的 topology edge record 视图或明细。",
+      "tags": [
+        "reporting",
+        "visualization"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:tools/generate_ring_perf_report.py:_topology_edge_classes",
+      "type": "function",
+      "name": "_topology_edge_classes",
+      "filePath": "tools/generate_ring_perf_report.py",
+      "lineRange": [
+        653,
+        674
+      ],
+      "summary": "构建性能报告解析与可视化中的 topology edge classes 视图或明细。",
+      "tags": [
+        "reporting",
+        "visualization"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:tools/generate_ring_perf_report.py:_topology_edge_detail",
+      "type": "function",
+      "name": "_topology_edge_detail",
+      "filePath": "tools/generate_ring_perf_report.py",
+      "lineRange": [
+        677,
+        710
+      ],
+      "summary": "构建性能报告解析与可视化中的 topology edge detail 视图或明细。",
+      "tags": [
+        "reporting",
+        "visualization"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:tools/generate_ring_perf_report.py:_topology_node_details",
+      "type": "function",
+      "name": "_topology_node_details",
+      "filePath": "tools/generate_ring_perf_report.py",
+      "lineRange": [
+        713,
+        790
+      ],
+      "summary": "构建性能报告解析与可视化中的 topology node details 视图或明细。",
+      "tags": [
+        "reporting",
+        "visualization"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:tools/generate_ring_perf_report.py:_topology_rbrg_details",
+      "type": "function",
+      "name": "_topology_rbrg_details",
+      "filePath": "tools/generate_ring_perf_report.py",
+      "lineRange": [
+        793,
+        819
+      ],
+      "summary": "构建性能报告解析与可视化中的 topology rbrg details 视图或明细。",
+      "tags": [
+        "reporting",
+        "visualization"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:tools/generate_ring_perf_report.py:_topology_path_summary",
+      "type": "function",
+      "name": "_topology_path_summary",
+      "filePath": "tools/generate_ring_perf_report.py",
+      "lineRange": [
+        822,
+        857
+      ],
+      "summary": "构建性能报告解析与可视化中的 topology path summary 视图或明细。",
+      "tags": [
+        "reporting",
+        "visualization"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:tools/generate_ring_perf_report.py:_render_topology_overview",
+      "type": "function",
+      "name": "_render_topology_overview",
+      "filePath": "tools/generate_ring_perf_report.py",
+      "lineRange": [
+        860,
+        1000
+      ],
+      "summary": "绘制固定 Ring 拓扑、节点详情和链路热度，形成场景总览。",
+      "tags": [
+        "reporting",
+        "visualization"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:tools/generate_ring_perf_report.py:_physical_channel_view",
+      "type": "function",
+      "name": "_physical_channel_view",
+      "filePath": "tools/generate_ring_perf_report.py",
+      "lineRange": [
+        1003,
+        1045
+      ],
+      "summary": "构建性能报告解析与可视化中的 physical channel view 视图或明细。",
+      "tags": [
+        "reporting",
+        "visualization"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:tools/generate_ring_perf_report.py:_edge_hotspot_view",
+      "type": "function",
+      "name": "_edge_hotspot_view",
+      "filePath": "tools/generate_ring_perf_report.py",
+      "lineRange": [
+        1048,
+        1085
+      ],
+      "summary": "构建性能报告解析与可视化中的 edge hotspot view 视图或明细。",
+      "tags": [
+        "reporting",
+        "visualization"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:tools/generate_ring_perf_report.py:_endpoint_buffer_view",
+      "type": "function",
+      "name": "_endpoint_buffer_view",
+      "filePath": "tools/generate_ring_perf_report.py",
+      "lineRange": [
+        1088,
+        1117
+      ],
+      "summary": "构建性能报告解析与可视化中的 endpoint buffer view 视图或明细。",
+      "tags": [
+        "reporting",
+        "visualization"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:tools/generate_ring_perf_report.py:_deflection_recovery_view",
+      "type": "function",
+      "name": "_deflection_recovery_view",
+      "filePath": "tools/generate_ring_perf_report.py",
+      "lineRange": [
+        1120,
+        1152
+      ],
+      "summary": "构建性能报告解析与可视化中的 deflection recovery view 视图或明细。",
+      "tags": [
+        "reporting",
+        "visualization"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:tools/generate_ring_perf_report.py:_rbrg_channel_view",
+      "type": "function",
+      "name": "_rbrg_channel_view",
+      "filePath": "tools/generate_ring_perf_report.py",
+      "lineRange": [
+        1155,
+        1189
+      ],
+      "summary": "构建性能报告解析与可视化中的 rbrg channel view 视图或明细。",
+      "tags": [
+        "reporting",
+        "visualization"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:tools/generate_ring_perf_report.py:_single_scenario_metric_views",
+      "type": "function",
+      "name": "_single_scenario_metric_views",
+      "filePath": "tools/generate_ring_perf_report.py",
+      "lineRange": [
+        1192,
+        1207
+      ],
+      "summary": "构建性能报告解析与可视化中的 single scenario metric views 视图或明细。",
+      "tags": [
+        "reporting",
+        "visualization"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:tools/generate_ring_perf_report.py:_scenario_profile_section",
+      "type": "function",
+      "name": "_scenario_profile_section",
+      "filePath": "tools/generate_ring_perf_report.py",
+      "lineRange": [
+        1210,
+        1397
+      ],
+      "summary": "组织单场景的拓扑、通道与端点性能视图。",
+      "tags": [
+        "reporting",
+        "visualization"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:tools/generate_ring_perf_report.py:_bandwidth_section",
+      "type": "function",
+      "name": "_bandwidth_section",
+      "filePath": "tools/generate_ring_perf_report.py",
+      "lineRange": [
+        1400,
+        1453
+      ],
+      "summary": "生成跨场景带宽与扩展效率对比。",
+      "tags": [
+        "reporting",
+        "visualization"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:tools/generate_ring_perf_report.py:_latency_section",
+      "type": "function",
+      "name": "_latency_section",
+      "filePath": "tools/generate_ring_perf_report.py",
+      "lineRange": [
+        1456,
+        1477
+      ],
+      "summary": "生成端到端和分阶段时延对比。",
+      "tags": [
+        "reporting",
+        "visualization"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:tools/generate_ring_perf_report.py:_shared_section",
+      "type": "function",
+      "name": "_shared_section",
+      "filePath": "tools/generate_ring_perf_report.py",
+      "lineRange": [
+        1480,
+        1542
+      ],
+      "summary": "呈现共享资源利用率与公平性指标。",
+      "tags": [
+        "reporting",
+        "visualization"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:tools/generate_ring_perf_report.py:_bottleneck_section",
+      "type": "function",
+      "name": "_bottleneck_section",
+      "filePath": "tools/generate_ring_perf_report.py",
+      "lineRange": [
+        1545,
+        1627
+      ],
+      "summary": "汇总热点链路、FIFO 停顿和后端瓶颈证据。",
+      "tags": [
+        "reporting",
+        "visualization"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:tools/generate_ring_perf_report.py:_aggregation_wave_section",
+      "type": "function",
+      "name": "_aggregation_wave_section",
+      "filePath": "tools/generate_ring_perf_report.py",
+      "lineRange": [
+        1630,
+        1728
+      ],
+      "summary": "展示 Home Agent 聚合波次和 fanout 收益。",
+      "tags": [
+        "reporting",
+        "visualization"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:tools/generate_ring_perf_report.py:_details_section",
+      "type": "function",
+      "name": "_details_section",
+      "filePath": "tools/generate_ring_perf_report.py",
+      "lineRange": [
+        1731,
+        1789
+      ],
+      "summary": "生成完整 PERF 原始指标明细表。",
+      "tags": [
+        "reporting",
+        "visualization"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:tools/generate_ring_perf_report.py:render_html",
+      "type": "function",
+      "name": "render_html",
+      "filePath": "tools/generate_ring_perf_report.py",
+      "lineRange": [
+        1792,
+        2065
+      ],
+      "summary": "将解析结果渲染为自包含的离线 HTML 报告。",
+      "tags": [
+        "reporting",
+        "visualization"
+      ],
+      "complexity": "complex"
+    },
+    {
+      "id": "function:tools/generate_ring_perf_report.py:generate_report",
+      "type": "function",
+      "name": "generate_report",
+      "filePath": "tools/generate_ring_perf_report.py",
+      "lineRange": [
+        2068,
+        2079
+      ],
+      "summary": "读取结果文件、生成 HTML 并写入目标路径。",
+      "tags": [
+        "reporting",
+        "visualization",
+        "processing"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:tools/generate_ring_perf_report.py:main",
+      "type": "function",
+      "name": "main",
+      "filePath": "tools/generate_ring_perf_report.py",
+      "lineRange": [
+        2082,
+        2097
+      ],
+      "summary": "解析命令行参数并驱动报告生成流程。",
+      "tags": [
+        "reporting",
+        "visualization",
+        "processing"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "class:tools/generate_ring_perf_report.py:PerfScenario",
+      "type": "class",
+      "name": "PerfScenario",
+      "filePath": "tools/generate_ring_perf_report.py",
+      "lineRange": [
+        164,
+        191
+      ],
+      "summary": "封装一个已解析 PERF 场景，提供分区、记录和数值字段的统一访问。",
+      "tags": [
+        "data-model",
+        "performance",
+        "parsing"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:tools/test_generate_ring_demo_report.py",
+      "type": "file",
+      "name": "test_generate_ring_demo_report.py",
+      "filePath": "tools/test_generate_ring_demo_report.py",
+      "summary": "验证 demo 报告的分布解析、旧格式兼容性和自包含 HTML 输出。",
+      "tags": [
+        "test",
+        "validation",
+        "ring"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "class:tools/test_generate_ring_demo_report.py:RingDemoReportTest",
+      "type": "class",
+      "name": "RingDemoReportTest",
+      "filePath": "tools/test_generate_ring_demo_report.py",
+      "lineRange": [
+        21,
+        55
+      ],
+      "summary": "组织 test_generate_ring_demo_report.py 的相关测试用例与共享断言。",
+      "tags": [
+        "test",
+        "validation",
+        "reporting"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:tools/test_generate_ring_perf_report.py",
+      "type": "file",
+      "name": "test_generate_ring_perf_report.py",
+      "filePath": "tools/test_generate_ring_perf_report.py",
+      "summary": "验证性能报告解析约束、固定拓扑可视化、指标分区、安全转义和 CLI 文件输出。",
+      "tags": [
+        "test",
+        "validation",
+        "ring"
+      ],
+      "complexity": "complex"
+    },
+    {
+      "id": "function:tools/test_generate_ring_perf_report.py:perf_block",
+      "type": "function",
+      "name": "perf_block",
+      "filePath": "tools/test_generate_ring_perf_report.py",
+      "lineRange": [
+        29,
+        46
+      ],
+      "summary": "实现性能报告测试中的 perf block 核心处理。",
+      "tags": [
+        "test",
+        "validation",
+        "processing"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:tools/test_generate_ring_perf_report.py:aggregation_wave_perf_block",
+      "type": "function",
+      "name": "aggregation_wave_perf_block",
+      "filePath": "tools/test_generate_ring_perf_report.py",
+      "lineRange": [
+        67,
+        109
+      ],
+      "summary": "实现性能报告测试中的 aggregation wave perf block 核心处理。",
+      "tags": [
+        "test",
+        "validation",
+        "processing"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:tools/test_generate_ring_perf_report.py:single_scenario_metric_records",
+      "type": "function",
+      "name": "single_scenario_metric_records",
+      "filePath": "tools/test_generate_ring_perf_report.py",
+      "lineRange": [
+        112,
+        125
+      ],
+      "summary": "格式化性能报告测试使用的 single scenario metric records 展示元素。",
+      "tags": [
+        "test",
+        "validation",
+        "visualization"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:tools/test_generate_ring_perf_report.py:current_ring_perf_block",
+      "type": "function",
+      "name": "current_ring_perf_block",
+      "filePath": "tools/test_generate_ring_perf_report.py",
+      "lineRange": [
+        135,
+        159
+      ],
+      "summary": "实现性能报告测试中的 current ring perf block 核心处理。",
+      "tags": [
+        "test",
+        "validation",
+        "processing"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:tools/test_generate_ring_perf_report.py:fixed_topology_perf_block",
+      "type": "function",
+      "name": "fixed_topology_perf_block",
+      "filePath": "tools/test_generate_ring_perf_report.py",
+      "lineRange": [
+        162,
+        238
+      ],
+      "summary": "构建性能报告测试中的 fixed topology perf block 视图或明细。",
+      "tags": [
+        "test",
+        "validation",
+        "visualization"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "class:tools/test_generate_ring_perf_report.py:RingPerfParserTest",
+      "type": "class",
+      "name": "RingPerfParserTest",
+      "filePath": "tools/test_generate_ring_perf_report.py",
+      "lineRange": [
+        249,
+        386
+      ],
+      "summary": "组织 test_generate_ring_perf_report.py 的相关测试用例与共享断言。",
+      "tags": [
+        "test",
+        "validation",
+        "reporting"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "class:tools/test_generate_ring_perf_report.py:RingPerfHtmlTest",
+      "type": "class",
+      "name": "RingPerfHtmlTest",
+      "filePath": "tools/test_generate_ring_perf_report.py",
+      "lineRange": [
+        389,
+        668
+      ],
+      "summary": "组织 test_generate_ring_perf_report.py 的相关测试用例与共享断言。",
+      "tags": [
+        "test",
+        "validation",
+        "reporting"
+      ],
+      "complexity": "complex"
+    },
+    {
+      "id": "class:tools/test_generate_ring_perf_report.py:RingPerfFileTest",
+      "type": "class",
+      "name": "RingPerfFileTest",
+      "filePath": "tools/test_generate_ring_perf_report.py",
+      "lineRange": [
+        671,
+        710
+      ],
+      "summary": "组织 test_generate_ring_perf_report.py 的相关测试用例与共享断言。",
+      "tags": [
+        "test",
+        "validation",
+        "reporting"
+      ],
+      "complexity": "simple"
+    }
+  ],
+  "edges": [
+    {
+      "source": "file:tm_ring_home_agent.cc",
+      "target": "file:tm_ring_home_agent.h",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:tm_ring_home_agent.cc",
+      "target": "function:tm_ring_home_agent.cc:reset",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:tm_ring_home_agent.cc",
+      "target": "function:tm_ring_home_agent.cc:accept_read",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:tm_ring_home_agent.cc",
+      "target": "function:tm_ring_home_agent.cc:reserve_write",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:tm_ring_home_agent.cc",
+      "target": "function:tm_ring_home_agent.cc:complete_write",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:tm_ring_home_agent.cc",
+      "target": "function:tm_ring_home_agent.cc:front_backend_request",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:tm_ring_home_agent.cc",
+      "target": "function:tm_ring_home_agent.cc:commit_backend_request",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:tm_ring_home_agent.cc",
+      "target": "function:tm_ring_home_agent.cc:front_functional_read",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:tm_ring_home_agent.cc",
+      "target": "function:tm_ring_home_agent.cc:commit_functional_read",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:tm_ring_home_agent.cc",
+      "target": "function:tm_ring_home_agent.cc:accept_backend_response",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:tm_ring_home_agent.cc",
+      "target": "function:tm_ring_home_agent.cc:front_l2_response",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:tm_ring_home_agent.cc",
+      "target": "function:tm_ring_home_agent.cc:commit_l2_response",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:tm_ring_home_agent.cc",
+      "target": "function:tm_ring_home_agent.cc:consume_l2_group_summary",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:tm_ring_home_agent.cc",
+      "target": "function:tm_ring_home_agent.cc:in_one_line",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:tm_ring_home_agent.cc",
+      "target": "function:tm_ring_home_agent.cc:fanout_waiter_set_supported",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:tm_ring_home_agent.cc",
+      "target": "function:tm_ring_home_agent.cc:classify_l2_hit",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:tm_ring_home_agent.cc",
+      "target": "function:tm_ring_home_agent.cc:find_transaction",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:tm_ring_home_agent.cc",
+      "target": "function:tm_ring_home_agent.cc:find_pending_transaction",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:tm_ring_home_agent.cc",
+      "target": "function:tm_ring_home_agent.cc:find_pending_functional_transaction",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:tm_ring_home_agent.cc",
+      "target": "function:tm_ring_home_agent.cc:find_responding_transaction",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:tm_ring_home_agent.cc",
+      "target": "function:tm_ring_home_agent.cc:has_blocking_read_transaction",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:tm_ring_home_agent.cc",
+      "target": "function:tm_ring_home_agent.cc:make_backend_request",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:tm_ring_home_agent.cc",
+      "target": "function:tm_ring_home_agent.cc:make_completion_data",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:tm_ring_home_agent.cc",
+      "target": "function:tm_ring_home_agent.cc:make_l2_candidate",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:tm_ring_home_agent.cc",
+      "target": "function:tm_ring_home_agent.cc:erase_transaction",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:tm_ring_node_interface_test.cc",
+      "target": "file:tm_ring_node_interface.h",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:tm_ring_stats.cc",
+      "target": "file:tm_ring_stats.h",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:tm_ring_stats.cc",
+      "target": "function:tm_ring_stats.cc:merge_from",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:tm_ring_topology.cc",
+      "target": "file:tm_ring_topology.h",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:tm_ring_topology.cc",
+      "target": "function:tm_ring_topology.cc:config",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:tm_ring_topology.cc",
+      "target": "function:tm_ring_topology.cc:decode_target",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:tm_ring_topology.cc",
+      "target": "function:tm_ring_topology.cc:target_matches",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:tm_ring_topology.cc",
+      "target": "function:tm_ring_topology.cc:route_direction",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:tm_ring_topology.cc",
+      "target": "function:tm_ring_topology.cc:fanout_span",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:tm_ring_topology.cc",
+      "target": "function:tm_ring_topology.cc:neighbor_station",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:tools/generate_ring_demo_report.py",
+      "target": "function:tools/generate_ring_demo_report.py:_parse_buckets",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:tools/generate_ring_demo_report.py",
+      "target": "function:tools/generate_ring_demo_report.py:parse_result",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:tools/generate_ring_demo_report.py",
+      "target": "function:tools/generate_ring_demo_report.py:_bar_chart",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:tools/generate_ring_demo_report.py",
+      "target": "function:tools/generate_ring_demo_report.py:_carrier_chart",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:tools/generate_ring_demo_report.py",
+      "target": "function:tools/generate_ring_demo_report.py:render_html",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:tools/generate_ring_demo_report.py",
+      "target": "function:tools/generate_ring_demo_report.py:generate_report",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:tools/generate_ring_demo_report.py",
+      "target": "function:tools/generate_ring_demo_report.py:main",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:tools/generate_ring_perf_report.py",
+      "target": "function:tools/generate_ring_perf_report.py:_validate_required_fields",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:tools/generate_ring_perf_report.py",
+      "target": "function:tools/generate_ring_perf_report.py:parse_perf_results",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:tools/generate_ring_perf_report.py",
+      "target": "function:tools/generate_ring_perf_report.py:_metric_card",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:tools/generate_ring_perf_report.py",
+      "target": "function:tools/generate_ring_perf_report.py:_bar",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:tools/generate_ring_perf_report.py",
+      "target": "function:tools/generate_ring_perf_report.py:_direction_bar",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:tools/generate_ring_perf_report.py",
+      "target": "function:tools/generate_ring_perf_report.py:_multiring_profile",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:tools/generate_ring_perf_report.py",
+      "target": "function:tools/generate_ring_perf_report.py:_fixed_node_label",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:tools/generate_ring_perf_report.py",
+      "target": "function:tools/generate_ring_perf_report.py:_supports_fixed_topology",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:tools/generate_ring_perf_report.py",
+      "target": "function:tools/generate_ring_perf_report.py:_topology_segment_path",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:tools/generate_ring_perf_report.py",
+      "target": "function:tools/generate_ring_perf_report.py:_topology_edge_path",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:tools/generate_ring_perf_report.py",
+      "target": "function:tools/generate_ring_perf_report.py:_topology_edge_record",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:tools/generate_ring_perf_report.py",
+      "target": "function:tools/generate_ring_perf_report.py:_topology_edge_classes",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:tools/generate_ring_perf_report.py",
+      "target": "function:tools/generate_ring_perf_report.py:_topology_edge_detail",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:tools/generate_ring_perf_report.py",
+      "target": "function:tools/generate_ring_perf_report.py:_topology_node_details",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:tools/generate_ring_perf_report.py",
+      "target": "function:tools/generate_ring_perf_report.py:_topology_rbrg_details",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:tools/generate_ring_perf_report.py",
+      "target": "function:tools/generate_ring_perf_report.py:_topology_path_summary",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:tools/generate_ring_perf_report.py",
+      "target": "function:tools/generate_ring_perf_report.py:_render_topology_overview",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:tools/generate_ring_perf_report.py",
+      "target": "function:tools/generate_ring_perf_report.py:_physical_channel_view",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:tools/generate_ring_perf_report.py",
+      "target": "function:tools/generate_ring_perf_report.py:_edge_hotspot_view",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:tools/generate_ring_perf_report.py",
+      "target": "function:tools/generate_ring_perf_report.py:_endpoint_buffer_view",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:tools/generate_ring_perf_report.py",
+      "target": "function:tools/generate_ring_perf_report.py:_deflection_recovery_view",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:tools/generate_ring_perf_report.py",
+      "target": "function:tools/generate_ring_perf_report.py:_rbrg_channel_view",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:tools/generate_ring_perf_report.py",
+      "target": "function:tools/generate_ring_perf_report.py:_single_scenario_metric_views",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:tools/generate_ring_perf_report.py",
+      "target": "function:tools/generate_ring_perf_report.py:_scenario_profile_section",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:tools/generate_ring_perf_report.py",
+      "target": "function:tools/generate_ring_perf_report.py:_bandwidth_section",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:tools/generate_ring_perf_report.py",
+      "target": "function:tools/generate_ring_perf_report.py:_latency_section",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:tools/generate_ring_perf_report.py",
+      "target": "function:tools/generate_ring_perf_report.py:_shared_section",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:tools/generate_ring_perf_report.py",
+      "target": "function:tools/generate_ring_perf_report.py:_bottleneck_section",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:tools/generate_ring_perf_report.py",
+      "target": "function:tools/generate_ring_perf_report.py:_aggregation_wave_section",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:tools/generate_ring_perf_report.py",
+      "target": "function:tools/generate_ring_perf_report.py:_details_section",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:tools/generate_ring_perf_report.py",
+      "target": "function:tools/generate_ring_perf_report.py:render_html",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:tools/generate_ring_perf_report.py",
+      "target": "function:tools/generate_ring_perf_report.py:generate_report",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:tools/generate_ring_perf_report.py",
+      "target": "function:tools/generate_ring_perf_report.py:main",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:tools/generate_ring_perf_report.py",
+      "target": "class:tools/generate_ring_perf_report.py:PerfScenario",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:tools/test_generate_ring_demo_report.py",
+      "target": "file:tools/generate_ring_demo_report.py",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:tools/test_generate_ring_demo_report.py",
+      "target": "class:tools/test_generate_ring_demo_report.py:RingDemoReportTest",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:tools/test_generate_ring_perf_report.py",
+      "target": "file:tools/generate_ring_perf_report.py",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:tools/test_generate_ring_perf_report.py",
+      "target": "function:tools/test_generate_ring_perf_report.py:perf_block",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:tools/test_generate_ring_perf_report.py",
+      "target": "function:tools/test_generate_ring_perf_report.py:aggregation_wave_perf_block",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:tools/test_generate_ring_perf_report.py",
+      "target": "function:tools/test_generate_ring_perf_report.py:single_scenario_metric_records",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:tools/test_generate_ring_perf_report.py",
+      "target": "function:tools/test_generate_ring_perf_report.py:current_ring_perf_block",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:tools/test_generate_ring_perf_report.py",
+      "target": "function:tools/test_generate_ring_perf_report.py:fixed_topology_perf_block",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:tools/test_generate_ring_perf_report.py",
+      "target": "class:tools/test_generate_ring_perf_report.py:RingPerfParserTest",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:tools/test_generate_ring_perf_report.py",
+      "target": "class:tools/test_generate_ring_perf_report.py:RingPerfHtmlTest",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:tools/test_generate_ring_perf_report.py",
+      "target": "class:tools/test_generate_ring_perf_report.py:RingPerfFileTest",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:tm_ring_node_interface.h",
+      "target": "file:tm_ring_node_interface_test.cc",
+      "type": "tested_by",
+      "direction": "forward",
+      "weight": 0.5
+    },
+    {
+      "source": "file:tools/generate_ring_demo_report.py",
+      "target": "file:tools/test_generate_ring_demo_report.py",
+      "type": "tested_by",
+      "direction": "forward",
+      "weight": 0.5
+    },
+    {
+      "source": "file:tools/generate_ring_perf_report.py",
+      "target": "file:tools/test_generate_ring_perf_report.py",
+      "type": "tested_by",
+      "direction": "forward",
+      "weight": 0.5
+    }
+  ]
+}

@@ -1,0 +1,19 @@
+Found 5 batch files (5 logical batches, 0 multi-part):
+  batch-1.json: 56 nodes, 112 edges
+  batch-2.json: 58 nodes, 109 edges
+  batch-3.json: 56 nodes, 104 edges
+  batch-4.json: 15 nodes, 16 edges
+  batch-5.json: 95 nodes, 90 edges
+
+Input: 280 nodes, 431 edges
+
+Tested-by linker:
+     0 × tested_by edges produced (path-convention supplement, production → test)
+    12 × production nodes tagged "tested"
+
+Output: 280 nodes, 431 edges
+
+Imports edge recovery:
+  Recovered 0 `imports` edges from importMap (46 entries scanned)
+
+Written to C:\Users\wayne\Downloads\gem5-stable\BUS\aicore\code\.ua\intermediate\assembled-graph.json (230 KB)

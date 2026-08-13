@@ -1,0 +1,98 @@
+{
+  "projectRoot": "C:\\Users\\wayne\\Downloads\\gem5-stable\\BUS\\aicore\\code",
+  "batchFiles": [
+    {
+      "path": "tm_ring.h",
+      "language": "c",
+      "sizeLines": 340,
+      "fileCategory": "code"
+    },
+    {
+      "path": "tm_ring_multiring_test.cc",
+      "language": "cpp",
+      "sizeLines": 438,
+      "fileCategory": "code"
+    },
+    {
+      "path": "tm_ring_perf.cc",
+      "language": "cpp",
+      "sizeLines": 718,
+      "fileCategory": "code"
+    },
+    {
+      "path": "tm_ring_perf.h",
+      "language": "c",
+      "sizeLines": 197,
+      "fileCategory": "code"
+    },
+    {
+      "path": "tm_ring_perf_master.cc",
+      "language": "cpp",
+      "sizeLines": 261,
+      "fileCategory": "code"
+    },
+    {
+      "path": "tm_ring_perf_master.h",
+      "language": "c",
+      "sizeLines": 79,
+      "fileCategory": "code"
+    },
+    {
+      "path": "tm_ring_perf_report.cc",
+      "language": "cpp",
+      "sizeLines": 483,
+      "fileCategory": "code"
+    },
+    {
+      "path": "tm_ring_perf_report.h",
+      "language": "c",
+      "sizeLines": 10,
+      "fileCategory": "code"
+    },
+    {
+      "path": "tm_ring_perf_test.cc",
+      "language": "cpp",
+      "sizeLines": 1424,
+      "fileCategory": "code"
+    },
+    {
+      "path": "tm_ring_rbrg_l1_test.cc",
+      "language": "cpp",
+      "sizeLines": 428,
+      "fileCategory": "code"
+    }
+  ],
+  "batchImportData": {
+    "tm_ring.h": [],
+    "tm_ring_multiring_test.cc": [
+      "tm_ring.h",
+      "tm_ring_perf.h",
+      "tm_ring_perf_master.h"
+    ],
+    "tm_ring_perf.cc": [
+      "tm_ring.h",
+      "tm_ring_perf.h",
+      "tm_ring_perf_master.h"
+    ],
+    "tm_ring_perf.h": [],
+    "tm_ring_perf_master.cc": [
+      "tm_ring_perf_master.h"
+    ],
+    "tm_ring_perf_master.h": [],
+    "tm_ring_perf_report.cc": [
+      "tm_ring_perf_report.h"
+    ],
+    "tm_ring_perf_report.h": [],
+    "tm_ring_perf_test.cc": [
+      "tm_ring.h",
+      "tm_ring_home_agent.h",
+      "tm_ring_perf.h",
+      "tm_ring_perf_master.h",
+      "tm_ring_perf_report.h"
+    ],
+    "tm_ring_rbrg_l1_test.cc": [
+      "tm_ring.h",
+      "tm_ring_fanout.h"
+    ]
+  }
+}

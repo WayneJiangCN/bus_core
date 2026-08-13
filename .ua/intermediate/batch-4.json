@@ -1,0 +1,355 @@
+{
+  "nodes": [
+    {
+      "id": "file:pem_trdemo.cc",
+      "type": "file",
+      "name": "pem_trdemo.cc",
+      "filePath": "pem_trdemo.cc",
+      "summary": "实现轻量级 PemTrDemo 流量发生器，负责生成读写 uop、经 BIU 发起事务并核对返回数据。",
+      "tags": [
+        "traffic-generator",
+        "demo",
+        "memory-io"
+      ],
+      "complexity": "complex"
+    },
+    {
+      "id": "function:pem_trdemo.cc:config",
+      "type": "function",
+      "name": "config",
+      "filePath": "pem_trdemo.cc",
+      "lineRange": [
+        17,
+        51
+      ],
+      "summary": "校验并加载配置，建立后续运行所需的派生状态。",
+      "tags": [
+        "traffic-generator",
+        "demo",
+        "processing"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:pem_trdemo.cc:configure_traffic",
+      "type": "function",
+      "name": "configure_traffic",
+      "filePath": "pem_trdemo.cc",
+      "lineRange": [
+        53,
+        65
+      ],
+      "summary": "设置地址范围、uop 数量、访问粒度和读写步长。",
+      "tags": [
+        "traffic-generator",
+        "demo",
+        "processing"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:pem_trdemo.cc:reset",
+      "type": "function",
+      "name": "reset",
+      "filePath": "pem_trdemo.cc",
+      "lineRange": [
+        82,
+        98
+      ],
+      "summary": "清空运行期状态并恢复组件到初始可运行状态。",
+      "tags": [
+        "traffic-generator",
+        "demo",
+        "processing"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:pem_trdemo.cc:gen_uop",
+      "type": "function",
+      "name": "gen_uop",
+      "filePath": "pem_trdemo.cc",
+      "lineRange": [
+        100,
+        125
+      ],
+      "summary": "按配置生成下一批读写微操作并维护请求标识。",
+      "tags": [
+        "traffic-generator",
+        "demo",
+        "processing"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:pem_trdemo.cc:read_mem",
+      "type": "function",
+      "name": "read_mem",
+      "filePath": "pem_trdemo.cc",
+      "lineRange": [
+        126,
+        153
+      ],
+      "summary": "从待执行队列选择读操作并向 BIU 发起请求。",
+      "tags": [
+        "traffic-generator",
+        "demo",
+        "processing"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:pem_trdemo.cc:recv_rsp",
+      "type": "function",
+      "name": "recv_rsp",
+      "filePath": "pem_trdemo.cc",
+      "lineRange": [
+        154,
+        166
+      ],
+      "summary": "接收并分类处理 BIU 返回的响应。",
+      "tags": [
+        "traffic-generator",
+        "demo",
+        "processing"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:pem_trdemo.cc:handle_read_response",
+      "type": "function",
+      "name": "handle_read_response",
+      "filePath": "pem_trdemo.cc",
+      "lineRange": [
+        167,
+        260
+      ],
+      "summary": "校验读响应内容，更新 outstanding 状态并生成后续写事务。",
+      "tags": [
+        "traffic-generator",
+        "demo",
+        "transaction"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:pem_trdemo.cc:record_read_response",
+      "type": "function",
+      "name": "record_read_response",
+      "filePath": "pem_trdemo.cc",
+      "lineRange": [
+        262,
+        278
+      ],
+      "summary": "记录读完成地址并更新完成度统计。",
+      "tags": [
+        "traffic-generator",
+        "demo",
+        "transaction"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:pem_trdemo.cc:pipeline",
+      "type": "function",
+      "name": "pipeline",
+      "filePath": "pem_trdemo.cc",
+      "lineRange": [
+        280,
+        315
+      ],
+      "summary": "推进流量发生器流水，协调生成、发送和响应回收。",
+      "tags": [
+        "traffic-generator",
+        "demo",
+        "processing"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:pem_trdemo.cc:wr_recv_rsp",
+      "type": "function",
+      "name": "wr_recv_rsp",
+      "filePath": "pem_trdemo.cc",
+      "lineRange": [
+        317,
+        355
+      ],
+      "summary": "回收写响应，释放写缓冲并更新完成计数。",
+      "tags": [
+        "traffic-generator",
+        "demo",
+        "processing"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:pem_trdemo.h",
+      "type": "file",
+      "name": "pem_trdemo.h",
+      "filePath": "pem_trdemo.h",
+      "summary": "声明用于联调 bus、ring 与 memory 整条路径的 PemTrDemo 模块、uop 状态和统计数据。",
+      "tags": [
+        "traffic-generator",
+        "demo",
+        "memory-io"
+      ],
+      "complexity": "moderate",
+      "languageNotes": "C++ 头文件集中声明协议数据结构与内联接口。"
+    },
+    {
+      "id": "file:tm_ring_packet_cost_test.cc",
+      "type": "file",
+      "name": "tm_ring_packet_cost_test.cc",
+      "filePath": "tm_ring_packet_cost_test.cc",
+      "summary": "验证不同 Ring 命令和负载尺寸的链路占用字节与序列化成本计算。",
+      "tags": [
+        "test",
+        "validation",
+        "ring"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:tm_ring_stats_test.cc",
+      "type": "file",
+      "name": "tm_ring_stats_test.cc",
+      "filePath": "tm_ring_stats_test.cc",
+      "summary": "验证 Ring 连接停顿计数聚合等统计辅助逻辑。",
+      "tags": [
+        "test",
+        "validation",
+        "ring"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:tm_ring_types.h",
+      "type": "file",
+      "name": "tm_ring_types.h",
+      "filePath": "tm_ring_types.h",
+      "summary": "定义 Ring 拓扑位置、子网、端点队列、配置和读响应状态等跨组件共享类型。",
+      "tags": [
+        "type-definition",
+        "configuration",
+        "protocol"
+      ],
+      "complexity": "moderate",
+      "languageNotes": "C++ 头文件集中声明协议数据结构与内联接口。"
+    }
+  ],
+  "edges": [
+    {
+      "source": "file:pem_trdemo.cc",
+      "target": "file:pem_trdemo.h",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:pem_trdemo.cc",
+      "target": "file:tm_ring_types.h",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:pem_trdemo.cc",
+      "target": "function:pem_trdemo.cc:config",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:pem_trdemo.cc",
+      "target": "function:pem_trdemo.cc:configure_traffic",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:pem_trdemo.cc",
+      "target": "function:pem_trdemo.cc:reset",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:pem_trdemo.cc",
+      "target": "function:pem_trdemo.cc:gen_uop",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:pem_trdemo.cc",
+      "target": "function:pem_trdemo.cc:read_mem",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:pem_trdemo.cc",
+      "target": "function:pem_trdemo.cc:recv_rsp",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:pem_trdemo.cc",
+      "target": "function:pem_trdemo.cc:handle_read_response",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:pem_trdemo.cc",
+      "target": "function:pem_trdemo.cc:record_read_response",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:pem_trdemo.cc",
+      "target": "function:pem_trdemo.cc:pipeline",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:pem_trdemo.cc",
+      "target": "function:pem_trdemo.cc:wr_recv_rsp",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:tm_ring_packet_cost_test.cc",
+      "target": "file:tm_ring_types.h",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:tm_ring_stats_test.cc",
+      "target": "file:tm_ring_types.h",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:tm_ring_types.h",
+      "target": "file:tm_ring_packet_cost_test.cc",
+      "type": "tested_by",
+      "direction": "forward",
+      "weight": 0.5
+    },
+    {
+      "source": "file:tm_ring_types.h",
+      "target": "file:tm_ring_stats_test.cc",
+      "type": "tested_by",
+      "direction": "forward",
+      "weight": 0.5
+    }
+  ]
+}

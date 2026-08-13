@@ -1,0 +1,5546 @@
+{
+  "scriptCompleted": true,
+  "filesAnalyzed": 8,
+  "filesSkipped": [],
+  "analysisOutcomes": {
+    "structure": {
+      "succeeded": 8,
+      "failed": 0
+    },
+    "callGraph": {
+      "succeeded": 8,
+      "failed": 0,
+      "skipped": 0
+    }
+  },
+  "results": [
+    {
+      "path": "tm_ring_cross_station.cc",
+      "language": "cpp",
+      "fileCategory": "code",
+      "totalLines": 666,
+      "nonEmptyLines": 596,
+      "functions": [
+        {
+          "name": "TmRingCrossStation",
+          "startLine": 9,
+          "endLine": 40,
+          "params": [
+            "name",
+            "clk"
+          ]
+        },
+        {
+          "name": "reset",
+          "startLine": 42,
+          "endLine": 53,
+          "params": []
+        },
+        {
+          "name": "clear_stats",
+          "startLine": 55,
+          "endLine": 55,
+          "params": []
+        },
+        {
+          "name": "idle",
+          "startLine": 57,
+          "endLine": 73,
+          "params": []
+        },
+        {
+          "name": "attach",
+          "startLine": 75,
+          "endLine": 83,
+          "params": [
+            "station_id",
+            "cw_out_conn",
+            "ccw_out_conn",
+            "slot_pool"
+          ]
+        },
+        {
+          "name": "bind_node_interface",
+          "startLine": 85,
+          "endLine": 97,
+          "params": [
+            "node_interface"
+          ]
+        },
+        {
+          "name": "transit_in_reg",
+          "startLine": 99,
+          "endLine": 102,
+          "params": [
+            "in_dir",
+            "subnet"
+          ]
+        },
+        {
+          "name": "schedule_req",
+          "startLine": 108,
+          "endLine": 108,
+          "params": []
+        },
+        {
+          "name": "schedule_rsp",
+          "startLine": 110,
+          "endLine": 110,
+          "params": []
+        },
+        {
+          "name": "schedule_dat",
+          "startLine": 112,
+          "endLine": 112,
+          "params": []
+        },
+        {
+          "name": "schedule_subnet",
+          "startLine": 114,
+          "endLine": 118,
+          "params": [
+            "subnet"
+          ]
+        },
+        {
+          "name": "schedule_output",
+          "startLine": 120,
+          "endLine": 168,
+          "params": [
+            "subnet",
+            "out_dir",
+            "output_used"
+          ]
+        },
+        {
+          "name": "process_transit",
+          "startLine": 170,
+          "endLine": 285,
+          "params": [
+            "in_dir",
+            "subnet",
+            "output_used"
+          ]
+        },
+        {
+          "name": "process_fanout_transit",
+          "startLine": 287,
+          "endLine": 371,
+          "params": [
+            "in_dir",
+            "subnet",
+            "output_used"
+          ]
+        },
+        {
+          "name": "try_normal_injection",
+          "startLine": 373,
+          "endLine": 394,
+          "params": [
+            "subnet",
+            "out_dir",
+            "output_used"
+          ]
+        },
+        {
+          "name": "try_slot_replacement",
+          "startLine": 396,
+          "endLine": 427,
+          "params": [
+            "transit_slot",
+            "subnet",
+            "out_dir",
+            "tag_required"
+          ]
+        },
+        {
+          "name": "try_preserve_or_replace_i_tag",
+          "startLine": 429,
+          "endLine": 451,
+          "params": [
+            "slot",
+            "subnet",
+            "out_dir",
+            "output_used",
+            "replacement_sent"
+          ]
+        },
+        {
+          "name": "forward_slot",
+          "startLine": 453,
+          "endLine": 455,
+          "params": [
+            "slot",
+            "out_dir"
+          ]
+        },
+        {
+          "name": "can_eject",
+          "startLine": 457,
+          "endLine": 466,
+          "params": [
+            "slot",
+            "subnet",
+            "arrival_direction"
+          ]
+        },
+        {
+          "name": "owns_e_tag",
+          "startLine": 468,
+          "endLine": 475,
+          "params": [
+            "slot",
+            "subnet",
+            "arrival_direction"
+          ]
+        },
+        {
+          "name": "mark_e_tag_for_forward",
+          "startLine": 477,
+          "endLine": 487,
+          "params": [
+            "slot",
+            "subnet",
+            "arrival_direction"
+          ]
+        },
+        {
+          "name": "rollback_e_tag_mark",
+          "startLine": 489,
+          "endLine": 493,
+          "params": [
+            "slot",
+            "marked"
+          ]
+        },
+        {
+          "name": "claim_e_tag",
+          "startLine": 495,
+          "endLine": 505,
+          "params": [
+            "slot",
+            "subnet",
+            "arrival_direction"
+          ]
+        },
+        {
+          "name": "commit_eject",
+          "startLine": 507,
+          "endLine": 525,
+          "params": [
+            "slot",
+            "subnet",
+            "arrival_direction"
+          ]
+        },
+        {
+          "name": "commit_fanout_eject",
+          "startLine": 527,
+          "endLine": 538,
+          "params": [
+            "envelope",
+            "response",
+            "subnet",
+            "arrival_direction"
+          ]
+        },
+        {
+          "name": "transit_reg",
+          "startLine": 540,
+          "endLine": 543,
+          "params": [
+            "in_dir",
+            "subnet"
+          ]
+        },
+        {
+          "name": "output_conn",
+          "startLine": 545,
+          "endLine": 547,
+          "params": [
+            "out_dir"
+          ]
+        },
+        {
+          "name": "destination_node",
+          "startLine": 549,
+          "endLine": 551,
+          "params": [
+            "slot"
+          ]
+        },
+        {
+          "name": "is_destination",
+          "startLine": 553,
+          "endLine": 555,
+          "params": [
+            "slot"
+          ]
+        },
+        {
+          "name": "fanout_recipient_for_station",
+          "startLine": 557,
+          "endLine": 572,
+          "params": [
+            "slot",
+            "recipient_index"
+          ]
+        },
+        {
+          "name": "make_fanout_forward",
+          "startLine": 574,
+          "endLine": 582,
+          "params": [
+            "slot",
+            "recipient_index"
+          ]
+        },
+        {
+          "name": "make_fanout_response",
+          "startLine": 584,
+          "endLine": 613,
+          "params": [
+            "envelope",
+            "recipient_index"
+          ]
+        },
+        {
+          "name": "slot_direction",
+          "startLine": 615,
+          "endLine": 617,
+          "params": [
+            "slot"
+          ]
+        },
+        {
+          "name": "direction_index",
+          "startLine": 619,
+          "endLine": 621,
+          "params": [
+            "dir"
+          ]
+        },
+        {
+          "name": "ejection_bank_index",
+          "startLine": 623,
+          "endLine": 626,
+          "params": [
+            "direction"
+          ]
+        },
+        {
+          "name": "transit_waiting_for_output",
+          "startLine": 628,
+          "endLine": 633,
+          "params": [
+            "subnet",
+            "out_dir"
+          ]
+        },
+        {
+          "name": "normal_injection_ready",
+          "startLine": 635,
+          "endLine": 642,
+          "params": [
+            "subnet",
+            "out_dir"
+          ]
+        },
+        {
+          "name": "local_waiting_for_output",
+          "startLine": 644,
+          "endLine": 650,
+          "params": [
+            "subnet",
+            "out_dir"
+          ]
+        },
+        {
+          "name": "release_ring_slot",
+          "startLine": 652,
+          "endLine": 655,
+          "params": [
+            "subnet",
+            "out_dir"
+          ]
+        },
+        {
+          "name": "make_tagged_empty_slot",
+          "startLine": 657,
+          "endLine": 666,
+          "params": [
+            "source"
+          ]
+        }
+      ],
+      "exports": [
+        {
+          "name": "TmRingCrossStation",
+          "line": 9,
+          "isDefault": false
+        },
+        {
+          "name": "reset",
+          "line": 42,
+          "isDefault": false
+        },
+        {
+          "name": "clear_stats",
+          "line": 55,
+          "isDefault": false
+        },
+        {
+          "name": "idle",
+          "line": 57,
+          "isDefault": false
+        },
+        {
+          "name": "attach",
+          "line": 75,
+          "isDefault": false
+        },
+        {
+          "name": "bind_node_interface",
+          "line": 85,
+          "isDefault": false
+        },
+        {
+          "name": "transit_in_reg",
+          "line": 99,
+          "isDefault": false
+        },
+        {
+          "name": "schedule_req",
+          "line": 108,
+          "isDefault": false
+        },
+        {
+          "name": "schedule_rsp",
+          "line": 110,
+          "isDefault": false
+        },
+        {
+          "name": "schedule_dat",
+          "line": 112,
+          "isDefault": false
+        },
+        {
+          "name": "schedule_subnet",
+          "line": 114,
+          "isDefault": false
+        },
+        {
+          "name": "schedule_output",
+          "line": 120,
+          "isDefault": false
+        },
+        {
+          "name": "process_transit",
+          "line": 170,
+          "isDefault": false
+        },
+        {
+          "name": "process_fanout_transit",
+          "line": 287,
+          "isDefault": false
+        },
+        {
+          "name": "try_normal_injection",
+          "line": 373,
+          "isDefault": false
+        },
+        {
+          "name": "try_slot_replacement",
+          "line": 396,
+          "isDefault": false
+        },
+        {
+          "name": "try_preserve_or_replace_i_tag",
+          "line": 429,
+          "isDefault": false
+        },
+        {
+          "name": "forward_slot",
+          "line": 453,
+          "isDefault": false
+        },
+        {
+          "name": "can_eject",
+          "line": 457,
+          "isDefault": false
+        },
+        {
+          "name": "owns_e_tag",
+          "line": 468,
+          "isDefault": false
+        },
+        {
+          "name": "mark_e_tag_for_forward",
+          "line": 477,
+          "isDefault": false
+        },
+        {
+          "name": "rollback_e_tag_mark",
+          "line": 489,
+          "isDefault": false
+        },
+        {
+          "name": "claim_e_tag",
+          "line": 495,
+          "isDefault": false
+        },
+        {
+          "name": "commit_eject",
+          "line": 507,
+          "isDefault": false
+        },
+        {
+          "name": "commit_fanout_eject",
+          "line": 527,
+          "isDefault": false
+        },
+        {
+          "name": "transit_reg",
+          "line": 540,
+          "isDefault": false
+        },
+        {
+          "name": "output_conn",
+          "line": 545,
+          "isDefault": false
+        },
+        {
+          "name": "destination_node",
+          "line": 549,
+          "isDefault": false
+        },
+        {
+          "name": "is_destination",
+          "line": 553,
+          "isDefault": false
+        },
+        {
+          "name": "fanout_recipient_for_station",
+          "line": 557,
+          "isDefault": false
+        },
+        {
+          "name": "make_fanout_forward",
+          "line": 574,
+          "isDefault": false
+        },
+        {
+          "name": "make_fanout_response",
+          "line": 584,
+          "isDefault": false
+        },
+        {
+          "name": "slot_direction",
+          "line": 615,
+          "isDefault": false
+        },
+        {
+          "name": "direction_index",
+          "line": 619,
+          "isDefault": false
+        },
+        {
+          "name": "ejection_bank_index",
+          "line": 623,
+          "isDefault": false
+        },
+        {
+          "name": "transit_waiting_for_output",
+          "line": 628,
+          "isDefault": false
+        },
+        {
+          "name": "normal_injection_ready",
+          "line": 635,
+          "isDefault": false
+        },
+        {
+          "name": "local_waiting_for_output",
+          "line": 644,
+          "isDefault": false
+        },
+        {
+          "name": "release_ring_slot",
+          "line": 652,
+          "isDefault": false
+        },
+        {
+          "name": "make_tagged_empty_slot",
+          "line": 657,
+          "isDefault": false
+        }
+      ],
+      "callGraph": [
+        {
+          "caller": "TmRingCrossStation",
+          "callee": "tm_ring_subnet_count",
+          "lineNumber": 11
+        },
+        {
+          "caller": "TmRingCrossStation",
+          "callee": "tm_make_com_que",
+          "lineNumber": 14
+        },
+        {
+          "caller": "TmRingCrossStation",
+          "callee": "std::to_string",
+          "lineNumber": 15
+        },
+        {
+          "caller": "TmRingCrossStation",
+          "callee": "std::to_string",
+          "lineNumber": 16
+        },
+        {
+          "caller": "TmRingCrossStation",
+          "callee": "TM_MAKE_CPROC",
+          "lineNumber": 21
+        },
+        {
+          "caller": "TmRingCrossStation",
+          "callee": "TM_MAKE_CPROC",
+          "lineNumber": 22
+        },
+        {
+          "caller": "TmRingCrossStation",
+          "callee": "TM_MAKE_CPROC",
+          "lineNumber": 23
+        },
+        {
+          "caller": "TmRingCrossStation",
+          "callee": "tm_sensitive",
+          "lineNumber": 25
+        },
+        {
+          "caller": "TmRingCrossStation",
+          "callee": "static_cast<uint32_t>",
+          "lineNumber": 27
+        },
+        {
+          "caller": "TmRingCrossStation",
+          "callee": "tm_sensitive",
+          "lineNumber": 29
+        },
+        {
+          "caller": "TmRingCrossStation",
+          "callee": "static_cast<uint32_t>",
+          "lineNumber": 31
+        },
+        {
+          "caller": "TmRingCrossStation",
+          "callee": "tm_sensitive",
+          "lineNumber": 33
+        },
+        {
+          "caller": "TmRingCrossStation",
+          "callee": "static_cast<uint32_t>",
+          "lineNumber": 35
+        },
+        {
+          "caller": "TmRingCrossStation",
+          "callee": "reset",
+          "lineNumber": 39
+        },
+        {
+          "caller": "reset",
+          "callee": "tm_ring_subnet_count",
+          "lineNumber": 43
+        },
+        {
+          "caller": "reset",
+          "callee": "clear",
+          "lineNumber": 45
+        },
+        {
+          "caller": "reset",
+          "callee": "TmPldTxnKey",
+          "lineNumber": 49
+        },
+        {
+          "caller": "reset",
+          "callee": "clear_stats",
+          "lineNumber": 52
+        },
+        {
+          "caller": "clear_stats",
+          "callee": "clear",
+          "lineNumber": 55
+        },
+        {
+          "caller": "idle",
+          "callee": "tm_ring_subnet_count",
+          "lineNumber": 58
+        },
+        {
+          "caller": "idle",
+          "callee": "empty",
+          "lineNumber": 60
+        },
+        {
+          "caller": "idle",
+          "callee": "tm_ring_subnet_count",
+          "lineNumber": 65
+        },
+        {
+          "caller": "bind_node_interface",
+          "callee": "tm_sensitive",
+          "lineNumber": 90
+        },
+        {
+          "caller": "bind_node_interface",
+          "callee": "TM_MAKE_CPROC",
+          "lineNumber": 90
+        },
+        {
+          "caller": "bind_node_interface",
+          "callee": "inject_bank",
+          "lineNumber": 91
+        },
+        {
+          "caller": "bind_node_interface",
+          "callee": "tm_sensitive",
+          "lineNumber": 92
+        },
+        {
+          "caller": "bind_node_interface",
+          "callee": "TM_MAKE_CPROC",
+          "lineNumber": 92
+        },
+        {
+          "caller": "bind_node_interface",
+          "callee": "inject_bank",
+          "lineNumber": 93
+        },
+        {
+          "caller": "bind_node_interface",
+          "callee": "tm_sensitive",
+          "lineNumber": 94
+        },
+        {
+          "caller": "bind_node_interface",
+          "callee": "TM_MAKE_CPROC",
+          "lineNumber": 94
+        },
+        {
+          "caller": "bind_node_interface",
+          "callee": "inject_bank",
+          "lineNumber": 95
+        },
+        {
+          "caller": "transit_in_reg",
+          "callee": "transit_reg",
+          "lineNumber": 101
+        },
+        {
+          "caller": "schedule_req",
+          "callee": "schedule_subnet",
+          "lineNumber": 108
+        },
+        {
+          "caller": "schedule_rsp",
+          "callee": "schedule_subnet",
+          "lineNumber": 110
+        },
+        {
+          "caller": "schedule_dat",
+          "callee": "schedule_subnet",
+          "lineNumber": 112
+        },
+        {
+          "caller": "schedule_subnet",
+          "callee": "schedule_output",
+          "lineNumber": 116
+        },
+        {
+          "caller": "schedule_subnet",
+          "callee": "schedule_output",
+          "lineNumber": 117
+        },
+        {
+          "caller": "schedule_output",
+          "callee": "static_cast<uint32_t>",
+          "lineNumber": 123
+        },
+        {
+          "caller": "schedule_output",
+          "callee": "direction_index",
+          "lineNumber": 124
+        },
+        {
+          "caller": "schedule_output",
+          "callee": "transit_waiting_for_output",
+          "lineNumber": 125
+        },
+        {
+          "caller": "schedule_output",
+          "callee": "normal_injection_ready",
+          "lineNumber": 126
+        },
+        {
+          "caller": "schedule_output",
+          "callee": "local_waiting_for_output",
+          "lineNumber": 129
+        },
+        {
+          "caller": "schedule_output",
+          "callee": "try_normal_injection",
+          "lineNumber": 130
+        },
+        {
+          "caller": "schedule_output",
+          "callee": "try_normal_injection",
+          "lineNumber": 143
+        },
+        {
+          "caller": "schedule_output",
+          "callee": "tm_ring_opposite_dir",
+          "lineNumber": 150
+        },
+        {
+          "caller": "schedule_output",
+          "callee": "process_transit",
+          "lineNumber": 151
+        },
+        {
+          "caller": "schedule_output",
+          "callee": "normal_injection_ready",
+          "lineNumber": 161
+        },
+        {
+          "caller": "schedule_output",
+          "callee": "try_normal_injection",
+          "lineNumber": 163
+        },
+        {
+          "caller": "process_transit",
+          "callee": "transit_reg",
+          "lineNumber": 172
+        },
+        {
+          "caller": "process_transit",
+          "callee": "valid",
+          "lineNumber": 173
+        },
+        {
+          "caller": "process_transit",
+          "callee": "empty",
+          "lineNumber": 173
+        },
+        {
+          "caller": "process_transit",
+          "callee": "front",
+          "lineNumber": 177
+        },
+        {
+          "caller": "process_transit",
+          "callee": "slot_direction",
+          "lineNumber": 178
+        },
+        {
+          "caller": "process_transit",
+          "callee": "direction_index",
+          "lineNumber": 179
+        },
+        {
+          "caller": "process_transit",
+          "callee": "tm_ring_fanout_active",
+          "lineNumber": 184
+        },
+        {
+          "caller": "process_transit",
+          "callee": "process_fanout_transit",
+          "lineNumber": 185
+        },
+        {
+          "caller": "process_transit",
+          "callee": "local_waiting_for_output",
+          "lineNumber": 190
+        },
+        {
+          "caller": "process_transit",
+          "callee": "static_cast<uint32_t>",
+          "lineNumber": 191
+        },
+        {
+          "caller": "process_transit",
+          "callee": "release_ring_slot",
+          "lineNumber": 192
+        },
+        {
+          "caller": "process_transit",
+          "callee": "pop_front",
+          "lineNumber": 193
+        },
+        {
+          "caller": "process_transit",
+          "callee": "try_slot_replacement",
+          "lineNumber": 198
+        },
+        {
+          "caller": "process_transit",
+          "callee": "pop_front",
+          "lineNumber": 199
+        },
+        {
+          "caller": "process_transit",
+          "callee": "forward_slot",
+          "lineNumber": 206
+        },
+        {
+          "caller": "process_transit",
+          "callee": "pop_front",
+          "lineNumber": 207
+        },
+        {
+          "caller": "process_transit",
+          "callee": "is_destination",
+          "lineNumber": 215
+        },
+        {
+          "caller": "process_transit",
+          "callee": "can_eject",
+          "lineNumber": 215
+        },
+        {
+          "caller": "process_transit",
+          "callee": "try_preserve_or_replace_i_tag",
+          "lineNumber": 217
+        },
+        {
+          "caller": "process_transit",
+          "callee": "commit_eject",
+          "lineNumber": 222
+        },
+        {
+          "caller": "process_transit",
+          "callee": "local_waiting_for_output",
+          "lineNumber": 225
+        },
+        {
+          "caller": "process_transit",
+          "callee": "static_cast<uint32_t>",
+          "lineNumber": 226
+        },
+        {
+          "caller": "process_transit",
+          "callee": "release_ring_slot",
+          "lineNumber": 228
+        },
+        {
+          "caller": "process_transit",
+          "callee": "pop_front",
+          "lineNumber": 230
+        },
+        {
+          "caller": "process_transit",
+          "callee": "static_cast<uint32_t>",
+          "lineNumber": 239
+        },
+        {
+          "caller": "process_transit",
+          "callee": "local_waiting_for_output",
+          "lineNumber": 241
+        },
+        {
+          "caller": "process_transit",
+          "callee": "can_acquire",
+          "lineNumber": 242
+        },
+        {
+          "caller": "process_transit",
+          "callee": "tm_ring_invalid_tag_owner",
+          "lineNumber": 243
+        },
+        {
+          "caller": "process_transit",
+          "callee": "is_destination",
+          "lineNumber": 245
+        },
+        {
+          "caller": "process_transit",
+          "callee": "mark_e_tag_for_forward",
+          "lineNumber": 245
+        },
+        {
+          "caller": "process_transit",
+          "callee": "forward_slot",
+          "lineNumber": 250
+        },
+        {
+          "caller": "process_transit",
+          "callee": "rollback_e_tag_mark",
+          "lineNumber": 251
+        },
+        {
+          "caller": "process_transit",
+          "callee": "tm_ring_invalid_tag_owner",
+          "lineNumber": 253
+        },
+        {
+          "caller": "process_transit",
+          "callee": "is_destination",
+          "lineNumber": 259
+        },
+        {
+          "caller": "process_transit",
+          "callee": "tm_ring_subnet_index",
+          "lineNumber": 262
+        },
+        {
+          "caller": "process_transit",
+          "callee": "time",
+          "lineNumber": 265
+        },
+        {
+          "caller": "process_transit",
+          "callee": "ejection_bank_index",
+          "lineNumber": 271
+        },
+        {
+          "caller": "process_transit",
+          "callee": "tm_ring_packet_txn_key",
+          "lineNumber": 273
+        },
+        {
+          "caller": "process_transit",
+          "callee": "pop_front",
+          "lineNumber": 281
+        },
+        {
+          "caller": "process_fanout_transit",
+          "callee": "transit_reg",
+          "lineNumber": 289
+        },
+        {
+          "caller": "process_fanout_transit",
+          "callee": "front",
+          "lineNumber": 290
+        },
+        {
+          "caller": "process_fanout_transit",
+          "callee": "slot_direction",
+          "lineNumber": 291
+        },
+        {
+          "caller": "process_fanout_transit",
+          "callee": "direction_index",
+          "lineNumber": 292
+        },
+        {
+          "caller": "process_fanout_transit",
+          "callee": "fanout_recipient_for_station",
+          "lineNumber": 295
+        },
+        {
+          "caller": "process_fanout_transit",
+          "callee": "forward_slot",
+          "lineNumber": 296
+        },
+        {
+          "caller": "process_fanout_transit",
+          "callee": "pop_front",
+          "lineNumber": 297
+        },
+        {
+          "caller": "process_fanout_transit",
+          "callee": "can_eject",
+          "lineNumber": 307
+        },
+        {
+          "caller": "process_fanout_transit",
+          "callee": "static_cast<uint32_t>",
+          "lineNumber": 308
+        },
+        {
+          "caller": "process_fanout_transit",
+          "callee": "mark_e_tag_for_forward",
+          "lineNumber": 309
+        },
+        {
+          "caller": "process_fanout_transit",
+          "callee": "forward_slot",
+          "lineNumber": 310
+        },
+        {
+          "caller": "process_fanout_transit",
+          "callee": "rollback_e_tag_mark",
+          "lineNumber": 311
+        },
+        {
+          "caller": "process_fanout_transit",
+          "callee": "tm_ring_subnet_index",
+          "lineNumber": 317
+        },
+        {
+          "caller": "process_fanout_transit",
+          "callee": "ejection_bank_index",
+          "lineNumber": 320
+        },
+        {
+          "caller": "process_fanout_transit",
+          "callee": "tm_ring_packet_txn_key",
+          "lineNumber": 322
+        },
+        {
+          "caller": "process_fanout_transit",
+          "callee": "pop_front",
+          "lineNumber": 325
+        },
+        {
+          "caller": "process_fanout_transit",
+          "callee": "make_fanout_response",
+          "lineNumber": 331
+        },
+        {
+          "caller": "process_fanout_transit",
+          "callee": "tm_ring_fanout_remaining_stations",
+          "lineNumber": 333
+        },
+        {
+          "caller": "process_fanout_transit",
+          "callee": "make_fanout_forward",
+          "lineNumber": 335
+        },
+        {
+          "caller": "process_fanout_transit",
+          "callee": "owns_e_tag",
+          "lineNumber": 336
+        },
+        {
+          "caller": "process_fanout_transit",
+          "callee": "tm_ring_invalid_tag_owner",
+          "lineNumber": 337
+        },
+        {
+          "caller": "process_fanout_transit",
+          "callee": "forward_slot",
+          "lineNumber": 339
+        },
+        {
+          "caller": "process_fanout_transit",
+          "callee": "commit_fanout_eject",
+          "lineNumber": 343
+        },
+        {
+          "caller": "process_fanout_transit",
+          "callee": "pop_front",
+          "lineNumber": 344
+        },
+        {
+          "caller": "process_fanout_transit",
+          "callee": "try_preserve_or_replace_i_tag",
+          "lineNumber": 351
+        },
+        {
+          "caller": "process_fanout_transit",
+          "callee": "commit_fanout_eject",
+          "lineNumber": 356
+        },
+        {
+          "caller": "process_fanout_transit",
+          "callee": "local_waiting_for_output",
+          "lineNumber": 359
+        },
+        {
+          "caller": "process_fanout_transit",
+          "callee": "static_cast<uint32_t>",
+          "lineNumber": 360
+        },
+        {
+          "caller": "process_fanout_transit",
+          "callee": "release_ring_slot",
+          "lineNumber": 362
+        },
+        {
+          "caller": "process_fanout_transit",
+          "callee": "pop_front",
+          "lineNumber": 364
+        },
+        {
+          "caller": "try_normal_injection",
+          "callee": "direction_index",
+          "lineNumber": 375
+        },
+        {
+          "caller": "try_normal_injection",
+          "callee": "static_cast<uint32_t>",
+          "lineNumber": 376
+        },
+        {
+          "caller": "try_normal_injection",
+          "callee": "local_waiting_for_output",
+          "lineNumber": 377
+        },
+        {
+          "caller": "try_normal_injection",
+          "callee": "front_inject",
+          "lineNumber": 381
+        },
+        {
+          "caller": "try_normal_injection",
+          "callee": "try_acquire",
+          "lineNumber": 382
+        },
+        {
+          "caller": "try_normal_injection",
+          "callee": "forward_slot",
+          "lineNumber": 386
+        },
+        {
+          "caller": "try_normal_injection",
+          "callee": "release",
+          "lineNumber": 387
+        },
+        {
+          "caller": "try_normal_injection",
+          "callee": "pop_inject",
+          "lineNumber": 390
+        },
+        {
+          "caller": "try_slot_replacement",
+          "callee": "make_tagged_empty_slot",
+          "lineNumber": 401
+        },
+        {
+          "caller": "try_slot_replacement",
+          "callee": "forward_slot",
+          "lineNumber": 402
+        },
+        {
+          "caller": "try_slot_replacement",
+          "callee": "static_cast<uint32_t>",
+          "lineNumber": 405
+        },
+        {
+          "caller": "try_slot_replacement",
+          "callee": "direction_index",
+          "lineNumber": 406
+        },
+        {
+          "caller": "try_slot_replacement",
+          "callee": "local_waiting_for_output",
+          "lineNumber": 412
+        },
+        {
+          "caller": "try_slot_replacement",
+          "callee": "front_inject",
+          "lineNumber": 416
+        },
+        {
+          "caller": "try_slot_replacement",
+          "callee": "forward_slot",
+          "lineNumber": 417
+        },
+        {
+          "caller": "try_slot_replacement",
+          "callee": "pop_inject",
+          "lineNumber": 420
+        },
+        {
+          "caller": "try_preserve_or_replace_i_tag",
+          "callee": "direction_index",
+          "lineNumber": 434
+        },
+        {
+          "caller": "try_preserve_or_replace_i_tag",
+          "callee": "local_waiting_for_output",
+          "lineNumber": 436
+        },
+        {
+          "caller": "try_preserve_or_replace_i_tag",
+          "callee": "tm_ring_invalid_tag_owner",
+          "lineNumber": 438
+        },
+        {
+          "caller": "try_preserve_or_replace_i_tag",
+          "callee": "tm_ring_invalid_tag_owner",
+          "lineNumber": 441
+        },
+        {
+          "caller": "try_preserve_or_replace_i_tag",
+          "callee": "try_slot_replacement",
+          "lineNumber": 445
+        },
+        {
+          "caller": "try_preserve_or_replace_i_tag",
+          "callee": "try_slot_replacement",
+          "lineNumber": 449
+        },
+        {
+          "caller": "forward_slot",
+          "callee": "accept_slot",
+          "lineNumber": 454
+        },
+        {
+          "caller": "forward_slot",
+          "callee": "output_conn",
+          "lineNumber": 454
+        },
+        {
+          "caller": "can_eject",
+          "callee": "tm_ring_subnet_index",
+          "lineNumber": 459
+        },
+        {
+          "caller": "can_eject",
+          "callee": "ejection_bank_index",
+          "lineNumber": 460
+        },
+        {
+          "caller": "can_eject",
+          "callee": "owns_e_tag",
+          "lineNumber": 462
+        },
+        {
+          "caller": "can_eject",
+          "callee": "has_eject_capacity",
+          "lineNumber": 463
+        },
+        {
+          "caller": "can_eject",
+          "callee": "has_eject_capacity",
+          "lineNumber": 465
+        },
+        {
+          "caller": "owns_e_tag",
+          "callee": "tm_ring_subnet_index",
+          "lineNumber": 470
+        },
+        {
+          "caller": "owns_e_tag",
+          "callee": "ejection_bank_index",
+          "lineNumber": 471
+        },
+        {
+          "caller": "owns_e_tag",
+          "callee": "tm_ring_packet_txn_key",
+          "lineNumber": 474
+        },
+        {
+          "caller": "mark_e_tag_for_forward",
+          "callee": "tm_ring_subnet_index",
+          "lineNumber": 479
+        },
+        {
+          "caller": "mark_e_tag_for_forward",
+          "callee": "ejection_bank_index",
+          "lineNumber": 480
+        },
+        {
+          "caller": "mark_e_tag_for_forward",
+          "callee": "tm_ring_invalid_tag_owner",
+          "lineNumber": 482
+        },
+        {
+          "caller": "rollback_e_tag_mark",
+          "callee": "tm_ring_invalid_tag_owner",
+          "lineNumber": 491
+        },
+        {
+          "caller": "claim_e_tag",
+          "callee": "tm_ring_subnet_index",
+          "lineNumber": 497
+        },
+        {
+          "caller": "claim_e_tag",
+          "callee": "ejection_bank_index",
+          "lineNumber": 498
+        },
+        {
+          "caller": "claim_e_tag",
+          "callee": "owns_e_tag",
+          "lineNumber": 499
+        },
+        {
+          "caller": "claim_e_tag",
+          "callee": "TmPldTxnKey",
+          "lineNumber": 501
+        },
+        {
+          "caller": "claim_e_tag",
+          "callee": "tm_ring_invalid_tag_owner",
+          "lineNumber": 502
+        },
+        {
+          "caller": "commit_eject",
+          "callee": "claim_e_tag",
+          "lineNumber": 509
+        },
+        {
+          "caller": "commit_eject",
+          "callee": "push_eject",
+          "lineNumber": 510
+        },
+        {
+          "caller": "commit_eject",
+          "callee": "tm_ring_subnet_index",
+          "lineNumber": 514
+        },
+        {
+          "caller": "commit_eject",
+          "callee": "time",
+          "lineNumber": 518
+        },
+        {
+          "caller": "commit_eject",
+          "callee": "std::max",
+          "lineNumber": 521
+        },
+        {
+          "caller": "commit_eject",
+          "callee": "std::max",
+          "lineNumber": 523
+        },
+        {
+          "caller": "commit_fanout_eject",
+          "callee": "claim_e_tag",
+          "lineNumber": 531
+        },
+        {
+          "caller": "commit_fanout_eject",
+          "callee": "static_cast<uint32_t>",
+          "lineNumber": 533
+        },
+        {
+          "caller": "commit_fanout_eject",
+          "callee": "tm_ring_invalid_tag_owner",
+          "lineNumber": 534
+        },
+        {
+          "caller": "commit_fanout_eject",
+          "callee": "tm_ring_invalid_tag_owner",
+          "lineNumber": 535
+        },
+        {
+          "caller": "commit_fanout_eject",
+          "callee": "push_eject",
+          "lineNumber": 536
+        },
+        {
+          "caller": "transit_reg",
+          "callee": "static_cast<uint32_t>",
+          "lineNumber": 542
+        },
+        {
+          "caller": "transit_reg",
+          "callee": "direction_index",
+          "lineNumber": 542
+        },
+        {
+          "caller": "destination_node",
+          "callee": "tm_pld_dst_node",
+          "lineNumber": 550
+        },
+        {
+          "caller": "is_destination",
+          "callee": "destination_node",
+          "lineNumber": 554
+        },
+        {
+          "caller": "fanout_recipient_for_station",
+          "callee": "tm_ring_fanout_active",
+          "lineNumber": 559
+        },
+        {
+          "caller": "fanout_recipient_for_station",
+          "callee": "size",
+          "lineNumber": 564
+        },
+        {
+          "caller": "fanout_recipient_for_station",
+          "callee": "tm_ring_fanout_has_station",
+          "lineNumber": 565
+        },
+        {
+          "caller": "make_fanout_forward",
+          "callee": "tm_make_pld",
+          "lineNumber": 576
+        },
+        {
+          "caller": "make_fanout_forward",
+          "callee": "tm_ring_clone_fanout_state",
+          "lineNumber": 577
+        },
+        {
+          "caller": "make_fanout_forward",
+          "callee": "tm_ring_fanout_clear_station",
+          "lineNumber": 578
+        },
+        {
+          "caller": "make_fanout_forward",
+          "callee": "get",
+          "lineNumber": 579
+        },
+        {
+          "caller": "make_fanout_response",
+          "callee": "tm_make_pld",
+          "lineNumber": 588
+        },
+        {
+          "caller": "make_fanout_response",
+          "callee": "reset",
+          "lineNumber": 589
+        },
+        {
+          "caller": "make_fanout_response",
+          "callee": "tm_pld_set_ring_route",
+          "lineNumber": 596
+        },
+        {
+          "caller": "make_fanout_response",
+          "callee": "tm_pld_req_type",
+          "lineNumber": 596
+        },
+        {
+          "caller": "make_fanout_response",
+          "callee": "tm_pld_target_id",
+          "lineNumber": 597
+        },
+        {
+          "caller": "make_fanout_response",
+          "callee": "tm_pld_src_node",
+          "lineNumber": 597
+        },
+        {
+          "caller": "make_fanout_response",
+          "callee": "data",
+          "lineNumber": 604
+        },
+        {
+          "caller": "make_fanout_response",
+          "callee": "static_cast<uint32_t>",
+          "lineNumber": 605
+        },
+        {
+          "caller": "make_fanout_response",
+          "callee": "static_cast<uint32_t>",
+          "lineNumber": 606
+        },
+        {
+          "caller": "make_fanout_response",
+          "callee": "static_cast<uint32_t>",
+          "lineNumber": 607
+        },
+        {
+          "caller": "make_fanout_response",
+          "callee": "tm_ring_invalid_tag_owner",
+          "lineNumber": 609
+        },
+        {
+          "caller": "make_fanout_response",
+          "callee": "tm_ring_invalid_tag_owner",
+          "lineNumber": 610
+        },
+        {
+          "caller": "make_fanout_response",
+          "callee": "reset_ring_deflection_state",
+          "lineNumber": 611
+        },
+        {
+          "caller": "slot_direction",
+          "callee": "static_cast<TmRingPortDir>",
+          "lineNumber": 616
+        },
+        {
+          "caller": "ejection_bank_index",
+          "callee": "directional_eject",
+          "lineNumber": 625
+        },
+        {
+          "caller": "ejection_bank_index",
+          "callee": "direction_index",
+          "lineNumber": 625
+        },
+        {
+          "caller": "transit_waiting_for_output",
+          "callee": "transit_reg",
+          "lineNumber": 630
+        },
+        {
+          "caller": "transit_waiting_for_output",
+          "callee": "tm_ring_opposite_dir",
+          "lineNumber": 630
+        },
+        {
+          "caller": "transit_waiting_for_output",
+          "callee": "valid",
+          "lineNumber": 631
+        },
+        {
+          "caller": "transit_waiting_for_output",
+          "callee": "empty",
+          "lineNumber": 631
+        },
+        {
+          "caller": "transit_waiting_for_output",
+          "callee": "slot_direction",
+          "lineNumber": 632
+        },
+        {
+          "caller": "transit_waiting_for_output",
+          "callee": "front",
+          "lineNumber": 632
+        },
+        {
+          "caller": "normal_injection_ready",
+          "callee": "static_cast<uint32_t>",
+          "lineNumber": 637
+        },
+        {
+          "caller": "normal_injection_ready",
+          "callee": "direction_index",
+          "lineNumber": 638
+        },
+        {
+          "caller": "normal_injection_ready",
+          "callee": "local_waiting_for_output",
+          "lineNumber": 640
+        },
+        {
+          "caller": "normal_injection_ready",
+          "callee": "can_acquire",
+          "lineNumber": 641
+        },
+        {
+          "caller": "local_waiting_for_output",
+          "callee": "front_inject",
+          "lineNumber": 649
+        },
+        {
+          "caller": "release_ring_slot",
+          "callee": "release",
+          "lineNumber": 654
+        },
+        {
+          "caller": "make_tagged_empty_slot",
+          "callee": "tm_make_pld",
+          "lineNumber": 658
+        },
+        {
+          "caller": "make_tagged_empty_slot",
+          "callee": "tm_ring_invalid_tag_owner",
+          "lineNumber": 664
+        }
+      ],
+      "metrics": {
+        "importCount": 2,
+        "exportCount": 40,
+        "functionCount": 40,
+        "classCount": 0
+      }
+    },
+    {
+      "path": "tm_ring_cross_station.h",
+      "language": "c",
+      "fileCategory": "code",
+      "totalLines": 130,
+      "nonEmptyLines": 114,
+      "callGraph": [
+        {
+          "caller": "tm_make_ring_cs",
+          "callee": "std::make_shared<TmRingCrossStation>",
+          "lineNumber": 127
+        }
+      ],
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 0,
+        "functionCount": 0,
+        "classCount": 0
+      }
+    },
+    {
+      "path": "tm_ring_cross_station_test.cc",
+      "language": "cpp",
+      "fileCategory": "code",
+      "totalLines": 291,
+      "nonEmptyLines": 253,
+      "functions": [
+        {
+          "name": "TEST",
+          "startLine": 9,
+          "endLine": 19,
+          "params": []
+        },
+        {
+          "name": "TmRingCrossStationFixture",
+          "startLine": 23,
+          "endLine": 71,
+          "params": []
+        },
+        {
+          "name": "make_req",
+          "startLine": 73,
+          "endLine": 81,
+          "params": [
+            "destination_station"
+          ]
+        },
+        {
+          "name": "make_dat",
+          "startLine": 83,
+          "endLine": 91,
+          "params": [
+            "destination_station"
+          ]
+        },
+        {
+          "name": "run_until_deflections",
+          "startLine": 93,
+          "endLine": 102,
+          "params": [
+            "count"
+          ]
+        },
+        {
+          "name": "run_until_eject",
+          "startLine": 104,
+          "endLine": 112,
+          "params": []
+        },
+        {
+          "name": "attach_to_destination",
+          "startLine": 126,
+          "endLine": 132,
+          "params": [
+            "conn",
+            "station",
+            "direction"
+          ]
+        },
+        {
+          "name": "TEST",
+          "startLine": 135,
+          "endLine": 171,
+          "params": []
+        },
+        {
+          "name": "TEST",
+          "startLine": 173,
+          "endLine": 200,
+          "params": []
+        },
+        {
+          "name": "TEST",
+          "startLine": 202,
+          "endLine": 233,
+          "params": []
+        },
+        {
+          "name": "TEST",
+          "startLine": 235,
+          "endLine": 259,
+          "params": []
+        },
+        {
+          "name": "TEST",
+          "startLine": 261,
+          "endLine": 289,
+          "params": []
+        }
+      ],
+      "classes": [
+        {
+          "name": "TmRingCrossStationFixture",
+          "startLine": 21,
+          "endLine": 133,
+          "methods": [
+            "TmRingCrossStationFixture",
+            "make_req",
+            "make_dat",
+            "run_until_deflections",
+            "run_until_eject",
+            "attach_to_destination"
+          ],
+          "properties": [
+            "clk",
+            "slot_pool",
+            "source_node",
+            "destination_node",
+            "source",
+            "destination",
+            "cw_source_to_destination",
+            "cw_destination_to_source",
+            "ccw_source_to_destination",
+            "ccw_destination_to_source"
+          ]
+        }
+      ],
+      "exports": [
+        {
+          "name": "TEST",
+          "line": 9,
+          "isDefault": false
+        },
+        {
+          "name": "TmRingCrossStationFixture",
+          "line": 23,
+          "isDefault": false
+        },
+        {
+          "name": "make_req",
+          "line": 73,
+          "isDefault": false
+        },
+        {
+          "name": "make_dat",
+          "line": 83,
+          "isDefault": false
+        },
+        {
+          "name": "run_until_deflections",
+          "line": 93,
+          "isDefault": false
+        },
+        {
+          "name": "run_until_eject",
+          "line": 104,
+          "isDefault": false
+        },
+        {
+          "name": "TmRingCrossStationFixture",
+          "line": 21,
+          "isDefault": false
+        },
+        {
+          "name": "TEST",
+          "line": 135,
+          "isDefault": false
+        },
+        {
+          "name": "TEST",
+          "line": 173,
+          "isDefault": false
+        },
+        {
+          "name": "TEST",
+          "line": 202,
+          "isDefault": false
+        },
+        {
+          "name": "TEST",
+          "line": 235,
+          "isDefault": false
+        },
+        {
+          "name": "TEST",
+          "line": 261,
+          "isDefault": false
+        }
+      ],
+      "callGraph": [
+        {
+          "caller": "TEST",
+          "callee": "EXPECT_TRUE",
+          "lineNumber": 12
+        },
+        {
+          "caller": "TEST",
+          "callee": "can_acquire",
+          "lineNumber": 12
+        },
+        {
+          "caller": "TEST",
+          "callee": "EXPECT_TRUE",
+          "lineNumber": 13
+        },
+        {
+          "caller": "TEST",
+          "callee": "can_acquire",
+          "lineNumber": 13
+        },
+        {
+          "caller": "TEST",
+          "callee": "ASSERT_TRUE",
+          "lineNumber": 14
+        },
+        {
+          "caller": "TEST",
+          "callee": "try_acquire",
+          "lineNumber": 14
+        },
+        {
+          "caller": "TEST",
+          "callee": "EXPECT_FALSE",
+          "lineNumber": 15
+        },
+        {
+          "caller": "TEST",
+          "callee": "can_acquire",
+          "lineNumber": 15
+        },
+        {
+          "caller": "TEST",
+          "callee": "release",
+          "lineNumber": 17
+        },
+        {
+          "caller": "TEST",
+          "callee": "EXPECT_TRUE",
+          "lineNumber": 18
+        },
+        {
+          "caller": "TEST",
+          "callee": "can_acquire",
+          "lineNumber": 18
+        },
+        {
+          "caller": "TmRingCrossStationFixture",
+          "callee": "tm_init",
+          "lineNumber": 24
+        },
+        {
+          "caller": "TmRingCrossStationFixture",
+          "callee": "tm_make_clk",
+          "lineNumber": 25
+        },
+        {
+          "caller": "TmRingCrossStationFixture",
+          "callee": "tm_make_ring_slot_pool",
+          "lineNumber": 26
+        },
+        {
+          "caller": "TmRingCrossStationFixture",
+          "callee": "tm_make_ring_node_interface",
+          "lineNumber": 31
+        },
+        {
+          "caller": "TmRingCrossStationFixture",
+          "callee": "tm_make_ring_node_interface",
+          "lineNumber": 34
+        },
+        {
+          "caller": "TmRingCrossStationFixture",
+          "callee": "tm_make_ring_node_interface",
+          "lineNumber": 37
+        },
+        {
+          "caller": "TmRingCrossStationFixture",
+          "callee": "tm_make_ring_cs",
+          "lineNumber": 40
+        },
+        {
+          "caller": "TmRingCrossStationFixture",
+          "callee": "tm_make_ring_cs",
+          "lineNumber": 41
+        },
+        {
+          "caller": "TmRingCrossStationFixture",
+          "callee": "tm_make_ring_conn",
+          "lineNumber": 43
+        },
+        {
+          "caller": "TmRingCrossStationFixture",
+          "callee": "tm_make_ring_conn",
+          "lineNumber": 46
+        },
+        {
+          "caller": "TmRingCrossStationFixture",
+          "callee": "tm_make_ring_conn",
+          "lineNumber": 49
+        },
+        {
+          "caller": "TmRingCrossStationFixture",
+          "callee": "tm_make_ring_conn",
+          "lineNumber": 52
+        },
+        {
+          "caller": "TmRingCrossStationFixture",
+          "callee": "attach",
+          "lineNumber": 56
+        },
+        {
+          "caller": "TmRingCrossStationFixture",
+          "callee": "attach",
+          "lineNumber": 58
+        },
+        {
+          "caller": "TmRingCrossStationFixture",
+          "callee": "bind_node_interface",
+          "lineNumber": 60
+        },
+        {
+          "caller": "TmRingCrossStationFixture",
+          "callee": "bind_node_interface",
+          "lineNumber": 61
+        },
+        {
+          "caller": "TmRingCrossStationFixture",
+          "callee": "attach_to_destination",
+          "lineNumber": 63
+        },
+        {
+          "caller": "TmRingCrossStationFixture",
+          "callee": "attach_to_destination",
+          "lineNumber": 65
+        },
+        {
+          "caller": "TmRingCrossStationFixture",
+          "callee": "attach_to_destination",
+          "lineNumber": 67
+        },
+        {
+          "caller": "TmRingCrossStationFixture",
+          "callee": "attach_to_destination",
+          "lineNumber": 69
+        },
+        {
+          "caller": "make_req",
+          "callee": "tm_make_pld",
+          "lineNumber": 74
+        },
+        {
+          "caller": "make_req",
+          "callee": "static_cast<uint32_t>",
+          "lineNumber": 75
+        },
+        {
+          "caller": "make_req",
+          "callee": "static_cast<uint32_t>",
+          "lineNumber": 76
+        },
+        {
+          "caller": "make_req",
+          "callee": "static_cast<uint32_t>",
+          "lineNumber": 77
+        },
+        {
+          "caller": "make_req",
+          "callee": "tm_pld_set_ring_route",
+          "lineNumber": 78
+        },
+        {
+          "caller": "make_req",
+          "callee": "static_cast<uint32_t>",
+          "lineNumber": 78
+        },
+        {
+          "caller": "make_dat",
+          "callee": "tm_make_pld",
+          "lineNumber": 84
+        },
+        {
+          "caller": "make_dat",
+          "callee": "static_cast<uint32_t>",
+          "lineNumber": 85
+        },
+        {
+          "caller": "make_dat",
+          "callee": "static_cast<uint32_t>",
+          "lineNumber": 86
+        },
+        {
+          "caller": "make_dat",
+          "callee": "static_cast<uint32_t>",
+          "lineNumber": 87
+        },
+        {
+          "caller": "make_dat",
+          "callee": "tm_pld_set_ring_route",
+          "lineNumber": 88
+        },
+        {
+          "caller": "make_dat",
+          "callee": "static_cast<uint32_t>",
+          "lineNumber": 88
+        },
+        {
+          "caller": "run_until_deflections",
+          "callee": "stats",
+          "lineNumber": 95
+        },
+        {
+          "caller": "run_until_deflections",
+          "callee": "tm_ring_subnet_index",
+          "lineNumber": 96
+        },
+        {
+          "caller": "run_until_deflections",
+          "callee": "tm_start",
+          "lineNumber": 100
+        },
+        {
+          "caller": "run_until_eject",
+          "callee": "front_eject",
+          "lineNumber": 106
+        },
+        {
+          "caller": "run_until_eject",
+          "callee": "tm_start",
+          "lineNumber": 109
+        },
+        {
+          "caller": "attach_to_destination",
+          "callee": "attach",
+          "lineNumber": 129
+        },
+        {
+          "caller": "attach_to_destination",
+          "callee": "transit_in_reg",
+          "lineNumber": 129
+        },
+        {
+          "caller": "attach_to_destination",
+          "callee": "transit_in_reg",
+          "lineNumber": 130
+        },
+        {
+          "caller": "attach_to_destination",
+          "callee": "transit_in_reg",
+          "lineNumber": 131
+        },
+        {
+          "caller": "TEST",
+          "callee": "ASSERT_TRUE",
+          "lineNumber": 138
+        },
+        {
+          "caller": "TEST",
+          "callee": "push_eject",
+          "lineNumber": 138
+        },
+        {
+          "caller": "TEST",
+          "callee": "make_req",
+          "lineNumber": 139
+        },
+        {
+          "caller": "TEST",
+          "callee": "make_req",
+          "lineNumber": 141
+        },
+        {
+          "caller": "TEST",
+          "callee": "ASSERT_TRUE",
+          "lineNumber": 143
+        },
+        {
+          "caller": "TEST",
+          "callee": "push_inject",
+          "lineNumber": 143
+        },
+        {
+          "caller": "TEST",
+          "callee": "run_until_deflections",
+          "lineNumber": 146
+        },
+        {
+          "caller": "TEST",
+          "callee": "stats",
+          "lineNumber": 148
+        },
+        {
+          "caller": "TEST",
+          "callee": "tm_ring_subnet_index",
+          "lineNumber": 149
+        },
+        {
+          "caller": "TEST",
+          "callee": "ASSERT_GE",
+          "lineNumber": 150
+        },
+        {
+          "caller": "TEST",
+          "callee": "uint64_t",
+          "lineNumber": 150
+        },
+        {
+          "caller": "TEST",
+          "callee": "pop_eject",
+          "lineNumber": 152
+        },
+        {
+          "caller": "TEST",
+          "callee": "ASSERT_TRUE",
+          "lineNumber": 153
+        },
+        {
+          "caller": "TEST",
+          "callee": "run_until_eject",
+          "lineNumber": 153
+        },
+        {
+          "caller": "TEST",
+          "callee": "ASSERT_EQ",
+          "lineNumber": 154
+        },
+        {
+          "caller": "TEST",
+          "callee": "front_eject",
+          "lineNumber": 154
+        },
+        {
+          "caller": "TEST",
+          "callee": "pop_eject",
+          "lineNumber": 155
+        },
+        {
+          "caller": "TEST",
+          "callee": "tm_start",
+          "lineNumber": 156
+        },
+        {
+          "caller": "TEST",
+          "callee": "stats",
+          "lineNumber": 159
+        },
+        {
+          "caller": "TEST",
+          "callee": "tm_ring_subnet_index",
+          "lineNumber": 160
+        },
+        {
+          "caller": "TEST",
+          "callee": "EXPECT_EQ",
+          "lineNumber": 161
+        },
+        {
+          "caller": "TEST",
+          "callee": "uint64_t",
+          "lineNumber": 161
+        },
+        {
+          "caller": "TEST",
+          "callee": "EXPECT_EQ",
+          "lineNumber": 162
+        },
+        {
+          "caller": "TEST",
+          "callee": "uint64_t",
+          "lineNumber": 162
+        },
+        {
+          "caller": "TEST",
+          "callee": "EXPECT_EQ",
+          "lineNumber": 163
+        },
+        {
+          "caller": "TEST",
+          "callee": "uint64_t",
+          "lineNumber": 163
+        },
+        {
+          "caller": "TEST",
+          "callee": "EXPECT_EQ",
+          "lineNumber": 164
+        },
+        {
+          "caller": "TEST",
+          "callee": "uint64_t",
+          "lineNumber": 164
+        },
+        {
+          "caller": "TEST",
+          "callee": "EXPECT_EQ",
+          "lineNumber": 165
+        },
+        {
+          "caller": "TEST",
+          "callee": "uint64_t",
+          "lineNumber": 165
+        },
+        {
+          "caller": "TEST",
+          "callee": "EXPECT_EQ",
+          "lineNumber": 166
+        },
+        {
+          "caller": "TEST",
+          "callee": "uint64_t",
+          "lineNumber": 166
+        },
+        {
+          "caller": "TEST",
+          "callee": "EXPECT_GT",
+          "lineNumber": 167
+        },
+        {
+          "caller": "TEST",
+          "callee": "uint64_t",
+          "lineNumber": 167
+        },
+        {
+          "caller": "TEST",
+          "callee": "EXPECT_GT",
+          "lineNumber": 168
+        },
+        {
+          "caller": "TEST",
+          "callee": "uint64_t",
+          "lineNumber": 168
+        },
+        {
+          "caller": "TEST",
+          "callee": "EXPECT_TRUE",
+          "lineNumber": 169
+        },
+        {
+          "caller": "TEST",
+          "callee": "empty",
+          "lineNumber": 169
+        },
+        {
+          "caller": "TEST",
+          "callee": "eject_q",
+          "lineNumber": 169
+        },
+        {
+          "caller": "TEST",
+          "callee": "EXPECT_EQ",
+          "lineNumber": 170
+        },
+        {
+          "caller": "TEST",
+          "callee": "uint64_t",
+          "lineNumber": 170
+        },
+        {
+          "caller": "TEST",
+          "callee": "stats",
+          "lineNumber": 170
+        },
+        {
+          "caller": "TEST",
+          "callee": "ASSERT_TRUE",
+          "lineNumber": 175
+        },
+        {
+          "caller": "TEST",
+          "callee": "push_inject",
+          "lineNumber": 175
+        },
+        {
+          "caller": "TEST",
+          "callee": "make_dat",
+          "lineNumber": 176
+        },
+        {
+          "caller": "TEST",
+          "callee": "front_inject",
+          "lineNumber": 179
+        },
+        {
+          "caller": "TEST",
+          "callee": "ASSERT_TRUE",
+          "lineNumber": 181
+        },
+        {
+          "caller": "TEST",
+          "callee": "push_inject",
+          "lineNumber": 181
+        },
+        {
+          "caller": "TEST",
+          "callee": "make_dat",
+          "lineNumber": 182
+        },
+        {
+          "caller": "TEST",
+          "callee": "transit_in_reg",
+          "lineNumber": 184
+        },
+        {
+          "caller": "TEST",
+          "callee": "empty",
+          "lineNumber": 186
+        },
+        {
+          "caller": "TEST",
+          "callee": "can_acquire",
+          "lineNumber": 186
+        },
+        {
+          "caller": "TEST",
+          "callee": "ASSERT_TRUE",
+          "lineNumber": 188
+        },
+        {
+          "caller": "TEST",
+          "callee": "try_acquire",
+          "lineNumber": 188
+        },
+        {
+          "caller": "TEST",
+          "callee": "push_back",
+          "lineNumber": 190
+        },
+        {
+          "caller": "TEST",
+          "callee": "make_dat",
+          "lineNumber": 190
+        },
+        {
+          "caller": "TEST",
+          "callee": "front_eject",
+          "lineNumber": 192
+        },
+        {
+          "caller": "TEST",
+          "callee": "pop_eject",
+          "lineNumber": 193
+        },
+        {
+          "caller": "TEST",
+          "callee": "tm_start",
+          "lineNumber": 195
+        },
+        {
+          "caller": "TEST",
+          "callee": "EXPECT_GT",
+          "lineNumber": 198
+        },
+        {
+          "caller": "TEST",
+          "callee": "stats",
+          "lineNumber": 198
+        },
+        {
+          "caller": "TEST",
+          "callee": "uint64_t",
+          "lineNumber": 198
+        },
+        {
+          "caller": "TEST",
+          "callee": "EXPECT_GT",
+          "lineNumber": 199
+        },
+        {
+          "caller": "TEST",
+          "callee": "stats",
+          "lineNumber": 199
+        },
+        {
+          "caller": "TEST",
+          "callee": "uint64_t",
+          "lineNumber": 199
+        },
+        {
+          "caller": "TEST",
+          "callee": "ASSERT_TRUE",
+          "lineNumber": 204
+        },
+        {
+          "caller": "TEST",
+          "callee": "try_acquire",
+          "lineNumber": 204
+        },
+        {
+          "caller": "TEST",
+          "callee": "ASSERT_TRUE",
+          "lineNumber": 206
+        },
+        {
+          "caller": "TEST",
+          "callee": "accept_slot",
+          "lineNumber": 206
+        },
+        {
+          "caller": "TEST",
+          "callee": "make_dat",
+          "lineNumber": 207
+        },
+        {
+          "caller": "TEST",
+          "callee": "ASSERT_TRUE",
+          "lineNumber": 209
+        },
+        {
+          "caller": "TEST",
+          "callee": "push_inject",
+          "lineNumber": 209
+        },
+        {
+          "caller": "TEST",
+          "callee": "make_dat",
+          "lineNumber": 210
+        },
+        {
+          "caller": "TEST",
+          "callee": "ASSERT_TRUE",
+          "lineNumber": 211
+        },
+        {
+          "caller": "TEST",
+          "callee": "try_acquire",
+          "lineNumber": 211
+        },
+        {
+          "caller": "TEST",
+          "callee": "transit_in_reg",
+          "lineNumber": 213
+        },
+        {
+          "caller": "TEST",
+          "callee": "push_back",
+          "lineNumber": 215
+        },
+        {
+          "caller": "TEST",
+          "callee": "make_dat",
+          "lineNumber": 215
+        },
+        {
+          "caller": "TEST",
+          "callee": "tm_start",
+          "lineNumber": 217
+        },
+        {
+          "caller": "TEST",
+          "callee": "ASSERT_NE",
+          "lineNumber": 218
+        },
+        {
+          "caller": "TEST",
+          "callee": "front_inject",
+          "lineNumber": 218
+        },
+        {
+          "caller": "TEST",
+          "callee": "ASSERT_FALSE",
+          "lineNumber": 220
+        },
+        {
+          "caller": "TEST",
+          "callee": "empty",
+          "lineNumber": 220
+        },
+        {
+          "caller": "TEST",
+          "callee": "tm_start",
+          "lineNumber": 223
+        },
+        {
+          "caller": "TEST",
+          "callee": "front_inject",
+          "lineNumber": 224
+        },
+        {
+          "caller": "TEST",
+          "callee": "empty",
+          "lineNumber": 226
+        },
+        {
+          "caller": "TEST",
+          "callee": "EXPECT_EQ",
+          "lineNumber": 230
+        },
+        {
+          "caller": "TEST",
+          "callee": "front_inject",
+          "lineNumber": 230
+        },
+        {
+          "caller": "TEST",
+          "callee": "EXPECT_FALSE",
+          "lineNumber": 232
+        },
+        {
+          "caller": "TEST",
+          "callee": "empty",
+          "lineNumber": 232
+        },
+        {
+          "caller": "TEST",
+          "callee": "make_req",
+          "lineNumber": 238
+        },
+        {
+          "caller": "TEST",
+          "callee": "make_req",
+          "lineNumber": 239
+        },
+        {
+          "caller": "TEST",
+          "callee": "static_cast<uint32_t>",
+          "lineNumber": 240
+        },
+        {
+          "caller": "TEST",
+          "callee": "ASSERT_TRUE",
+          "lineNumber": 242
+        },
+        {
+          "caller": "TEST",
+          "callee": "try_acquire",
+          "lineNumber": 242
+        },
+        {
+          "caller": "TEST",
+          "callee": "ASSERT_TRUE",
+          "lineNumber": 244
+        },
+        {
+          "caller": "TEST",
+          "callee": "try_acquire",
+          "lineNumber": 244
+        },
+        {
+          "caller": "TEST",
+          "callee": "push_back",
+          "lineNumber": 246
+        },
+        {
+          "caller": "TEST",
+          "callee": "transit_in_reg",
+          "lineNumber": 246
+        },
+        {
+          "caller": "TEST",
+          "callee": "push_back",
+          "lineNumber": 249
+        },
+        {
+          "caller": "TEST",
+          "callee": "transit_in_reg",
+          "lineNumber": 249
+        },
+        {
+          "caller": "TEST",
+          "callee": "tm_start",
+          "lineNumber": 253
+        },
+        {
+          "caller": "TEST",
+          "callee": "EXPECT_EQ",
+          "lineNumber": 255
+        },
+        {
+          "caller": "TEST",
+          "callee": "front_eject",
+          "lineNumber": 255
+        },
+        {
+          "caller": "TEST",
+          "callee": "EXPECT_EQ",
+          "lineNumber": 257
+        },
+        {
+          "caller": "TEST",
+          "callee": "front_eject",
+          "lineNumber": 257
+        },
+        {
+          "caller": "TEST",
+          "callee": "make_req",
+          "lineNumber": 263
+        },
+        {
+          "caller": "TEST",
+          "callee": "ASSERT_TRUE",
+          "lineNumber": 264
+        },
+        {
+          "caller": "TEST",
+          "callee": "push_eject",
+          "lineNumber": 264
+        },
+        {
+          "caller": "TEST",
+          "callee": "make_req",
+          "lineNumber": 267
+        },
+        {
+          "caller": "TEST",
+          "callee": "make_req",
+          "lineNumber": 268
+        },
+        {
+          "caller": "TEST",
+          "callee": "static_cast<uint32_t>",
+          "lineNumber": 269
+        },
+        {
+          "caller": "TEST",
+          "callee": "ASSERT_TRUE",
+          "lineNumber": 270
+        },
+        {
+          "caller": "TEST",
+          "callee": "try_acquire",
+          "lineNumber": 270
+        },
+        {
+          "caller": "TEST",
+          "callee": "ASSERT_TRUE",
+          "lineNumber": 272
+        },
+        {
+          "caller": "TEST",
+          "callee": "try_acquire",
+          "lineNumber": 272
+        },
+        {
+          "caller": "TEST",
+          "callee": "push_back",
+          "lineNumber": 274
+        },
+        {
+          "caller": "TEST",
+          "callee": "transit_in_reg",
+          "lineNumber": 274
+        },
+        {
+          "caller": "TEST",
+          "callee": "push_back",
+          "lineNumber": 277
+        },
+        {
+          "caller": "TEST",
+          "callee": "transit_in_reg",
+          "lineNumber": 277
+        },
+        {
+          "caller": "TEST",
+          "callee": "tm_start",
+          "lineNumber": 281
+        },
+        {
+          "caller": "TEST",
+          "callee": "EXPECT_EQ",
+          "lineNumber": 283
+        },
+        {
+          "caller": "TEST",
+          "callee": "front_eject",
+          "lineNumber": 283
+        },
+        {
+          "caller": "TEST",
+          "callee": "EXPECT_EQ",
+          "lineNumber": 285
+        },
+        {
+          "caller": "TEST",
+          "callee": "front_eject",
+          "lineNumber": 285
+        },
+        {
+          "caller": "TEST",
+          "callee": "EXPECT_GT",
+          "lineNumber": 287
+        },
+        {
+          "caller": "TEST",
+          "callee": "stats",
+          "lineNumber": 287
+        },
+        {
+          "caller": "TEST",
+          "callee": "uint64_t",
+          "lineNumber": 288
+        }
+      ],
+      "metrics": {
+        "importCount": 1,
+        "exportCount": 12,
+        "functionCount": 12,
+        "classCount": 1
+      }
+    },
+    {
+      "path": "tm_ring_fanout.h",
+      "language": "c",
+      "fileCategory": "code",
+      "totalLines": 121,
+      "nonEmptyLines": 100,
+      "callGraph": [
+        {
+          "caller": "tm_ring_station_bit",
+          "callee": "std::out_of_range",
+          "lineNumber": 74
+        },
+        {
+          "caller": "tm_ring_fanout_has_station",
+          "callee": "tm_ring_station_bit",
+          "lineNumber": 81
+        },
+        {
+          "caller": "tm_ring_fanout_clear_station",
+          "callee": "tm_ring_station_bit",
+          "lineNumber": 87
+        },
+        {
+          "caller": "tm_ring_clone_fanout_state",
+          "callee": "std::make_shared<TmRingFanoutState>",
+          "lineNumber": 105
+        },
+        {
+          "caller": "tm_ring_fanout_active",
+          "callee": "tm_ring_has_fanout",
+          "lineNumber": 113
+        },
+        {
+          "caller": "tm_ring_packet_txn_key",
+          "callee": "tm_ring_has_fanout",
+          "lineNumber": 117
+        },
+        {
+          "caller": "tm_ring_packet_txn_key",
+          "callee": "tm_pld_txn_key",
+          "lineNumber": 118
+        }
+      ],
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 0,
+        "functionCount": 0,
+        "classCount": 0
+      }
+    },
+    {
+      "path": "tm_ring_l2_buffer_node.cc",
+      "language": "cpp",
+      "fileCategory": "code",
+      "totalLines": 620,
+      "nonEmptyLines": 566,
+      "functions": [
+        {
+          "name": "TmRingL2BufferNode",
+          "startLine": 12,
+          "endLine": 29,
+          "params": [
+            "name",
+            "clk",
+            "cfg",
+            "queue_depths"
+          ]
+        },
+        {
+          "name": "attach",
+          "startLine": 31,
+          "endLine": 35,
+          "params": [
+            "target_id",
+            "topology"
+          ]
+        },
+        {
+          "name": "reset",
+          "startLine": 37,
+          "endLine": 53,
+          "params": []
+        },
+        {
+          "name": "clear_stats",
+          "startLine": 55,
+          "endLine": 57,
+          "params": []
+        },
+        {
+          "name": "idle",
+          "startLine": 59,
+          "endLine": 64,
+          "params": []
+        },
+        {
+          "name": "has_capacity",
+          "startLine": 66,
+          "endLine": 68,
+          "params": []
+        },
+        {
+          "name": "fanout_candidate_valid",
+          "startLine": 70,
+          "endLine": 86,
+          "params": [
+            "candidate"
+          ]
+        },
+        {
+          "name": "allocate_group_token",
+          "startLine": 88,
+          "endLine": 94,
+          "params": []
+        },
+        {
+          "name": "accept_response",
+          "startLine": 96,
+          "endLine": 167,
+          "params": [
+            "candidate"
+          ]
+        },
+        {
+          "name": "take_frozen_summaries",
+          "startLine": 169,
+          "endLine": 173,
+          "params": []
+        },
+        {
+          "name": "record_accepted_entry",
+          "startLine": 175,
+          "endLine": 180,
+          "params": []
+        },
+        {
+          "name": "make_unicast_response",
+          "startLine": 182,
+          "endLine": 205,
+          "params": [
+            "candidate"
+          ]
+        },
+        {
+          "name": "make_fanout_envelope",
+          "startLine": 207,
+          "endLine": 233,
+          "params": [
+            "candidate",
+            "group_token"
+          ]
+        },
+        {
+          "name": "append_fanout_recipient",
+          "startLine": 235,
+          "endLine": 280,
+          "params": [
+            "envelope",
+            "candidate"
+          ]
+        },
+        {
+          "name": "carrier_size",
+          "startLine": 282,
+          "endLine": 330,
+          "params": [
+            "envelope",
+            "carrier_offset"
+          ]
+        },
+        {
+          "name": "freeze_fanout_group",
+          "startLine": 332,
+          "endLine": 360,
+          "params": [
+            "envelope"
+          ]
+        },
+        {
+          "name": "make_frozen_carrier",
+          "startLine": 362,
+          "endLine": 404,
+          "params": [
+            "envelope",
+            "target_vring"
+          ]
+        },
+        {
+          "name": "materialize_fanout",
+          "startLine": 406,
+          "endLine": 439,
+          "params": [
+            "carrier"
+          ]
+        },
+        {
+          "name": "node_interface",
+          "startLine": 441,
+          "endLine": 443,
+          "params": []
+        },
+        {
+          "name": "prepare_dat_route",
+          "startLine": 449,
+          "endLine": 482,
+          "params": [
+            "rsp"
+          ]
+        },
+        {
+          "name": "service_ready_response",
+          "startLine": 484,
+          "endLine": 499,
+          "params": []
+        },
+        {
+          "name": "release_issue_token",
+          "startLine": 501,
+          "endLine": 515,
+          "params": []
+        },
+        {
+          "name": "service",
+          "startLine": 517,
+          "endLine": 620,
+          "params": []
+        }
+      ],
+      "exports": [
+        {
+          "name": "TmRingL2BufferNode",
+          "line": 12,
+          "isDefault": false
+        },
+        {
+          "name": "attach",
+          "line": 31,
+          "isDefault": false
+        },
+        {
+          "name": "reset",
+          "line": 37,
+          "isDefault": false
+        },
+        {
+          "name": "clear_stats",
+          "line": 55,
+          "isDefault": false
+        },
+        {
+          "name": "idle",
+          "line": 59,
+          "isDefault": false
+        },
+        {
+          "name": "has_capacity",
+          "line": 66,
+          "isDefault": false
+        },
+        {
+          "name": "fanout_candidate_valid",
+          "line": 70,
+          "isDefault": false
+        },
+        {
+          "name": "allocate_group_token",
+          "line": 88,
+          "isDefault": false
+        },
+        {
+          "name": "accept_response",
+          "line": 96,
+          "isDefault": false
+        },
+        {
+          "name": "take_frozen_summaries",
+          "line": 169,
+          "isDefault": false
+        },
+        {
+          "name": "record_accepted_entry",
+          "line": 175,
+          "isDefault": false
+        },
+        {
+          "name": "make_unicast_response",
+          "line": 182,
+          "isDefault": false
+        },
+        {
+          "name": "make_fanout_envelope",
+          "line": 207,
+          "isDefault": false
+        },
+        {
+          "name": "append_fanout_recipient",
+          "line": 235,
+          "isDefault": false
+        },
+        {
+          "name": "carrier_size",
+          "line": 282,
+          "isDefault": false
+        },
+        {
+          "name": "freeze_fanout_group",
+          "line": 332,
+          "isDefault": false
+        },
+        {
+          "name": "make_frozen_carrier",
+          "line": 362,
+          "isDefault": false
+        },
+        {
+          "name": "materialize_fanout",
+          "line": 406,
+          "isDefault": false
+        },
+        {
+          "name": "node_interface",
+          "line": 441,
+          "isDefault": false
+        },
+        {
+          "name": "prepare_dat_route",
+          "line": 449,
+          "isDefault": false
+        },
+        {
+          "name": "service_ready_response",
+          "line": 484,
+          "isDefault": false
+        },
+        {
+          "name": "release_issue_token",
+          "line": 501,
+          "isDefault": false
+        },
+        {
+          "name": "service",
+          "line": 517,
+          "isDefault": false
+        }
+      ],
+      "callGraph": [
+        {
+          "caller": "TmRingL2BufferNode",
+          "callee": "tm_make_ring_node_interface",
+          "lineNumber": 18
+        },
+        {
+          "caller": "TmRingL2BufferNode",
+          "callee": "tm_make_que<p_tm_pld_t>",
+          "lineNumber": 20
+        },
+        {
+          "caller": "TmRingL2BufferNode",
+          "callee": "tm_make_event",
+          "lineNumber": 22
+        },
+        {
+          "caller": "TmRingL2BufferNode",
+          "callee": "tm_sensitive",
+          "lineNumber": 23
+        },
+        {
+          "caller": "TmRingL2BufferNode",
+          "callee": "TM_MAKE_CPROC",
+          "lineNumber": 23
+        },
+        {
+          "caller": "TmRingL2BufferNode",
+          "callee": "tm_sensitive",
+          "lineNumber": 25
+        },
+        {
+          "caller": "TmRingL2BufferNode",
+          "callee": "TM_MAKE_CPROC",
+          "lineNumber": 25
+        },
+        {
+          "caller": "TmRingL2BufferNode",
+          "callee": "tm_sensitive",
+          "lineNumber": 27
+        },
+        {
+          "caller": "TmRingL2BufferNode",
+          "callee": "TM_MAKE_CPROC",
+          "lineNumber": 27
+        },
+        {
+          "caller": "TmRingL2BufferNode",
+          "callee": "reset",
+          "lineNumber": 28
+        },
+        {
+          "caller": "reset",
+          "callee": "clear",
+          "lineNumber": 41
+        },
+        {
+          "caller": "reset",
+          "callee": "clear",
+          "lineNumber": 45
+        },
+        {
+          "caller": "reset",
+          "callee": "TmRingL2GroupSummary",
+          "lineNumber": 47
+        },
+        {
+          "caller": "reset",
+          "callee": "clear",
+          "lineNumber": 48
+        },
+        {
+          "caller": "reset",
+          "callee": "clear_stats",
+          "lineNumber": 51
+        },
+        {
+          "caller": "reset",
+          "callee": "reset",
+          "lineNumber": 52
+        },
+        {
+          "caller": "clear_stats",
+          "callee": "clear",
+          "lineNumber": 56
+        },
+        {
+          "caller": "idle",
+          "callee": "empty",
+          "lineNumber": 61
+        },
+        {
+          "caller": "idle",
+          "callee": "empty",
+          "lineNumber": 62
+        },
+        {
+          "caller": "idle",
+          "callee": "idle",
+          "lineNumber": 63
+        },
+        {
+          "caller": "has_capacity",
+          "callee": "full",
+          "lineNumber": 67
+        },
+        {
+          "caller": "accept_response",
+          "callee": "size",
+          "lineNumber": 102
+        },
+        {
+          "caller": "accept_response",
+          "callee": "size",
+          "lineNumber": 104
+        },
+        {
+          "caller": "accept_response",
+          "callee": "std::invalid_argument",
+          "lineNumber": 105
+        },
+        {
+          "caller": "accept_response",
+          "callee": "fanout_candidate_valid",
+          "lineNumber": 109
+        },
+        {
+          "caller": "accept_response",
+          "callee": "find",
+          "lineNumber": 114
+        },
+        {
+          "caller": "accept_response",
+          "callee": "end",
+          "lineNumber": 115
+        },
+        {
+          "caller": "accept_response",
+          "callee": "tm_ring_has_fanout",
+          "lineNumber": 116
+        },
+        {
+          "caller": "accept_response",
+          "callee": "std::logic_error",
+          "lineNumber": 117
+        },
+        {
+          "caller": "accept_response",
+          "callee": "append_fanout_recipient",
+          "lineNumber": 123
+        },
+        {
+          "caller": "accept_response",
+          "callee": "std::logic_error",
+          "lineNumber": 124
+        },
+        {
+          "caller": "accept_response",
+          "callee": "has_capacity",
+          "lineNumber": 131
+        },
+        {
+          "caller": "accept_response",
+          "callee": "allocate_group_token",
+          "lineNumber": 137
+        },
+        {
+          "caller": "accept_response",
+          "callee": "make_fanout_envelope",
+          "lineNumber": 138
+        },
+        {
+          "caller": "accept_response",
+          "callee": "append_fanout_recipient",
+          "lineNumber": 140
+        },
+        {
+          "caller": "accept_response",
+          "callee": "std::logic_error",
+          "lineNumber": 141
+        },
+        {
+          "caller": "accept_response",
+          "callee": "push_back",
+          "lineNumber": 143
+        },
+        {
+          "caller": "accept_response",
+          "callee": "record_accepted_entry",
+          "lineNumber": 146
+        },
+        {
+          "caller": "accept_response",
+          "callee": "has_capacity",
+          "lineNumber": 152
+        },
+        {
+          "caller": "accept_response",
+          "callee": "make_unicast_response",
+          "lineNumber": 158
+        },
+        {
+          "caller": "accept_response",
+          "callee": "std::logic_error",
+          "lineNumber": 160
+        },
+        {
+          "caller": "accept_response",
+          "callee": "push_back",
+          "lineNumber": 162
+        },
+        {
+          "caller": "accept_response",
+          "callee": "record_accepted_entry",
+          "lineNumber": 164
+        },
+        {
+          "caller": "take_frozen_summaries",
+          "callee": "clear",
+          "lineNumber": 171
+        },
+        {
+          "caller": "record_accepted_entry",
+          "callee": "std::max<uint64_t>",
+          "lineNumber": 178
+        },
+        {
+          "caller": "record_accepted_entry",
+          "callee": "static_cast<uint64_t>",
+          "lineNumber": 179
+        },
+        {
+          "caller": "make_unicast_response",
+          "callee": "tm_make_pld",
+          "lineNumber": 184
+        },
+        {
+          "caller": "make_unicast_response",
+          "callee": "reset",
+          "lineNumber": 189
+        },
+        {
+          "caller": "make_unicast_response",
+          "callee": "std::make_shared<std::vector<uint8_t>>",
+          "lineNumber": 190
+        },
+        {
+          "caller": "make_unicast_response",
+          "callee": "data",
+          "lineNumber": 192
+        },
+        {
+          "caller": "make_unicast_response",
+          "callee": "std::memcpy",
+          "lineNumber": 194
+        },
+        {
+          "caller": "make_unicast_response",
+          "callee": "data",
+          "lineNumber": 195
+        },
+        {
+          "caller": "make_unicast_response",
+          "callee": "static_cast<uint32_t>",
+          "lineNumber": 198
+        },
+        {
+          "caller": "make_unicast_response",
+          "callee": "static_cast<uint32_t>",
+          "lineNumber": 199
+        },
+        {
+          "caller": "make_unicast_response",
+          "callee": "tm_ring_invalid_tag_owner",
+          "lineNumber": 201
+        },
+        {
+          "caller": "make_unicast_response",
+          "callee": "tm_ring_invalid_tag_owner",
+          "lineNumber": 202
+        },
+        {
+          "caller": "make_unicast_response",
+          "callee": "reset_ring_deflection_state",
+          "lineNumber": 203
+        },
+        {
+          "caller": "make_fanout_envelope",
+          "callee": "tm_make_pld",
+          "lineNumber": 210
+        },
+        {
+          "caller": "make_fanout_envelope",
+          "callee": "std::make_shared<TmRingFanoutState>",
+          "lineNumber": 215
+        },
+        {
+          "caller": "make_fanout_envelope",
+          "callee": "tm_pld_txn_key",
+          "lineNumber": 217
+        },
+        {
+          "caller": "make_fanout_envelope",
+          "callee": "reset",
+          "lineNumber": 222
+        },
+        {
+          "caller": "make_fanout_envelope",
+          "callee": "static_cast<uint32_t>",
+          "lineNumber": 226
+        },
+        {
+          "caller": "make_fanout_envelope",
+          "callee": "static_cast<uint32_t>",
+          "lineNumber": 227
+        },
+        {
+          "caller": "make_fanout_envelope",
+          "callee": "tm_ring_invalid_tag_owner",
+          "lineNumber": 229
+        },
+        {
+          "caller": "make_fanout_envelope",
+          "callee": "tm_ring_invalid_tag_owner",
+          "lineNumber": 230
+        },
+        {
+          "caller": "make_fanout_envelope",
+          "callee": "reset_ring_deflection_state",
+          "lineNumber": 231
+        },
+        {
+          "caller": "append_fanout_recipient",
+          "callee": "tm_ring_has_fanout",
+          "lineNumber": 238
+        },
+        {
+          "caller": "append_fanout_recipient",
+          "callee": "master_location",
+          "lineNumber": 245
+        },
+        {
+          "caller": "append_fanout_recipient",
+          "callee": "tm_make_pld",
+          "lineNumber": 258
+        },
+        {
+          "caller": "append_fanout_recipient",
+          "callee": "reset",
+          "lineNumber": 262
+        },
+        {
+          "caller": "append_fanout_recipient",
+          "callee": "reset",
+          "lineNumber": 263
+        },
+        {
+          "caller": "append_fanout_recipient",
+          "callee": "tm_ring_invalid_tag_owner",
+          "lineNumber": 266
+        },
+        {
+          "caller": "append_fanout_recipient",
+          "callee": "tm_ring_invalid_tag_owner",
+          "lineNumber": 267
+        },
+        {
+          "caller": "append_fanout_recipient",
+          "callee": "reset_ring_deflection_state",
+          "lineNumber": 268
+        },
+        {
+          "caller": "append_fanout_recipient",
+          "callee": "empty",
+          "lineNumber": 270
+        },
+        {
+          "caller": "append_fanout_recipient",
+          "callee": "front",
+          "lineNumber": 272
+        },
+        {
+          "caller": "append_fanout_recipient",
+          "callee": "push_back",
+          "lineNumber": 278
+        },
+        {
+          "caller": "carrier_size",
+          "callee": "tm_ring_has_fanout",
+          "lineNumber": 285
+        },
+        {
+          "caller": "carrier_size",
+          "callee": "std::numeric_limits<uint32_t>::max",
+          "lineNumber": 290
+        },
+        {
+          "caller": "carrier_size",
+          "callee": "std::min",
+          "lineNumber": 301
+        },
+        {
+          "caller": "carrier_size",
+          "callee": "std::max<uint64_t>",
+          "lineNumber": 302
+        },
+        {
+          "caller": "carrier_size",
+          "callee": "static_cast<uint64_t>",
+          "lineNumber": 303
+        },
+        {
+          "caller": "carrier_size",
+          "callee": "std::numeric_limits<uint32_t>::max",
+          "lineNumber": 306
+        },
+        {
+          "caller": "carrier_size",
+          "callee": "static_cast<uint64_t>",
+          "lineNumber": 321
+        },
+        {
+          "caller": "freeze_fanout_group",
+          "callee": "tm_ring_has_fanout",
+          "lineNumber": 333
+        },
+        {
+          "caller": "freeze_fanout_group",
+          "callee": "empty",
+          "lineNumber": 339
+        },
+        {
+          "caller": "freeze_fanout_group",
+          "callee": "std::logic_error",
+          "lineNumber": 341
+        },
+        {
+          "caller": "freeze_fanout_group",
+          "callee": "find",
+          "lineNumber": 346
+        },
+        {
+          "caller": "freeze_fanout_group",
+          "callee": "end",
+          "lineNumber": 347
+        },
+        {
+          "caller": "freeze_fanout_group",
+          "callee": "std::logic_error",
+          "lineNumber": 348
+        },
+        {
+          "caller": "freeze_fanout_group",
+          "callee": "static_cast<uint32_t>",
+          "lineNumber": 355
+        },
+        {
+          "caller": "freeze_fanout_group",
+          "callee": "size",
+          "lineNumber": 356
+        },
+        {
+          "caller": "freeze_fanout_group",
+          "callee": "push_back",
+          "lineNumber": 358
+        },
+        {
+          "caller": "freeze_fanout_group",
+          "callee": "erase",
+          "lineNumber": 359
+        },
+        {
+          "caller": "make_frozen_carrier",
+          "callee": "tm_ring_has_fanout",
+          "lineNumber": 364
+        },
+        {
+          "caller": "make_frozen_carrier",
+          "callee": "tm_make_pld",
+          "lineNumber": 368
+        },
+        {
+          "caller": "make_frozen_carrier",
+          "callee": "tm_ring_clone_fanout_state",
+          "lineNumber": 373
+        },
+        {
+          "caller": "make_frozen_carrier",
+          "callee": "clear",
+          "lineNumber": 376
+        },
+        {
+          "caller": "make_frozen_carrier",
+          "callee": "push_back",
+          "lineNumber": 380
+        },
+        {
+          "caller": "make_frozen_carrier",
+          "callee": "empty",
+          "lineNumber": 383
+        },
+        {
+          "caller": "make_frozen_carrier",
+          "callee": "front",
+          "lineNumber": 387
+        },
+        {
+          "caller": "make_frozen_carrier",
+          "callee": "materialize_fanout",
+          "lineNumber": 397
+        },
+        {
+          "caller": "materialize_fanout",
+          "callee": "tm_ring_has_fanout",
+          "lineNumber": 407
+        },
+        {
+          "caller": "materialize_fanout",
+          "callee": "carrier_size",
+          "lineNumber": 413
+        },
+        {
+          "caller": "materialize_fanout",
+          "callee": "size",
+          "lineNumber": 415
+        },
+        {
+          "caller": "materialize_fanout",
+          "callee": "size",
+          "lineNumber": 417
+        },
+        {
+          "caller": "materialize_fanout",
+          "callee": "std::make_shared<std::vector<uint8_t>>",
+          "lineNumber": 424
+        },
+        {
+          "caller": "materialize_fanout",
+          "callee": "data",
+          "lineNumber": 425
+        },
+        {
+          "caller": "materialize_fanout",
+          "callee": "std::memcpy",
+          "lineNumber": 427
+        },
+        {
+          "caller": "materialize_fanout",
+          "callee": "data",
+          "lineNumber": 427
+        },
+        {
+          "caller": "materialize_fanout",
+          "callee": "reset",
+          "lineNumber": 437
+        },
+        {
+          "caller": "prepare_dat_route",
+          "callee": "l2_location",
+          "lineNumber": 450
+        },
+        {
+          "caller": "prepare_dat_route",
+          "callee": "tm_ring_has_fanout",
+          "lineNumber": 453
+        },
+        {
+          "caller": "prepare_dat_route",
+          "callee": "empty",
+          "lineNumber": 455
+        },
+        {
+          "caller": "prepare_dat_route",
+          "callee": "std::logic_error",
+          "lineNumber": 456
+        },
+        {
+          "caller": "prepare_dat_route",
+          "callee": "front",
+          "lineNumber": 459
+        },
+        {
+          "caller": "prepare_dat_route",
+          "callee": "std::logic_error",
+          "lineNumber": 463
+        },
+        {
+          "caller": "prepare_dat_route",
+          "callee": "rbrg_h_location",
+          "lineNumber": 466
+        },
+        {
+          "caller": "prepare_dat_route",
+          "callee": "rbrg_h_location",
+          "lineNumber": 471
+        },
+        {
+          "caller": "prepare_dat_route",
+          "callee": "master_vring",
+          "lineNumber": 471
+        },
+        {
+          "caller": "prepare_dat_route",
+          "callee": "route_direction",
+          "lineNumber": 473
+        },
+        {
+          "caller": "prepare_dat_route",
+          "callee": "tm_pld_set_ring_route",
+          "lineNumber": 476
+        },
+        {
+          "caller": "prepare_dat_route",
+          "callee": "static_cast<uint32_t>",
+          "lineNumber": 476
+        },
+        {
+          "caller": "prepare_dat_route",
+          "callee": "static_cast<uint32_t>",
+          "lineNumber": 479
+        },
+        {
+          "caller": "prepare_dat_route",
+          "callee": "static_cast<uint32_t>",
+          "lineNumber": 480
+        },
+        {
+          "caller": "prepare_dat_route",
+          "callee": "static_cast<uint32_t>",
+          "lineNumber": 481
+        },
+        {
+          "caller": "service_ready_response",
+          "callee": "valid",
+          "lineNumber": 490
+        },
+        {
+          "caller": "service_ready_response",
+          "callee": "empty",
+          "lineNumber": 491
+        },
+        {
+          "caller": "service_ready_response",
+          "callee": "freeze_fanout_group",
+          "lineNumber": 492
+        },
+        {
+          "caller": "service_ready_response",
+          "callee": "front",
+          "lineNumber": 492
+        },
+        {
+          "caller": "service_ready_response",
+          "callee": "service",
+          "lineNumber": 497
+        },
+        {
+          "caller": "release_issue_token",
+          "callee": "service",
+          "lineNumber": 513
+        },
+        {
+          "caller": "service",
+          "callee": "valid",
+          "lineNumber": 518
+        },
+        {
+          "caller": "service",
+          "callee": "empty",
+          "lineNumber": 519
+        },
+        {
+          "caller": "service",
+          "callee": "front",
+          "lineNumber": 523
+        },
+        {
+          "caller": "service",
+          "callee": "freeze_fanout_group",
+          "lineNumber": 524
+        },
+        {
+          "caller": "service",
+          "callee": "tm_ring_has_fanout",
+          "lineNumber": 531
+        },
+        {
+          "caller": "service",
+          "callee": "empty",
+          "lineNumber": 536
+        },
+        {
+          "caller": "service",
+          "callee": "std::logic_error",
+          "lineNumber": 537
+        },
+        {
+          "caller": "service",
+          "callee": "std::numeric_limits<uint32_t>::max",
+          "lineNumber": 540
+        },
+        {
+          "caller": "service",
+          "callee": "std::min",
+          "lineNumber": 543
+        },
+        {
+          "caller": "service",
+          "callee": "make_frozen_carrier",
+          "lineNumber": 546
+        },
+        {
+          "caller": "service",
+          "callee": "std::logic_error",
+          "lineNumber": 548
+        },
+        {
+          "caller": "service",
+          "callee": "prepare_dat_route",
+          "lineNumber": 551
+        },
+        {
+          "caller": "service",
+          "callee": "static_cast<uint32_t>",
+          "lineNumber": 555
+        },
+        {
+          "caller": "service",
+          "callee": "size",
+          "lineNumber": 555
+        },
+        {
+          "caller": "service",
+          "callee": "prepare_dat_route",
+          "lineNumber": 557
+        },
+        {
+          "caller": "service",
+          "callee": "push_inject",
+          "lineNumber": 559
+        },
+        {
+          "caller": "service",
+          "callee": "erase",
+          "lineNumber": 589
+        },
+        {
+          "caller": "service",
+          "callee": "std::remove_if",
+          "lineNumber": 590
+        },
+        {
+          "caller": "service",
+          "callee": "begin",
+          "lineNumber": 590
+        },
+        {
+          "caller": "service",
+          "callee": "end",
+          "lineNumber": 590
+        },
+        {
+          "caller": "service",
+          "callee": "end",
+          "lineNumber": 595
+        },
+        {
+          "caller": "service",
+          "callee": "empty",
+          "lineNumber": 596
+        },
+        {
+          "caller": "service",
+          "callee": "TmRingL2GroupSummary",
+          "lineNumber": 603
+        },
+        {
+          "caller": "service",
+          "callee": "pop_front",
+          "lineNumber": 605
+        },
+        {
+          "caller": "service",
+          "callee": "notify_after",
+          "lineNumber": 619
+        }
+      ],
+      "metrics": {
+        "importCount": 2,
+        "exportCount": 23,
+        "functionCount": 23,
+        "classCount": 0
+      }
+    },
+    {
+      "path": "tm_ring_l2_buffer_node.h",
+      "language": "c",
+      "fileCategory": "code",
+      "totalLines": 94,
+      "nonEmptyLines": 83,
+      "callGraph": [
+        {
+          "caller": "tm_make_ring_l2_buffer_node",
+          "callee": "std::make_shared<TmRingL2BufferNode>",
+          "lineNumber": 90
+        }
+      ],
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 0,
+        "functionCount": 0,
+        "classCount": 0
+      }
+    },
+    {
+      "path": "tm_ring_rbrg_l1.cc",
+      "language": "cpp",
+      "fileCategory": "code",
+      "totalLines": 594,
+      "nonEmptyLines": 529,
+      "functions": [
+        {
+          "name": "TmRingRbrgL1",
+          "startLine": 10,
+          "endLine": 131,
+          "params": [
+            "name",
+            "clk",
+            "v_ring_id",
+            "queue_depth",
+            "latency",
+            "width_bytes",
+            "v_queue_depths",
+            "h_queue_depths",
+            "topology"
+          ]
+        },
+        {
+          "name": "reset",
+          "startLine": 133,
+          "endLine": 154,
+          "params": []
+        },
+        {
+          "name": "idle",
+          "startLine": 156,
+          "endLine": 173,
+          "params": []
+        },
+        {
+          "name": "clear_stats",
+          "startLine": 175,
+          "endLine": 175,
+          "params": []
+        },
+        {
+          "name": "v_node_interface",
+          "startLine": 177,
+          "endLine": 179,
+          "params": []
+        },
+        {
+          "name": "h_node_interface",
+          "startLine": 181,
+          "endLine": 183,
+          "params": []
+        },
+        {
+          "name": "recv_v_req",
+          "startLine": 192,
+          "endLine": 194,
+          "params": []
+        },
+        {
+          "name": "recv_v_dat",
+          "startLine": 196,
+          "endLine": 198,
+          "params": []
+        },
+        {
+          "name": "recv_h_rsp",
+          "startLine": 200,
+          "endLine": 202,
+          "params": []
+        },
+        {
+          "name": "recv_h_dat",
+          "startLine": 204,
+          "endLine": 206,
+          "params": []
+        },
+        {
+          "name": "release_v_req_cw_bandwidth",
+          "startLine": 208,
+          "endLine": 210,
+          "params": []
+        },
+        {
+          "name": "release_v_req_ccw_bandwidth",
+          "startLine": 212,
+          "endLine": 214,
+          "params": []
+        },
+        {
+          "name": "release_v_dat_cw_bandwidth",
+          "startLine": 216,
+          "endLine": 218,
+          "params": []
+        },
+        {
+          "name": "release_v_dat_ccw_bandwidth",
+          "startLine": 220,
+          "endLine": 222,
+          "params": []
+        },
+        {
+          "name": "release_h_rsp_cw_bandwidth",
+          "startLine": 224,
+          "endLine": 226,
+          "params": []
+        },
+        {
+          "name": "release_h_rsp_ccw_bandwidth",
+          "startLine": 228,
+          "endLine": 230,
+          "params": []
+        },
+        {
+          "name": "release_h_dat_cw_bandwidth",
+          "startLine": 232,
+          "endLine": 234,
+          "params": []
+        },
+        {
+          "name": "release_h_dat_ccw_bandwidth",
+          "startLine": 236,
+          "endLine": 238,
+          "params": []
+        },
+        {
+          "name": "handoff_v_req_cw_serializer",
+          "startLine": 240,
+          "endLine": 242,
+          "params": []
+        },
+        {
+          "name": "handoff_v_req_ccw_serializer",
+          "startLine": 244,
+          "endLine": 246,
+          "params": []
+        },
+        {
+          "name": "handoff_v_dat_cw_serializer",
+          "startLine": 248,
+          "endLine": 250,
+          "params": []
+        },
+        {
+          "name": "handoff_v_dat_ccw_serializer",
+          "startLine": 252,
+          "endLine": 254,
+          "params": []
+        },
+        {
+          "name": "handoff_h_rsp_cw_serializer",
+          "startLine": 256,
+          "endLine": 258,
+          "params": []
+        },
+        {
+          "name": "handoff_h_rsp_ccw_serializer",
+          "startLine": 260,
+          "endLine": 262,
+          "params": []
+        },
+        {
+          "name": "handoff_h_dat_cw_serializer",
+          "startLine": 264,
+          "endLine": 266,
+          "params": []
+        },
+        {
+          "name": "handoff_h_dat_ccw_serializer",
+          "startLine": 268,
+          "endLine": 270,
+          "params": []
+        },
+        {
+          "name": "schedule_path",
+          "startLine": 272,
+          "endLine": 360,
+          "params": [
+            "path"
+          ]
+        },
+        {
+          "name": "start_serializer",
+          "startLine": 362,
+          "endLine": 398,
+          "params": [
+            "path",
+            "candidate",
+            "output"
+          ]
+        },
+        {
+          "name": "head_candidate",
+          "startLine": 400,
+          "endLine": 412,
+          "params": [
+            "path",
+            "input"
+          ]
+        },
+        {
+          "name": "preferred_direction",
+          "startLine": 414,
+          "endLine": 463,
+          "params": [
+            "path",
+            "pld",
+            "equal_fanout_span"
+          ]
+        },
+        {
+          "name": "release_bandwidth",
+          "startLine": 465,
+          "endLine": 480,
+          "params": [
+            "path",
+            "direction"
+          ]
+        },
+        {
+          "name": "handoff_serializer",
+          "startLine": 482,
+          "endLine": 506,
+          "params": [
+            "path",
+            "direction"
+          ]
+        },
+        {
+          "name": "prepare_h_segment",
+          "startLine": 508,
+          "endLine": 516,
+          "params": [
+            "pld",
+            "direction"
+          ]
+        },
+        {
+          "name": "prepare_v_segment",
+          "startLine": 518,
+          "endLine": 559,
+          "params": [
+            "pld",
+            "direction"
+          ]
+        },
+        {
+          "name": "clear_ring_local_state",
+          "startLine": 561,
+          "endLine": 566,
+          "params": [
+            "pld"
+          ]
+        },
+        {
+          "name": "path_index",
+          "startLine": 568,
+          "endLine": 570,
+          "params": [
+            "path"
+          ]
+        },
+        {
+          "name": "direction_index",
+          "startLine": 572,
+          "endLine": 574,
+          "params": [
+            "direction"
+          ]
+        },
+        {
+          "name": "source_for",
+          "startLine": 576,
+          "endLine": 582,
+          "params": [
+            "path"
+          ]
+        },
+        {
+          "name": "destination_for",
+          "startLine": 584,
+          "endLine": 587,
+          "params": [
+            "path"
+          ]
+        },
+        {
+          "name": "subnet_for",
+          "startLine": 589,
+          "endLine": 594,
+          "params": [
+            "path"
+          ]
+        }
+      ],
+      "exports": [
+        {
+          "name": "TmRingRbrgL1",
+          "line": 10,
+          "isDefault": false
+        },
+        {
+          "name": "reset",
+          "line": 133,
+          "isDefault": false
+        },
+        {
+          "name": "idle",
+          "line": 156,
+          "isDefault": false
+        },
+        {
+          "name": "clear_stats",
+          "line": 175,
+          "isDefault": false
+        },
+        {
+          "name": "v_node_interface",
+          "line": 177,
+          "isDefault": false
+        },
+        {
+          "name": "h_node_interface",
+          "line": 181,
+          "isDefault": false
+        },
+        {
+          "name": "recv_v_req",
+          "line": 192,
+          "isDefault": false
+        },
+        {
+          "name": "recv_v_dat",
+          "line": 196,
+          "isDefault": false
+        },
+        {
+          "name": "recv_h_rsp",
+          "line": 200,
+          "isDefault": false
+        },
+        {
+          "name": "recv_h_dat",
+          "line": 204,
+          "isDefault": false
+        },
+        {
+          "name": "release_v_req_cw_bandwidth",
+          "line": 208,
+          "isDefault": false
+        },
+        {
+          "name": "release_v_req_ccw_bandwidth",
+          "line": 212,
+          "isDefault": false
+        },
+        {
+          "name": "release_v_dat_cw_bandwidth",
+          "line": 216,
+          "isDefault": false
+        },
+        {
+          "name": "release_v_dat_ccw_bandwidth",
+          "line": 220,
+          "isDefault": false
+        },
+        {
+          "name": "release_h_rsp_cw_bandwidth",
+          "line": 224,
+          "isDefault": false
+        },
+        {
+          "name": "release_h_rsp_ccw_bandwidth",
+          "line": 228,
+          "isDefault": false
+        },
+        {
+          "name": "release_h_dat_cw_bandwidth",
+          "line": 232,
+          "isDefault": false
+        },
+        {
+          "name": "release_h_dat_ccw_bandwidth",
+          "line": 236,
+          "isDefault": false
+        },
+        {
+          "name": "handoff_v_req_cw_serializer",
+          "line": 240,
+          "isDefault": false
+        },
+        {
+          "name": "handoff_v_req_ccw_serializer",
+          "line": 244,
+          "isDefault": false
+        },
+        {
+          "name": "handoff_v_dat_cw_serializer",
+          "line": 248,
+          "isDefault": false
+        },
+        {
+          "name": "handoff_v_dat_ccw_serializer",
+          "line": 252,
+          "isDefault": false
+        },
+        {
+          "name": "handoff_h_rsp_cw_serializer",
+          "line": 256,
+          "isDefault": false
+        },
+        {
+          "name": "handoff_h_rsp_ccw_serializer",
+          "line": 260,
+          "isDefault": false
+        },
+        {
+          "name": "handoff_h_dat_cw_serializer",
+          "line": 264,
+          "isDefault": false
+        },
+        {
+          "name": "handoff_h_dat_ccw_serializer",
+          "line": 268,
+          "isDefault": false
+        },
+        {
+          "name": "schedule_path",
+          "line": 272,
+          "isDefault": false
+        },
+        {
+          "name": "start_serializer",
+          "line": 362,
+          "isDefault": false
+        },
+        {
+          "name": "head_candidate",
+          "line": 400,
+          "isDefault": false
+        },
+        {
+          "name": "preferred_direction",
+          "line": 414,
+          "isDefault": false
+        },
+        {
+          "name": "release_bandwidth",
+          "line": 465,
+          "isDefault": false
+        },
+        {
+          "name": "handoff_serializer",
+          "line": 482,
+          "isDefault": false
+        },
+        {
+          "name": "prepare_h_segment",
+          "line": 508,
+          "isDefault": false
+        },
+        {
+          "name": "prepare_v_segment",
+          "line": 518,
+          "isDefault": false
+        },
+        {
+          "name": "clear_ring_local_state",
+          "line": 561,
+          "isDefault": false
+        },
+        {
+          "name": "path_index",
+          "line": 568,
+          "isDefault": false
+        },
+        {
+          "name": "direction_index",
+          "line": 572,
+          "isDefault": false
+        },
+        {
+          "name": "source_for",
+          "line": 576,
+          "isDefault": false
+        },
+        {
+          "name": "destination_for",
+          "line": 584,
+          "isDefault": false
+        },
+        {
+          "name": "subnet_for",
+          "line": 589,
+          "isDefault": false
+        }
+      ],
+      "callGraph": [
+        {
+          "caller": "TmRingRbrgL1",
+          "callee": "tm_ring_subnet_count",
+          "lineNumber": 22
+        },
+        {
+          "caller": "TmRingRbrgL1",
+          "callee": "tm_make_ring_node_interface",
+          "lineNumber": 26
+        },
+        {
+          "caller": "TmRingRbrgL1",
+          "callee": "tm_make_ring_node_interface",
+          "lineNumber": 29
+        },
+        {
+          "caller": "TmRingRbrgL1",
+          "callee": "size",
+          "lineNumber": 33
+        },
+        {
+          "caller": "TmRingRbrgL1",
+          "callee": "std::to_string",
+          "lineNumber": 36
+        },
+        {
+          "caller": "TmRingRbrgL1",
+          "callee": "tm_make_event",
+          "lineNumber": 37
+        },
+        {
+          "caller": "TmRingRbrgL1",
+          "callee": "std::to_string",
+          "lineNumber": 38
+        },
+        {
+          "caller": "TmRingRbrgL1",
+          "callee": "tm_make_event",
+          "lineNumber": 40
+        },
+        {
+          "caller": "TmRingRbrgL1",
+          "callee": "std::to_string",
+          "lineNumber": 41
+        },
+        {
+          "caller": "TmRingRbrgL1",
+          "callee": "tm_sensitive",
+          "lineNumber": 50
+        },
+        {
+          "caller": "TmRingRbrgL1",
+          "callee": "TM_MAKE_CPROC",
+          "lineNumber": 50
+        },
+        {
+          "caller": "TmRingRbrgL1",
+          "callee": "eject_q",
+          "lineNumber": 51
+        },
+        {
+          "caller": "TmRingRbrgL1",
+          "callee": "tm_sensitive",
+          "lineNumber": 52
+        },
+        {
+          "caller": "TmRingRbrgL1",
+          "callee": "TM_MAKE_CPROC",
+          "lineNumber": 52
+        },
+        {
+          "caller": "TmRingRbrgL1",
+          "callee": "eject_q",
+          "lineNumber": 53
+        },
+        {
+          "caller": "TmRingRbrgL1",
+          "callee": "tm_sensitive",
+          "lineNumber": 54
+        },
+        {
+          "caller": "TmRingRbrgL1",
+          "callee": "TM_MAKE_CPROC",
+          "lineNumber": 54
+        },
+        {
+          "caller": "TmRingRbrgL1",
+          "callee": "inject_space_event",
+          "lineNumber": 55
+        },
+        {
+          "caller": "TmRingRbrgL1",
+          "callee": "tm_sensitive",
+          "lineNumber": 57
+        },
+        {
+          "caller": "TmRingRbrgL1",
+          "callee": "TM_MAKE_CPROC",
+          "lineNumber": 57
+        },
+        {
+          "caller": "TmRingRbrgL1",
+          "callee": "inject_space_event",
+          "lineNumber": 58
+        },
+        {
+          "caller": "TmRingRbrgL1",
+          "callee": "tm_sensitive",
+          "lineNumber": 61
+        },
+        {
+          "caller": "TmRingRbrgL1",
+          "callee": "TM_MAKE_CPROC",
+          "lineNumber": 61
+        },
+        {
+          "caller": "TmRingRbrgL1",
+          "callee": "eject_q",
+          "lineNumber": 62
+        },
+        {
+          "caller": "TmRingRbrgL1",
+          "callee": "tm_sensitive",
+          "lineNumber": 63
+        },
+        {
+          "caller": "TmRingRbrgL1",
+          "callee": "TM_MAKE_CPROC",
+          "lineNumber": 63
+        },
+        {
+          "caller": "TmRingRbrgL1",
+          "callee": "eject_q",
+          "lineNumber": 64
+        },
+        {
+          "caller": "TmRingRbrgL1",
+          "callee": "tm_sensitive",
+          "lineNumber": 65
+        },
+        {
+          "caller": "TmRingRbrgL1",
+          "callee": "TM_MAKE_CPROC",
+          "lineNumber": 65
+        },
+        {
+          "caller": "TmRingRbrgL1",
+          "callee": "inject_space_event",
+          "lineNumber": 66
+        },
+        {
+          "caller": "TmRingRbrgL1",
+          "callee": "tm_sensitive",
+          "lineNumber": 68
+        },
+        {
+          "caller": "TmRingRbrgL1",
+          "callee": "TM_MAKE_CPROC",
+          "lineNumber": 68
+        },
+        {
+          "caller": "TmRingRbrgL1",
+          "callee": "inject_space_event",
+          "lineNumber": 69
+        },
+        {
+          "caller": "TmRingRbrgL1",
+          "callee": "tm_sensitive",
+          "lineNumber": 72
+        },
+        {
+          "caller": "TmRingRbrgL1",
+          "callee": "TM_MAKE_CPROC",
+          "lineNumber": 72
+        },
+        {
+          "caller": "TmRingRbrgL1",
+          "callee": "eject_q",
+          "lineNumber": 73
+        },
+        {
+          "caller": "TmRingRbrgL1",
+          "callee": "tm_sensitive",
+          "lineNumber": 74
+        },
+        {
+          "caller": "TmRingRbrgL1",
+          "callee": "TM_MAKE_CPROC",
+          "lineNumber": 74
+        },
+        {
+          "caller": "TmRingRbrgL1",
+          "callee": "eject_q",
+          "lineNumber": 75
+        },
+        {
+          "caller": "TmRingRbrgL1",
+          "callee": "tm_sensitive",
+          "lineNumber": 76
+        },
+        {
+          "caller": "TmRingRbrgL1",
+          "callee": "TM_MAKE_CPROC",
+          "lineNumber": 76
+        },
+        {
+          "caller": "TmRingRbrgL1",
+          "callee": "inject_space_event",
+          "lineNumber": 77
+        },
+        {
+          "caller": "TmRingRbrgL1",
+          "callee": "tm_sensitive",
+          "lineNumber": 79
+        },
+        {
+          "caller": "TmRingRbrgL1",
+          "callee": "TM_MAKE_CPROC",
+          "lineNumber": 79
+        },
+        {
+          "caller": "TmRingRbrgL1",
+          "callee": "inject_space_event",
+          "lineNumber": 80
+        },
+        {
+          "caller": "TmRingRbrgL1",
+          "callee": "tm_sensitive",
+          "lineNumber": 83
+        },
+        {
+          "caller": "TmRingRbrgL1",
+          "callee": "TM_MAKE_CPROC",
+          "lineNumber": 83
+        },
+        {
+          "caller": "TmRingRbrgL1",
+          "callee": "eject_q",
+          "lineNumber": 84
+        },
+        {
+          "caller": "TmRingRbrgL1",
+          "callee": "tm_sensitive",
+          "lineNumber": 85
+        },
+        {
+          "caller": "TmRingRbrgL1",
+          "callee": "TM_MAKE_CPROC",
+          "lineNumber": 85
+        },
+        {
+          "caller": "TmRingRbrgL1",
+          "callee": "eject_q",
+          "lineNumber": 86
+        },
+        {
+          "caller": "TmRingRbrgL1",
+          "callee": "tm_sensitive",
+          "lineNumber": 87
+        },
+        {
+          "caller": "TmRingRbrgL1",
+          "callee": "TM_MAKE_CPROC",
+          "lineNumber": 87
+        },
+        {
+          "caller": "TmRingRbrgL1",
+          "callee": "inject_space_event",
+          "lineNumber": 88
+        },
+        {
+          "caller": "TmRingRbrgL1",
+          "callee": "tm_sensitive",
+          "lineNumber": 90
+        },
+        {
+          "caller": "TmRingRbrgL1",
+          "callee": "TM_MAKE_CPROC",
+          "lineNumber": 90
+        },
+        {
+          "caller": "TmRingRbrgL1",
+          "callee": "inject_space_event",
+          "lineNumber": 91
+        },
+        {
+          "caller": "TmRingRbrgL1",
+          "callee": "tm_sensitive",
+          "lineNumber": 94
+        },
+        {
+          "caller": "TmRingRbrgL1",
+          "callee": "TM_MAKE_CPROC",
+          "lineNumber": 94
+        },
+        {
+          "caller": "TmRingRbrgL1",
+          "callee": "path_index",
+          "lineNumber": 95
+        },
+        {
+          "caller": "TmRingRbrgL1",
+          "callee": "tm_sensitive",
+          "lineNumber": 96
+        },
+        {
+          "caller": "TmRingRbrgL1",
+          "callee": "TM_MAKE_CPROC",
+          "lineNumber": 96
+        },
+        {
+          "caller": "TmRingRbrgL1",
+          "callee": "path_index",
+          "lineNumber": 97
+        },
+        {
+          "caller": "TmRingRbrgL1",
+          "callee": "tm_sensitive",
+          "lineNumber": 98
+        },
+        {
+          "caller": "TmRingRbrgL1",
+          "callee": "TM_MAKE_CPROC",
+          "lineNumber": 98
+        },
+        {
+          "caller": "TmRingRbrgL1",
+          "callee": "path_index",
+          "lineNumber": 99
+        },
+        {
+          "caller": "TmRingRbrgL1",
+          "callee": "tm_sensitive",
+          "lineNumber": 100
+        },
+        {
+          "caller": "TmRingRbrgL1",
+          "callee": "TM_MAKE_CPROC",
+          "lineNumber": 100
+        },
+        {
+          "caller": "TmRingRbrgL1",
+          "callee": "path_index",
+          "lineNumber": 101
+        },
+        {
+          "caller": "TmRingRbrgL1",
+          "callee": "tm_sensitive",
+          "lineNumber": 103
+        },
+        {
+          "caller": "TmRingRbrgL1",
+          "callee": "TM_MAKE_CPROC",
+          "lineNumber": 103
+        },
+        {
+          "caller": "TmRingRbrgL1",
+          "callee": "path_index",
+          "lineNumber": 104
+        },
+        {
+          "caller": "TmRingRbrgL1",
+          "callee": "tm_sensitive",
+          "lineNumber": 105
+        },
+        {
+          "caller": "TmRingRbrgL1",
+          "callee": "TM_MAKE_CPROC",
+          "lineNumber": 105
+        },
+        {
+          "caller": "TmRingRbrgL1",
+          "callee": "path_index",
+          "lineNumber": 106
+        },
+        {
+          "caller": "TmRingRbrgL1",
+          "callee": "tm_sensitive",
+          "lineNumber": 107
+        },
+        {
+          "caller": "TmRingRbrgL1",
+          "callee": "TM_MAKE_CPROC",
+          "lineNumber": 107
+        },
+        {
+          "caller": "TmRingRbrgL1",
+          "callee": "path_index",
+          "lineNumber": 108
+        },
+        {
+          "caller": "TmRingRbrgL1",
+          "callee": "tm_sensitive",
+          "lineNumber": 109
+        },
+        {
+          "caller": "TmRingRbrgL1",
+          "callee": "TM_MAKE_CPROC",
+          "lineNumber": 109
+        },
+        {
+          "caller": "TmRingRbrgL1",
+          "callee": "path_index",
+          "lineNumber": 110
+        },
+        {
+          "caller": "TmRingRbrgL1",
+          "callee": "tm_sensitive",
+          "lineNumber": 112
+        },
+        {
+          "caller": "TmRingRbrgL1",
+          "callee": "TM_MAKE_CPROC",
+          "lineNumber": 112
+        },
+        {
+          "caller": "TmRingRbrgL1",
+          "callee": "path_index",
+          "lineNumber": 113
+        },
+        {
+          "caller": "TmRingRbrgL1",
+          "callee": "tm_sensitive",
+          "lineNumber": 114
+        },
+        {
+          "caller": "TmRingRbrgL1",
+          "callee": "TM_MAKE_CPROC",
+          "lineNumber": 114
+        },
+        {
+          "caller": "TmRingRbrgL1",
+          "callee": "path_index",
+          "lineNumber": 115
+        },
+        {
+          "caller": "TmRingRbrgL1",
+          "callee": "tm_sensitive",
+          "lineNumber": 116
+        },
+        {
+          "caller": "TmRingRbrgL1",
+          "callee": "TM_MAKE_CPROC",
+          "lineNumber": 116
+        },
+        {
+          "caller": "TmRingRbrgL1",
+          "callee": "path_index",
+          "lineNumber": 117
+        },
+        {
+          "caller": "TmRingRbrgL1",
+          "callee": "tm_sensitive",
+          "lineNumber": 118
+        },
+        {
+          "caller": "TmRingRbrgL1",
+          "callee": "TM_MAKE_CPROC",
+          "lineNumber": 118
+        },
+        {
+          "caller": "TmRingRbrgL1",
+          "callee": "path_index",
+          "lineNumber": 119
+        },
+        {
+          "caller": "TmRingRbrgL1",
+          "callee": "tm_sensitive",
+          "lineNumber": 121
+        },
+        {
+          "caller": "TmRingRbrgL1",
+          "callee": "TM_MAKE_CPROC",
+          "lineNumber": 121
+        },
+        {
+          "caller": "TmRingRbrgL1",
+          "callee": "path_index",
+          "lineNumber": 122
+        },
+        {
+          "caller": "TmRingRbrgL1",
+          "callee": "tm_sensitive",
+          "lineNumber": 123
+        },
+        {
+          "caller": "TmRingRbrgL1",
+          "callee": "TM_MAKE_CPROC",
+          "lineNumber": 123
+        },
+        {
+          "caller": "TmRingRbrgL1",
+          "callee": "path_index",
+          "lineNumber": 124
+        },
+        {
+          "caller": "TmRingRbrgL1",
+          "callee": "tm_sensitive",
+          "lineNumber": 125
+        },
+        {
+          "caller": "TmRingRbrgL1",
+          "callee": "TM_MAKE_CPROC",
+          "lineNumber": 125
+        },
+        {
+          "caller": "TmRingRbrgL1",
+          "callee": "path_index",
+          "lineNumber": 126
+        },
+        {
+          "caller": "TmRingRbrgL1",
+          "callee": "tm_sensitive",
+          "lineNumber": 127
+        },
+        {
+          "caller": "TmRingRbrgL1",
+          "callee": "TM_MAKE_CPROC",
+          "lineNumber": 127
+        },
+        {
+          "caller": "TmRingRbrgL1",
+          "callee": "path_index",
+          "lineNumber": 128
+        },
+        {
+          "caller": "TmRingRbrgL1",
+          "callee": "reset",
+          "lineNumber": 130
+        },
+        {
+          "caller": "reset",
+          "callee": "size",
+          "lineNumber": 134
+        },
+        {
+          "caller": "reset",
+          "callee": "reset",
+          "lineNumber": 151
+        },
+        {
+          "caller": "reset",
+          "callee": "reset",
+          "lineNumber": 152
+        },
+        {
+          "caller": "reset",
+          "callee": "clear_stats",
+          "lineNumber": 153
+        },
+        {
+          "caller": "idle",
+          "callee": "idle",
+          "lineNumber": 157
+        },
+        {
+          "caller": "idle",
+          "callee": "idle",
+          "lineNumber": 157
+        },
+        {
+          "caller": "idle",
+          "callee": "size",
+          "lineNumber": 160
+        },
+        {
+          "caller": "clear_stats",
+          "callee": "clear",
+          "lineNumber": 175
+        },
+        {
+          "caller": "recv_v_req",
+          "callee": "schedule_path",
+          "lineNumber": 193
+        },
+        {
+          "caller": "recv_v_dat",
+          "callee": "schedule_path",
+          "lineNumber": 197
+        },
+        {
+          "caller": "recv_h_rsp",
+          "callee": "schedule_path",
+          "lineNumber": 201
+        },
+        {
+          "caller": "recv_h_dat",
+          "callee": "schedule_path",
+          "lineNumber": 205
+        },
+        {
+          "caller": "release_v_req_cw_bandwidth",
+          "callee": "release_bandwidth",
+          "lineNumber": 209
+        },
+        {
+          "caller": "release_v_req_ccw_bandwidth",
+          "callee": "release_bandwidth",
+          "lineNumber": 213
+        },
+        {
+          "caller": "release_v_dat_cw_bandwidth",
+          "callee": "release_bandwidth",
+          "lineNumber": 217
+        },
+        {
+          "caller": "release_v_dat_ccw_bandwidth",
+          "callee": "release_bandwidth",
+          "lineNumber": 221
+        },
+        {
+          "caller": "release_h_rsp_cw_bandwidth",
+          "callee": "release_bandwidth",
+          "lineNumber": 225
+        },
+        {
+          "caller": "release_h_rsp_ccw_bandwidth",
+          "callee": "release_bandwidth",
+          "lineNumber": 229
+        },
+        {
+          "caller": "release_h_dat_cw_bandwidth",
+          "callee": "release_bandwidth",
+          "lineNumber": 233
+        },
+        {
+          "caller": "release_h_dat_ccw_bandwidth",
+          "callee": "release_bandwidth",
+          "lineNumber": 237
+        },
+        {
+          "caller": "handoff_v_req_cw_serializer",
+          "callee": "handoff_serializer",
+          "lineNumber": 241
+        },
+        {
+          "caller": "handoff_v_req_ccw_serializer",
+          "callee": "handoff_serializer",
+          "lineNumber": 245
+        },
+        {
+          "caller": "handoff_v_dat_cw_serializer",
+          "callee": "handoff_serializer",
+          "lineNumber": 249
+        },
+        {
+          "caller": "handoff_v_dat_ccw_serializer",
+          "callee": "handoff_serializer",
+          "lineNumber": 253
+        },
+        {
+          "caller": "handoff_h_rsp_cw_serializer",
+          "callee": "handoff_serializer",
+          "lineNumber": 257
+        },
+        {
+          "caller": "handoff_h_rsp_ccw_serializer",
+          "callee": "handoff_serializer",
+          "lineNumber": 261
+        },
+        {
+          "caller": "handoff_h_dat_cw_serializer",
+          "callee": "handoff_serializer",
+          "lineNumber": 265
+        },
+        {
+          "caller": "handoff_h_dat_ccw_serializer",
+          "callee": "handoff_serializer",
+          "lineNumber": 269
+        },
+        {
+          "caller": "schedule_path",
+          "callee": "path_index",
+          "lineNumber": 275
+        },
+        {
+          "caller": "schedule_path",
+          "callee": "destination_for",
+          "lineNumber": 277
+        },
+        {
+          "caller": "schedule_path",
+          "callee": "subnet_for",
+          "lineNumber": 278
+        },
+        {
+          "caller": "schedule_path",
+          "callee": "size",
+          "lineNumber": 280
+        },
+        {
+          "caller": "schedule_path",
+          "callee": "head_candidate",
+          "lineNumber": 281
+        },
+        {
+          "caller": "schedule_path",
+          "callee": "size",
+          "lineNumber": 293
+        },
+        {
+          "caller": "schedule_path",
+          "callee": "direction_index",
+          "lineNumber": 305
+        },
+        {
+          "caller": "schedule_path",
+          "callee": "has_inject_capacity",
+          "lineNumber": 310
+        },
+        {
+          "caller": "schedule_path",
+          "callee": "direction_index",
+          "lineNumber": 323
+        },
+        {
+          "caller": "schedule_path",
+          "callee": "size",
+          "lineNumber": 352
+        },
+        {
+          "caller": "schedule_path",
+          "callee": "start_serializer",
+          "lineNumber": 354
+        },
+        {
+          "caller": "schedule_path",
+          "callee": "tm_ring_opposite_dir",
+          "lineNumber": 358
+        },
+        {
+          "caller": "start_serializer",
+          "callee": "path_index",
+          "lineNumber": 365
+        },
+        {
+          "caller": "start_serializer",
+          "callee": "direction_index",
+          "lineNumber": 366
+        },
+        {
+          "caller": "start_serializer",
+          "callee": "source_for",
+          "lineNumber": 369
+        },
+        {
+          "caller": "start_serializer",
+          "callee": "destination_for",
+          "lineNumber": 370
+        },
+        {
+          "caller": "start_serializer",
+          "callee": "subnet_for",
+          "lineNumber": 371
+        },
+        {
+          "caller": "start_serializer",
+          "callee": "front_eject",
+          "lineNumber": 372
+        },
+        {
+          "caller": "start_serializer",
+          "callee": "has_inject_capacity",
+          "lineNumber": 374
+        },
+        {
+          "caller": "start_serializer",
+          "callee": "prepare_h_segment",
+          "lineNumber": 380
+        },
+        {
+          "caller": "start_serializer",
+          "callee": "prepare_v_segment",
+          "lineNumber": 382
+        },
+        {
+          "caller": "start_serializer",
+          "callee": "pop_eject",
+          "lineNumber": 384
+        },
+        {
+          "caller": "start_serializer",
+          "callee": "tm_ring_opposite_dir",
+          "lineNumber": 387
+        },
+        {
+          "caller": "start_serializer",
+          "callee": "tm_ring_serialization_cycles",
+          "lineNumber": 390
+        },
+        {
+          "caller": "start_serializer",
+          "callee": "tm_ring_packet_bytes",
+          "lineNumber": 391
+        },
+        {
+          "caller": "start_serializer",
+          "callee": "notify_after",
+          "lineNumber": 396
+        },
+        {
+          "caller": "start_serializer",
+          "callee": "notify_after",
+          "lineNumber": 397
+        },
+        {
+          "caller": "head_candidate",
+          "callee": "front_eject",
+          "lineNumber": 404
+        },
+        {
+          "caller": "head_candidate",
+          "callee": "source_for",
+          "lineNumber": 404
+        },
+        {
+          "caller": "head_candidate",
+          "callee": "subnet_for",
+          "lineNumber": 404
+        },
+        {
+          "caller": "head_candidate",
+          "callee": "preferred_direction",
+          "lineNumber": 409
+        },
+        {
+          "caller": "preferred_direction",
+          "callee": "route_direction",
+          "lineNumber": 419
+        },
+        {
+          "caller": "preferred_direction",
+          "callee": "rbrg_h_location",
+          "lineNumber": 419
+        },
+        {
+          "caller": "preferred_direction",
+          "callee": "ha_location",
+          "lineNumber": 420
+        },
+        {
+          "caller": "preferred_direction",
+          "callee": "rbrg_v_location",
+          "lineNumber": 423
+        },
+        {
+          "caller": "preferred_direction",
+          "callee": "tm_ring_has_fanout",
+          "lineNumber": 424
+        },
+        {
+          "caller": "preferred_direction",
+          "callee": "empty",
+          "lineNumber": 425
+        },
+        {
+          "caller": "preferred_direction",
+          "callee": "std::logic_error",
+          "lineNumber": 426
+        },
+        {
+          "caller": "preferred_direction",
+          "callee": "front",
+          "lineNumber": 429
+        },
+        {
+          "caller": "preferred_direction",
+          "callee": "std::logic_error",
+          "lineNumber": 431
+        },
+        {
+          "caller": "preferred_direction",
+          "callee": "size",
+          "lineNumber": 433
+        },
+        {
+          "caller": "preferred_direction",
+          "callee": "route_direction",
+          "lineNumber": 434
+        },
+        {
+          "caller": "preferred_direction",
+          "callee": "master_location",
+          "lineNumber": 435
+        },
+        {
+          "caller": "preferred_direction",
+          "callee": "reserve",
+          "lineNumber": 439
+        },
+        {
+          "caller": "preferred_direction",
+          "callee": "size",
+          "lineNumber": 439
+        },
+        {
+          "caller": "preferred_direction",
+          "callee": "std::logic_error",
+          "lineNumber": 443
+        },
+        {
+          "caller": "preferred_direction",
+          "callee": "push_back",
+          "lineNumber": 445
+        },
+        {
+          "caller": "preferred_direction",
+          "callee": "TmRingLocation",
+          "lineNumber": 445
+        },
+        {
+          "caller": "preferred_direction",
+          "callee": "fanout_span",
+          "lineNumber": 449
+        },
+        {
+          "caller": "preferred_direction",
+          "callee": "fanout_span",
+          "lineNumber": 450
+        },
+        {
+          "caller": "preferred_direction",
+          "callee": "route_direction",
+          "lineNumber": 462
+        },
+        {
+          "caller": "preferred_direction",
+          "callee": "master_location",
+          "lineNumber": 462
+        },
+        {
+          "caller": "release_bandwidth",
+          "callee": "path_index",
+          "lineNumber": 468
+        },
+        {
+          "caller": "release_bandwidth",
+          "callee": "direction_index",
+          "lineNumber": 468
+        },
+        {
+          "caller": "release_bandwidth",
+          "callee": "schedule_path",
+          "lineNumber": 471
+        },
+        {
+          "caller": "release_bandwidth",
+          "callee": "schedule_path",
+          "lineNumber": 479
+        },
+        {
+          "caller": "handoff_serializer",
+          "callee": "path_index",
+          "lineNumber": 484
+        },
+        {
+          "caller": "handoff_serializer",
+          "callee": "subnet_for",
+          "lineNumber": 485
+        },
+        {
+          "caller": "handoff_serializer",
+          "callee": "destination_for",
+          "lineNumber": 486
+        },
+        {
+          "caller": "handoff_serializer",
+          "callee": "direction_index",
+          "lineNumber": 487
+        },
+        {
+          "caller": "handoff_serializer",
+          "callee": "schedule_path",
+          "lineNumber": 490
+        },
+        {
+          "caller": "handoff_serializer",
+          "callee": "std::logic_error",
+          "lineNumber": 497
+        },
+        {
+          "caller": "handoff_serializer",
+          "callee": "push_inject",
+          "lineNumber": 499
+        },
+        {
+          "caller": "handoff_serializer",
+          "callee": "std::logic_error",
+          "lineNumber": 500
+        },
+        {
+          "caller": "handoff_serializer",
+          "callee": "tm_ring_packet_bytes",
+          "lineNumber": 503
+        },
+        {
+          "caller": "prepare_h_segment",
+          "callee": "rbrg_h_location",
+          "lineNumber": 510
+        },
+        {
+          "caller": "prepare_h_segment",
+          "callee": "ha_location",
+          "lineNumber": 511
+        },
+        {
+          "caller": "prepare_h_segment",
+          "callee": "static_cast<uint32_t>",
+          "lineNumber": 514
+        },
+        {
+          "caller": "prepare_h_segment",
+          "callee": "clear_ring_local_state",
+          "lineNumber": 515
+        },
+        {
+          "caller": "prepare_v_segment",
+          "callee": "rbrg_v_location",
+          "lineNumber": 520
+        },
+        {
+          "caller": "prepare_v_segment",
+          "callee": "tm_ring_has_fanout",
+          "lineNumber": 521
+        },
+        {
+          "caller": "prepare_v_segment",
+          "callee": "empty",
+          "lineNumber": 522
+        },
+        {
+          "caller": "prepare_v_segment",
+          "callee": "std::logic_error",
+          "lineNumber": 523
+        },
+        {
+          "caller": "prepare_v_segment",
+          "callee": "front",
+          "lineNumber": 527
+        },
+        {
+          "caller": "prepare_v_segment",
+          "callee": "std::logic_error",
+          "lineNumber": 529
+        },
+        {
+          "caller": "prepare_v_segment",
+          "callee": "size",
+          "lineNumber": 533
+        },
+        {
+          "caller": "prepare_v_segment",
+          "callee": "reset",
+          "lineNumber": 534
+        },
+        {
+          "caller": "prepare_v_segment",
+          "callee": "std::logic_error",
+          "lineNumber": 540
+        },
+        {
+          "caller": "prepare_v_segment",
+          "callee": "tm_ring_station_bit",
+          "lineNumber": 542
+        },
+        {
+          "caller": "prepare_v_segment",
+          "callee": "static_cast<uint32_t>",
+          "lineNumber": 548
+        },
+        {
+          "caller": "prepare_v_segment",
+          "callee": "clear_ring_local_state",
+          "lineNumber": 549
+        },
+        {
+          "caller": "prepare_v_segment",
+          "callee": "master_location",
+          "lineNumber": 554
+        },
+        {
+          "caller": "prepare_v_segment",
+          "callee": "static_cast<uint32_t>",
+          "lineNumber": 557
+        },
+        {
+          "caller": "prepare_v_segment",
+          "callee": "clear_ring_local_state",
+          "lineNumber": 558
+        },
+        {
+          "caller": "clear_ring_local_state",
+          "callee": "tm_ring_invalid_tag_owner",
+          "lineNumber": 563
+        },
+        {
+          "caller": "clear_ring_local_state",
+          "callee": "tm_ring_invalid_tag_owner",
+          "lineNumber": 564
+        },
+        {
+          "caller": "clear_ring_local_state",
+          "callee": "reset_ring_deflection_state",
+          "lineNumber": 565
+        },
+        {
+          "caller": "path_index",
+          "callee": "static_cast<uint32_t>",
+          "lineNumber": 569
+        },
+        {
+          "caller": "destination_for",
+          "callee": "source_for",
+          "lineNumber": 586
+        }
+      ],
+      "metrics": {
+        "importCount": 2,
+        "exportCount": 40,
+        "functionCount": 40,
+        "classCount": 0
+      }
+    },
+    {
+      "path": "tm_ring_rbrg_l1.h",
+      "language": "c",
+      "fileCategory": "code",
+      "totalLines": 137,
+      "nonEmptyLines": 120,
+      "callGraph": [
+        {
+          "caller": "tm_make_ring_rbrg_l1",
+          "callee": "std::shared_ptr<TmRingRbrgL1>",
+          "lineNumber": 131
+        }
+      ],
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 0,
+        "functionCount": 0,
+        "classCount": 0
+      }
+    }
+  ]
+}

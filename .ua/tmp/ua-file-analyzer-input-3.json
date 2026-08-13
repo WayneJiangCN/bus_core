@@ -1,0 +1,74 @@
+{
+  "projectRoot": "C:\\Users\\wayne\\Downloads\\gem5-stable\\BUS\\aicore\\code",
+  "batchFiles": [
+    {
+      "path": "tm_ring_cross_station.cc",
+      "language": "cpp",
+      "sizeLines": 666,
+      "fileCategory": "code"
+    },
+    {
+      "path": "tm_ring_cross_station.h",
+      "language": "c",
+      "sizeLines": 130,
+      "fileCategory": "code"
+    },
+    {
+      "path": "tm_ring_cross_station_test.cc",
+      "language": "cpp",
+      "sizeLines": 291,
+      "fileCategory": "code"
+    },
+    {
+      "path": "tm_ring_fanout.h",
+      "language": "c",
+      "sizeLines": 121,
+      "fileCategory": "code"
+    },
+    {
+      "path": "tm_ring_l2_buffer_node.cc",
+      "language": "cpp",
+      "sizeLines": 620,
+      "fileCategory": "code"
+    },
+    {
+      "path": "tm_ring_l2_buffer_node.h",
+      "language": "c",
+      "sizeLines": 94,
+      "fileCategory": "code"
+    },
+    {
+      "path": "tm_ring_rbrg_l1.cc",
+      "language": "cpp",
+      "sizeLines": 594,
+      "fileCategory": "code"
+    },
+    {
+      "path": "tm_ring_rbrg_l1.h",
+      "language": "c",
+      "sizeLines": 137,
+      "fileCategory": "code"
+    }
+  ],
+  "batchImportData": {
+    "tm_ring_cross_station.cc": [
+      "tm_ring_cross_station.h",
+      "tm_ring_fanout.h"
+    ],
+    "tm_ring_cross_station.h": [],
+    "tm_ring_cross_station_test.cc": [
+      "tm_ring_cross_station.h"
+    ],
+    "tm_ring_fanout.h": [],
+    "tm_ring_l2_buffer_node.cc": [
+      "tm_ring_fanout.h",
+      "tm_ring_l2_buffer_node.h"
+    ],
+    "tm_ring_l2_buffer_node.h": [],
+    "tm_ring_rbrg_l1.cc": [
+      "tm_ring_fanout.h",
+      "tm_ring_rbrg_l1.h"
+    ],
+    "tm_ring_rbrg_l1.h": []
+  }
+}

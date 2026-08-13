@@ -1,0 +1,5564 @@
+{
+  "scriptCompleted": true,
+  "filesAnalyzed": 9,
+  "filesSkipped": [],
+  "analysisOutcomes": {
+    "structure": {
+      "succeeded": 9,
+      "failed": 0
+    },
+    "callGraph": {
+      "succeeded": 9,
+      "failed": 0,
+      "skipped": 0
+    }
+  },
+  "results": [
+    {
+      "path": "tm_ring_conn.cc",
+      "language": "cpp",
+      "fileCategory": "code",
+      "totalLines": 289,
+      "nonEmptyLines": 254,
+      "functions": [
+        {
+          "name": "TmRingConn",
+          "startLine": 7,
+          "endLine": 68,
+          "params": [
+            "name",
+            "clk",
+            "latency",
+            "width_bytes",
+            "dst_station",
+            "dst_dir"
+          ]
+        },
+        {
+          "name": "slot_subnet",
+          "startLine": 70,
+          "endLine": 78,
+          "params": [
+            "slot"
+          ]
+        },
+        {
+          "name": "record_stall",
+          "startLine": 80,
+          "endLine": 83,
+          "params": [
+            "lane_idx"
+          ]
+        },
+        {
+          "name": "record_slot",
+          "startLine": 85,
+          "endLine": 95,
+          "params": [
+            "lane_idx",
+            "bytes",
+            "serialization_cycles"
+          ]
+        },
+        {
+          "name": "reset",
+          "startLine": 97,
+          "endLine": 115,
+          "params": []
+        },
+        {
+          "name": "clear_stats",
+          "startLine": 117,
+          "endLine": 121,
+          "params": []
+        },
+        {
+          "name": "idle",
+          "startLine": 123,
+          "endLine": 132,
+          "params": []
+        },
+        {
+          "name": "can_accept",
+          "startLine": 134,
+          "endLine": 154,
+          "params": [
+            "slot"
+          ]
+        },
+        {
+          "name": "accept_slot",
+          "startLine": 156,
+          "endLine": 162,
+          "params": [
+            "slot"
+          ]
+        },
+        {
+          "name": "reserve_slot",
+          "startLine": 164,
+          "endLine": 188,
+          "params": [
+            "slot"
+          ]
+        },
+        {
+          "name": "has_ready_slot",
+          "startLine": 195,
+          "endLine": 199,
+          "params": [
+            "subnet"
+          ]
+        },
+        {
+          "name": "release_serializer",
+          "startLine": 201,
+          "endLine": 212,
+          "params": [
+            "subnet"
+          ]
+        },
+        {
+          "name": "move_serializer_to_pipeline",
+          "startLine": 214,
+          "endLine": 226,
+          "params": [
+            "subnet"
+          ]
+        },
+        {
+          "name": "release_req_serializer",
+          "startLine": 228,
+          "endLine": 230,
+          "params": []
+        },
+        {
+          "name": "release_rsp_serializer",
+          "startLine": 232,
+          "endLine": 234,
+          "params": []
+        },
+        {
+          "name": "release_dat_serializer",
+          "startLine": 236,
+          "endLine": 238,
+          "params": []
+        },
+        {
+          "name": "move_req_serializer_to_pipeline",
+          "startLine": 240,
+          "endLine": 242,
+          "params": []
+        },
+        {
+          "name": "move_rsp_serializer_to_pipeline",
+          "startLine": 244,
+          "endLine": 246,
+          "params": []
+        },
+        {
+          "name": "move_dat_serializer_to_pipeline",
+          "startLine": 248,
+          "endLine": 250,
+          "params": []
+        },
+        {
+          "name": "attach",
+          "startLine": 252,
+          "endLine": 259,
+          "params": [
+            "dst_req_transit_reg",
+            "dst_rsp_transit_reg",
+            "dst_dat_transit_reg"
+          ]
+        },
+        {
+          "name": "drain_ready_slots",
+          "startLine": 261,
+          "endLine": 283,
+          "params": []
+        },
+        {
+          "name": "dst_station",
+          "startLine": 285,
+          "endLine": 287,
+          "params": []
+        },
+        {
+          "name": "dst_dir",
+          "startLine": 289,
+          "endLine": 289,
+          "params": []
+        }
+      ],
+      "exports": [
+        {
+          "name": "TmRingConn",
+          "line": 7,
+          "isDefault": false
+        },
+        {
+          "name": "slot_subnet",
+          "line": 70,
+          "isDefault": false
+        },
+        {
+          "name": "record_stall",
+          "line": 80,
+          "isDefault": false
+        },
+        {
+          "name": "record_slot",
+          "line": 85,
+          "isDefault": false
+        },
+        {
+          "name": "reset",
+          "line": 97,
+          "isDefault": false
+        },
+        {
+          "name": "clear_stats",
+          "line": 117,
+          "isDefault": false
+        },
+        {
+          "name": "idle",
+          "line": 123,
+          "isDefault": false
+        },
+        {
+          "name": "can_accept",
+          "line": 134,
+          "isDefault": false
+        },
+        {
+          "name": "accept_slot",
+          "line": 156,
+          "isDefault": false
+        },
+        {
+          "name": "reserve_slot",
+          "line": 164,
+          "isDefault": false
+        },
+        {
+          "name": "has_ready_slot",
+          "line": 195,
+          "isDefault": false
+        },
+        {
+          "name": "release_serializer",
+          "line": 201,
+          "isDefault": false
+        },
+        {
+          "name": "move_serializer_to_pipeline",
+          "line": 214,
+          "isDefault": false
+        },
+        {
+          "name": "release_req_serializer",
+          "line": 228,
+          "isDefault": false
+        },
+        {
+          "name": "release_rsp_serializer",
+          "line": 232,
+          "isDefault": false
+        },
+        {
+          "name": "release_dat_serializer",
+          "line": 236,
+          "isDefault": false
+        },
+        {
+          "name": "move_req_serializer_to_pipeline",
+          "line": 240,
+          "isDefault": false
+        },
+        {
+          "name": "move_rsp_serializer_to_pipeline",
+          "line": 244,
+          "isDefault": false
+        },
+        {
+          "name": "move_dat_serializer_to_pipeline",
+          "line": 248,
+          "isDefault": false
+        },
+        {
+          "name": "attach",
+          "line": 252,
+          "isDefault": false
+        },
+        {
+          "name": "drain_ready_slots",
+          "line": 261,
+          "isDefault": false
+        },
+        {
+          "name": "dst_station",
+          "line": 285,
+          "isDefault": false
+        },
+        {
+          "name": "dst_dir",
+          "line": 289,
+          "isDefault": false
+        }
+      ],
+      "callGraph": [
+        {
+          "caller": "TmRingConn",
+          "callee": "std::max<uint32_t>",
+          "lineNumber": 12
+        },
+        {
+          "caller": "TmRingConn",
+          "callee": "std::max<uint32_t>",
+          "lineNumber": 13
+        },
+        {
+          "caller": "TmRingConn",
+          "callee": "clear",
+          "lineNumber": 15
+        },
+        {
+          "caller": "TmRingConn",
+          "callee": "tm_ring_subnet_count",
+          "lineNumber": 16
+        },
+        {
+          "caller": "TmRingConn",
+          "callee": "assign",
+          "lineNumber": 17
+        },
+        {
+          "caller": "TmRingConn",
+          "callee": "assign",
+          "lineNumber": 18
+        },
+        {
+          "caller": "TmRingConn",
+          "callee": "assign",
+          "lineNumber": 19
+        },
+        {
+          "caller": "TmRingConn",
+          "callee": "assign",
+          "lineNumber": 20
+        },
+        {
+          "caller": "TmRingConn",
+          "callee": "assign",
+          "lineNumber": 21
+        },
+        {
+          "caller": "TmRingConn",
+          "callee": "assign",
+          "lineNumber": 22
+        },
+        {
+          "caller": "TmRingConn",
+          "callee": "assign",
+          "lineNumber": 23
+        },
+        {
+          "caller": "TmRingConn",
+          "callee": "clear",
+          "lineNumber": 24
+        },
+        {
+          "caller": "TmRingConn",
+          "callee": "clear",
+          "lineNumber": 25
+        },
+        {
+          "caller": "TmRingConn",
+          "callee": "assign",
+          "lineNumber": 26
+        },
+        {
+          "caller": "TmRingConn",
+          "callee": "TmRingConnStats",
+          "lineNumber": 26
+        },
+        {
+          "caller": "TmRingConn",
+          "callee": "TM_MAKE_CPROC",
+          "lineNumber": 33
+        },
+        {
+          "caller": "TmRingConn",
+          "callee": "push_back",
+          "lineNumber": 35
+        },
+        {
+          "caller": "TmRingConn",
+          "callee": "tm_make_que<p_tm_pld_t>",
+          "lineNumber": 35
+        },
+        {
+          "caller": "TmRingConn",
+          "callee": "std::to_string",
+          "lineNumber": 36
+        },
+        {
+          "caller": "TmRingConn",
+          "callee": "push_back",
+          "lineNumber": 38
+        },
+        {
+          "caller": "TmRingConn",
+          "callee": "tm_make_event",
+          "lineNumber": 39
+        },
+        {
+          "caller": "TmRingConn",
+          "callee": "std::to_string",
+          "lineNumber": 39
+        },
+        {
+          "caller": "TmRingConn",
+          "callee": "push_back",
+          "lineNumber": 41
+        },
+        {
+          "caller": "TmRingConn",
+          "callee": "tm_make_event",
+          "lineNumber": 42
+        },
+        {
+          "caller": "TmRingConn",
+          "callee": "std::to_string",
+          "lineNumber": 42
+        },
+        {
+          "caller": "TmRingConn",
+          "callee": "tm_sensitive",
+          "lineNumber": 46
+        },
+        {
+          "caller": "TmRingConn",
+          "callee": "tm_sensitive",
+          "lineNumber": 48
+        },
+        {
+          "caller": "TmRingConn",
+          "callee": "TM_MAKE_CPROC",
+          "lineNumber": 48
+        },
+        {
+          "caller": "TmRingConn",
+          "callee": "tm_ring_subnet_index",
+          "lineNumber": 50
+        },
+        {
+          "caller": "TmRingConn",
+          "callee": "tm_sensitive",
+          "lineNumber": 51
+        },
+        {
+          "caller": "TmRingConn",
+          "callee": "TM_MAKE_CPROC",
+          "lineNumber": 51
+        },
+        {
+          "caller": "TmRingConn",
+          "callee": "tm_ring_subnet_index",
+          "lineNumber": 53
+        },
+        {
+          "caller": "TmRingConn",
+          "callee": "tm_sensitive",
+          "lineNumber": 54
+        },
+        {
+          "caller": "TmRingConn",
+          "callee": "TM_MAKE_CPROC",
+          "lineNumber": 54
+        },
+        {
+          "caller": "TmRingConn",
+          "callee": "tm_ring_subnet_index",
+          "lineNumber": 56
+        },
+        {
+          "caller": "TmRingConn",
+          "callee": "tm_sensitive",
+          "lineNumber": 57
+        },
+        {
+          "caller": "TmRingConn",
+          "callee": "TM_MAKE_CPROC",
+          "lineNumber": 57
+        },
+        {
+          "caller": "TmRingConn",
+          "callee": "tm_ring_subnet_index",
+          "lineNumber": 59
+        },
+        {
+          "caller": "TmRingConn",
+          "callee": "tm_sensitive",
+          "lineNumber": 60
+        },
+        {
+          "caller": "TmRingConn",
+          "callee": "TM_MAKE_CPROC",
+          "lineNumber": 60
+        },
+        {
+          "caller": "TmRingConn",
+          "callee": "tm_ring_subnet_index",
+          "lineNumber": 62
+        },
+        {
+          "caller": "TmRingConn",
+          "callee": "tm_sensitive",
+          "lineNumber": 63
+        },
+        {
+          "caller": "TmRingConn",
+          "callee": "TM_MAKE_CPROC",
+          "lineNumber": 63
+        },
+        {
+          "caller": "TmRingConn",
+          "callee": "tm_ring_subnet_index",
+          "lineNumber": 65
+        },
+        {
+          "caller": "TmRingConn",
+          "callee": "reset",
+          "lineNumber": 67
+        },
+        {
+          "caller": "slot_subnet",
+          "callee": "static_cast<uint32_t>",
+          "lineNumber": 71
+        },
+        {
+          "caller": "slot_subnet",
+          "callee": "static_cast<uint32_t>",
+          "lineNumber": 74
+        },
+        {
+          "caller": "record_slot",
+          "callee": "std::max",
+          "lineNumber": 93
+        },
+        {
+          "caller": "reset",
+          "callee": "std::fill",
+          "lineNumber": 98
+        },
+        {
+          "caller": "reset",
+          "callee": "begin",
+          "lineNumber": 98
+        },
+        {
+          "caller": "reset",
+          "callee": "end",
+          "lineNumber": 98
+        },
+        {
+          "caller": "reset",
+          "callee": "std::fill",
+          "lineNumber": 99
+        },
+        {
+          "caller": "reset",
+          "callee": "begin",
+          "lineNumber": 99
+        },
+        {
+          "caller": "reset",
+          "callee": "end",
+          "lineNumber": 99
+        },
+        {
+          "caller": "reset",
+          "callee": "tm_ring_subnet_count",
+          "lineNumber": 100
+        },
+        {
+          "caller": "reset",
+          "callee": "clear_stats",
+          "lineNumber": 111
+        },
+        {
+          "caller": "reset",
+          "callee": "clear",
+          "lineNumber": 113
+        },
+        {
+          "caller": "clear_stats",
+          "callee": "clear",
+          "lineNumber": 119
+        },
+        {
+          "caller": "idle",
+          "callee": "size",
+          "lineNumber": 124
+        },
+        {
+          "caller": "idle",
+          "callee": "empty",
+          "lineNumber": 127
+        },
+        {
+          "caller": "can_accept",
+          "callee": "slot_subnet",
+          "lineNumber": 135
+        },
+        {
+          "caller": "can_accept",
+          "callee": "tm_ring_subnet_index",
+          "lineNumber": 136
+        },
+        {
+          "caller": "can_accept",
+          "callee": "record_stall",
+          "lineNumber": 139
+        },
+        {
+          "caller": "can_accept",
+          "callee": "record_stall",
+          "lineNumber": 143
+        },
+        {
+          "caller": "can_accept",
+          "callee": "record_stall",
+          "lineNumber": 144
+        },
+        {
+          "caller": "can_accept",
+          "callee": "full",
+          "lineNumber": 148
+        },
+        {
+          "caller": "can_accept",
+          "callee": "record_stall",
+          "lineNumber": 149
+        },
+        {
+          "caller": "can_accept",
+          "callee": "record_stall",
+          "lineNumber": 150
+        },
+        {
+          "caller": "accept_slot",
+          "callee": "can_accept",
+          "lineNumber": 157
+        },
+        {
+          "caller": "accept_slot",
+          "callee": "reserve_slot",
+          "lineNumber": 160
+        },
+        {
+          "caller": "reserve_slot",
+          "callee": "slot_subnet",
+          "lineNumber": 165
+        },
+        {
+          "caller": "reserve_slot",
+          "callee": "tm_ring_subnet_index",
+          "lineNumber": 166
+        },
+        {
+          "caller": "reserve_slot",
+          "callee": "tm_ring_packet_bytes",
+          "lineNumber": 167
+        },
+        {
+          "caller": "reserve_slot",
+          "callee": "tm_ring_serialization_cycles",
+          "lineNumber": 169
+        },
+        {
+          "caller": "reserve_slot",
+          "callee": "record_slot",
+          "lineNumber": 174
+        },
+        {
+          "caller": "reserve_slot",
+          "callee": "push_back",
+          "lineNumber": 177
+        },
+        {
+          "caller": "reserve_slot",
+          "callee": "notify_after",
+          "lineNumber": 178
+        },
+        {
+          "caller": "reserve_slot",
+          "callee": "notify_after",
+          "lineNumber": 185
+        },
+        {
+          "caller": "reserve_slot",
+          "callee": "notify_after",
+          "lineNumber": 187
+        },
+        {
+          "caller": "has_ready_slot",
+          "callee": "tm_ring_subnet_index",
+          "lineNumber": 196
+        },
+        {
+          "caller": "has_ready_slot",
+          "callee": "valid",
+          "lineNumber": 197
+        },
+        {
+          "caller": "has_ready_slot",
+          "callee": "empty",
+          "lineNumber": 198
+        },
+        {
+          "caller": "release_serializer",
+          "callee": "tm_ring_subnet_index",
+          "lineNumber": 202
+        },
+        {
+          "caller": "move_serializer_to_pipeline",
+          "callee": "tm_ring_subnet_index",
+          "lineNumber": 215
+        },
+        {
+          "caller": "move_serializer_to_pipeline",
+          "callee": "push_back",
+          "lineNumber": 224
+        },
+        {
+          "caller": "release_req_serializer",
+          "callee": "release_serializer",
+          "lineNumber": 229
+        },
+        {
+          "caller": "release_rsp_serializer",
+          "callee": "release_serializer",
+          "lineNumber": 233
+        },
+        {
+          "caller": "release_dat_serializer",
+          "callee": "release_serializer",
+          "lineNumber": 237
+        },
+        {
+          "caller": "move_req_serializer_to_pipeline",
+          "callee": "move_serializer_to_pipeline",
+          "lineNumber": 241
+        },
+        {
+          "caller": "move_rsp_serializer_to_pipeline",
+          "callee": "move_serializer_to_pipeline",
+          "lineNumber": 245
+        },
+        {
+          "caller": "move_dat_serializer_to_pipeline",
+          "callee": "move_serializer_to_pipeline",
+          "lineNumber": 249
+        },
+        {
+          "caller": "drain_ready_slots",
+          "callee": "size",
+          "lineNumber": 262
+        },
+        {
+          "caller": "drain_ready_slots",
+          "callee": "valid",
+          "lineNumber": 264
+        },
+        {
+          "caller": "drain_ready_slots",
+          "callee": "empty",
+          "lineNumber": 264
+        },
+        {
+          "caller": "drain_ready_slots",
+          "callee": "static_cast<TmRingSubnet>",
+          "lineNumber": 267
+        },
+        {
+          "caller": "drain_ready_slots",
+          "callee": "front",
+          "lineNumber": 268
+        },
+        {
+          "caller": "drain_ready_slots",
+          "callee": "full",
+          "lineNumber": 274
+        },
+        {
+          "caller": "drain_ready_slots",
+          "callee": "record_stall",
+          "lineNumber": 275
+        },
+        {
+          "caller": "drain_ready_slots",
+          "callee": "push_back",
+          "lineNumber": 279
+        },
+        {
+          "caller": "drain_ready_slots",
+          "callee": "pop_front",
+          "lineNumber": 281
+        }
+      ],
+      "metrics": {
+        "importCount": 1,
+        "exportCount": 23,
+        "functionCount": 23,
+        "classCount": 0
+      }
+    },
+    {
+      "path": "tm_ring_conn.h",
+      "language": "c",
+      "fileCategory": "code",
+      "totalLines": 84,
+      "nonEmptyLines": 74,
+      "callGraph": [
+        {
+          "caller": "tm_make_ring_conn",
+          "callee": "std::make_shared<TmRingConn>",
+          "lineNumber": 80
+        }
+      ],
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 0,
+        "functionCount": 0,
+        "classCount": 0
+      }
+    },
+    {
+      "path": "tm_ring_conn_test.cc",
+      "language": "cpp",
+      "fileCategory": "code",
+      "totalLines": 210,
+      "nonEmptyLines": 176,
+      "functions": [
+        {
+          "name": "TmRingConnFixture",
+          "startLine": 13,
+          "endLine": 25,
+          "params": []
+        },
+        {
+          "name": "make_dat",
+          "startLine": 27,
+          "endLine": 32,
+          "params": []
+        },
+        {
+          "name": "make_req",
+          "startLine": 34,
+          "endLine": 39,
+          "params": []
+        },
+        {
+          "name": "serialization_cycles",
+          "startLine": 41,
+          "endLine": 44,
+          "params": [
+            "slot"
+          ]
+        },
+        {
+          "name": "arrival_cycles",
+          "startLine": 46,
+          "endLine": 48,
+          "params": [
+            "slot"
+          ]
+        },
+        {
+          "name": "latency",
+          "startLine": 51,
+          "endLine": 51,
+          "params": []
+        },
+        {
+          "name": "width_bytes",
+          "startLine": 52,
+          "endLine": 52,
+          "params": []
+        },
+        {
+          "name": "TEST",
+          "startLine": 66,
+          "endLine": 92,
+          "params": []
+        },
+        {
+          "name": "TEST",
+          "startLine": 94,
+          "endLine": 106,
+          "params": []
+        },
+        {
+          "name": "TEST",
+          "startLine": 108,
+          "endLine": 136,
+          "params": []
+        },
+        {
+          "name": "TEST",
+          "startLine": 138,
+          "endLine": 142,
+          "params": []
+        },
+        {
+          "name": "TEST",
+          "startLine": 144,
+          "endLine": 162,
+          "params": []
+        },
+        {
+          "name": "TEST",
+          "startLine": 164,
+          "endLine": 183,
+          "params": []
+        },
+        {
+          "name": "TEST",
+          "startLine": 185,
+          "endLine": 208,
+          "params": []
+        }
+      ],
+      "classes": [
+        {
+          "name": "TmRingConnFixture",
+          "startLine": 11,
+          "endLine": 64,
+          "methods": [
+            "TmRingConnFixture",
+            "make_dat",
+            "make_req",
+            "serialization_cycles",
+            "arrival_cycles",
+            "latency",
+            "width_bytes"
+          ],
+          "properties": [
+            "conn_latency_",
+            "conn_width_bytes_",
+            "clk",
+            "req",
+            "rsp",
+            "dat",
+            "conn"
+          ]
+        }
+      ],
+      "exports": [
+        {
+          "name": "TmRingConnFixture",
+          "line": 13,
+          "isDefault": false
+        },
+        {
+          "name": "make_dat",
+          "line": 27,
+          "isDefault": false
+        },
+        {
+          "name": "make_req",
+          "line": 34,
+          "isDefault": false
+        },
+        {
+          "name": "serialization_cycles",
+          "line": 41,
+          "isDefault": false
+        },
+        {
+          "name": "arrival_cycles",
+          "line": 46,
+          "isDefault": false
+        },
+        {
+          "name": "TmRingConnFixture",
+          "line": 11,
+          "isDefault": false
+        },
+        {
+          "name": "TEST",
+          "line": 66,
+          "isDefault": false
+        },
+        {
+          "name": "TEST",
+          "line": 94,
+          "isDefault": false
+        },
+        {
+          "name": "TEST",
+          "line": 108,
+          "isDefault": false
+        },
+        {
+          "name": "TEST",
+          "line": 138,
+          "isDefault": false
+        },
+        {
+          "name": "TEST",
+          "line": 144,
+          "isDefault": false
+        },
+        {
+          "name": "TEST",
+          "line": 164,
+          "isDefault": false
+        },
+        {
+          "name": "TEST",
+          "line": 185,
+          "isDefault": false
+        }
+      ],
+      "callGraph": [
+        {
+          "caller": "TmRingConnFixture",
+          "callee": "tm_init",
+          "lineNumber": 17
+        },
+        {
+          "caller": "TmRingConnFixture",
+          "callee": "tm_make_clk",
+          "lineNumber": 18
+        },
+        {
+          "caller": "TmRingConnFixture",
+          "callee": "tm_make_com_que",
+          "lineNumber": 19
+        },
+        {
+          "caller": "TmRingConnFixture",
+          "callee": "tm_make_com_que",
+          "lineNumber": 20
+        },
+        {
+          "caller": "TmRingConnFixture",
+          "callee": "tm_make_com_que",
+          "lineNumber": 21
+        },
+        {
+          "caller": "TmRingConnFixture",
+          "callee": "tm_make_ring_conn",
+          "lineNumber": 22
+        },
+        {
+          "caller": "TmRingConnFixture",
+          "callee": "latency",
+          "lineNumber": 22
+        },
+        {
+          "caller": "TmRingConnFixture",
+          "callee": "width_bytes",
+          "lineNumber": 22
+        },
+        {
+          "caller": "TmRingConnFixture",
+          "callee": "attach",
+          "lineNumber": 24
+        },
+        {
+          "caller": "make_dat",
+          "callee": "tm_make_pld",
+          "lineNumber": 28
+        },
+        {
+          "caller": "make_dat",
+          "callee": "static_cast<uint32_t>",
+          "lineNumber": 29
+        },
+        {
+          "caller": "make_dat",
+          "callee": "static_cast<uint32_t>",
+          "lineNumber": 30
+        },
+        {
+          "caller": "make_req",
+          "callee": "tm_make_pld",
+          "lineNumber": 35
+        },
+        {
+          "caller": "make_req",
+          "callee": "static_cast<uint32_t>",
+          "lineNumber": 36
+        },
+        {
+          "caller": "make_req",
+          "callee": "static_cast<uint32_t>",
+          "lineNumber": 37
+        },
+        {
+          "caller": "serialization_cycles",
+          "callee": "tm_ring_serialization_cycles",
+          "lineNumber": 42
+        },
+        {
+          "caller": "serialization_cycles",
+          "callee": "tm_ring_packet_bytes",
+          "lineNumber": 42
+        },
+        {
+          "caller": "serialization_cycles",
+          "callee": "width_bytes",
+          "lineNumber": 43
+        },
+        {
+          "caller": "arrival_cycles",
+          "callee": "serialization_cycles",
+          "lineNumber": 47
+        },
+        {
+          "caller": "arrival_cycles",
+          "callee": "latency",
+          "lineNumber": 47
+        },
+        {
+          "caller": "TEST",
+          "callee": "make_dat",
+          "lineNumber": 69
+        },
+        {
+          "caller": "TEST",
+          "callee": "serialization_cycles",
+          "lineNumber": 71
+        },
+        {
+          "caller": "TEST",
+          "callee": "ASSERT_TRUE",
+          "lineNumber": 72
+        },
+        {
+          "caller": "TEST",
+          "callee": "accept_slot",
+          "lineNumber": 72
+        },
+        {
+          "caller": "TEST",
+          "callee": "tm_start",
+          "lineNumber": 74
+        },
+        {
+          "caller": "TEST",
+          "callee": "ASSERT_FALSE",
+          "lineNumber": 75
+        },
+        {
+          "caller": "TEST",
+          "callee": "accept_slot",
+          "lineNumber": 75
+        },
+        {
+          "caller": "TEST",
+          "callee": "make_dat",
+          "lineNumber": 76
+        },
+        {
+          "caller": "TEST",
+          "callee": "tm_start",
+          "lineNumber": 77
+        },
+        {
+          "caller": "TEST",
+          "callee": "EXPECT_TRUE",
+          "lineNumber": 78
+        },
+        {
+          "caller": "TEST",
+          "callee": "accept_slot",
+          "lineNumber": 78
+        },
+        {
+          "caller": "TEST",
+          "callee": "make_dat",
+          "lineNumber": 79
+        },
+        {
+          "caller": "TEST",
+          "callee": "make_dat",
+          "lineNumber": 83
+        },
+        {
+          "caller": "TEST",
+          "callee": "arrival_cycles",
+          "lineNumber": 84
+        },
+        {
+          "caller": "TEST",
+          "callee": "ASSERT_TRUE",
+          "lineNumber": 85
+        },
+        {
+          "caller": "TEST",
+          "callee": "accept_slot",
+          "lineNumber": 85
+        },
+        {
+          "caller": "TEST",
+          "callee": "tm_start",
+          "lineNumber": 87
+        },
+        {
+          "caller": "TEST",
+          "callee": "ASSERT_TRUE",
+          "lineNumber": 88
+        },
+        {
+          "caller": "TEST",
+          "callee": "empty",
+          "lineNumber": 88
+        },
+        {
+          "caller": "TEST",
+          "callee": "tm_start",
+          "lineNumber": 89
+        },
+        {
+          "caller": "TEST",
+          "callee": "ASSERT_FALSE",
+          "lineNumber": 90
+        },
+        {
+          "caller": "TEST",
+          "callee": "empty",
+          "lineNumber": 90
+        },
+        {
+          "caller": "TEST",
+          "callee": "EXPECT_EQ",
+          "lineNumber": 91
+        },
+        {
+          "caller": "TEST",
+          "callee": "front",
+          "lineNumber": 91
+        },
+        {
+          "caller": "TEST",
+          "callee": "make_dat",
+          "lineNumber": 96
+        },
+        {
+          "caller": "TEST",
+          "callee": "ASSERT_TRUE",
+          "lineNumber": 99
+        },
+        {
+          "caller": "TEST",
+          "callee": "accept_slot",
+          "lineNumber": 99
+        },
+        {
+          "caller": "TEST",
+          "callee": "EXPECT_TRUE",
+          "lineNumber": 100
+        },
+        {
+          "caller": "TEST",
+          "callee": "tm_start",
+          "lineNumber": 101
+        },
+        {
+          "caller": "TEST",
+          "callee": "EXPECT_TRUE",
+          "lineNumber": 102
+        },
+        {
+          "caller": "TEST",
+          "callee": "empty",
+          "lineNumber": 102
+        },
+        {
+          "caller": "TEST",
+          "callee": "tm_start",
+          "lineNumber": 103
+        },
+        {
+          "caller": "TEST",
+          "callee": "ASSERT_FALSE",
+          "lineNumber": 104
+        },
+        {
+          "caller": "TEST",
+          "callee": "empty",
+          "lineNumber": 104
+        },
+        {
+          "caller": "TEST",
+          "callee": "EXPECT_EQ",
+          "lineNumber": 105
+        },
+        {
+          "caller": "TEST",
+          "callee": "front",
+          "lineNumber": 105
+        },
+        {
+          "caller": "TEST",
+          "callee": "tm_init",
+          "lineNumber": 109
+        },
+        {
+          "caller": "TEST",
+          "callee": "tm_make_clk",
+          "lineNumber": 110
+        },
+        {
+          "caller": "TEST",
+          "callee": "tm_make_com_que",
+          "lineNumber": 111
+        },
+        {
+          "caller": "TEST",
+          "callee": "tm_make_com_que",
+          "lineNumber": 112
+        },
+        {
+          "caller": "TEST",
+          "callee": "tm_make_com_que",
+          "lineNumber": 113
+        },
+        {
+          "caller": "TEST",
+          "callee": "tm_make_com_que",
+          "lineNumber": 114
+        },
+        {
+          "caller": "TEST",
+          "callee": "tm_make_com_que",
+          "lineNumber": 115
+        },
+        {
+          "caller": "TEST",
+          "callee": "tm_make_com_que",
+          "lineNumber": 116
+        },
+        {
+          "caller": "TEST",
+          "callee": "tm_make_ring_conn",
+          "lineNumber": 117
+        },
+        {
+          "caller": "TEST",
+          "callee": "tm_make_ring_conn",
+          "lineNumber": 119
+        },
+        {
+          "caller": "TEST",
+          "callee": "attach",
+          "lineNumber": 121
+        },
+        {
+          "caller": "TEST",
+          "callee": "attach",
+          "lineNumber": 122
+        },
+        {
+          "caller": "TEST",
+          "callee": "tm_make_pld",
+          "lineNumber": 124
+        },
+        {
+          "caller": "TEST",
+          "callee": "static_cast<uint32_t>",
+          "lineNumber": 125
+        },
+        {
+          "caller": "TEST",
+          "callee": "static_cast<uint32_t>",
+          "lineNumber": 126
+        },
+        {
+          "caller": "TEST",
+          "callee": "ASSERT_TRUE",
+          "lineNumber": 127
+        },
+        {
+          "caller": "TEST",
+          "callee": "accept_slot",
+          "lineNumber": 127
+        },
+        {
+          "caller": "TEST",
+          "callee": "tm_start",
+          "lineNumber": 129
+        },
+        {
+          "caller": "TEST",
+          "callee": "ASSERT_FALSE",
+          "lineNumber": 130
+        },
+        {
+          "caller": "TEST",
+          "callee": "empty",
+          "lineNumber": 130
+        },
+        {
+          "caller": "TEST",
+          "callee": "pop_front",
+          "lineNumber": 131
+        },
+        {
+          "caller": "TEST",
+          "callee": "ASSERT_TRUE",
+          "lineNumber": 132
+        },
+        {
+          "caller": "TEST",
+          "callee": "accept_slot",
+          "lineNumber": 132
+        },
+        {
+          "caller": "TEST",
+          "callee": "tm_start",
+          "lineNumber": 133
+        },
+        {
+          "caller": "TEST",
+          "callee": "ASSERT_FALSE",
+          "lineNumber": 134
+        },
+        {
+          "caller": "TEST",
+          "callee": "empty",
+          "lineNumber": 134
+        },
+        {
+          "caller": "TEST",
+          "callee": "EXPECT_EQ",
+          "lineNumber": 135
+        },
+        {
+          "caller": "TEST",
+          "callee": "front",
+          "lineNumber": 135
+        },
+        {
+          "caller": "TEST",
+          "callee": "ASSERT_TRUE",
+          "lineNumber": 140
+        },
+        {
+          "caller": "TEST",
+          "callee": "accept_slot",
+          "lineNumber": 140
+        },
+        {
+          "caller": "TEST",
+          "callee": "make_dat",
+          "lineNumber": 140
+        },
+        {
+          "caller": "TEST",
+          "callee": "EXPECT_TRUE",
+          "lineNumber": 141
+        },
+        {
+          "caller": "TEST",
+          "callee": "accept_slot",
+          "lineNumber": 141
+        },
+        {
+          "caller": "TEST",
+          "callee": "make_req",
+          "lineNumber": 141
+        },
+        {
+          "caller": "TEST",
+          "callee": "push_back",
+          "lineNumber": 146
+        },
+        {
+          "caller": "TEST",
+          "callee": "make_dat",
+          "lineNumber": 146
+        },
+        {
+          "caller": "TEST",
+          "callee": "make_dat",
+          "lineNumber": 147
+        },
+        {
+          "caller": "TEST",
+          "callee": "arrival_cycles",
+          "lineNumber": 148
+        },
+        {
+          "caller": "TEST",
+          "callee": "ASSERT_TRUE",
+          "lineNumber": 149
+        },
+        {
+          "caller": "TEST",
+          "callee": "accept_slot",
+          "lineNumber": 149
+        },
+        {
+          "caller": "TEST",
+          "callee": "tm_start",
+          "lineNumber": 151
+        },
+        {
+          "caller": "TEST",
+          "callee": "EXPECT_FALSE",
+          "lineNumber": 152
+        },
+        {
+          "caller": "TEST",
+          "callee": "idle",
+          "lineNumber": 152
+        },
+        {
+          "caller": "TEST",
+          "callee": "EXPECT_GT",
+          "lineNumber": 153
+        },
+        {
+          "caller": "TEST",
+          "callee": "subnet_stats",
+          "lineNumber": 153
+        },
+        {
+          "caller": "TEST",
+          "callee": "uint64_t",
+          "lineNumber": 155
+        },
+        {
+          "caller": "TEST",
+          "callee": "pop_front",
+          "lineNumber": 157
+        },
+        {
+          "caller": "TEST",
+          "callee": "tm_start",
+          "lineNumber": 158
+        },
+        {
+          "caller": "TEST",
+          "callee": "EXPECT_TRUE",
+          "lineNumber": 159
+        },
+        {
+          "caller": "TEST",
+          "callee": "idle",
+          "lineNumber": 159
+        },
+        {
+          "caller": "TEST",
+          "callee": "ASSERT_FALSE",
+          "lineNumber": 160
+        },
+        {
+          "caller": "TEST",
+          "callee": "empty",
+          "lineNumber": 160
+        },
+        {
+          "caller": "TEST",
+          "callee": "EXPECT_EQ",
+          "lineNumber": 161
+        },
+        {
+          "caller": "TEST",
+          "callee": "front",
+          "lineNumber": 161
+        },
+        {
+          "caller": "TEST",
+          "callee": "make_dat",
+          "lineNumber": 166
+        },
+        {
+          "caller": "TEST",
+          "callee": "serialization_cycles",
+          "lineNumber": 168
+        },
+        {
+          "caller": "TEST",
+          "callee": "ASSERT_TRUE",
+          "lineNumber": 169
+        },
+        {
+          "caller": "TEST",
+          "callee": "accept_slot",
+          "lineNumber": 169
+        },
+        {
+          "caller": "TEST",
+          "callee": "tm_start",
+          "lineNumber": 171
+        },
+        {
+          "caller": "TEST",
+          "callee": "reset",
+          "lineNumber": 172
+        },
+        {
+          "caller": "TEST",
+          "callee": "EXPECT_FALSE",
+          "lineNumber": 173
+        },
+        {
+          "caller": "TEST",
+          "callee": "accept_slot",
+          "lineNumber": 173
+        },
+        {
+          "caller": "TEST",
+          "callee": "make_dat",
+          "lineNumber": 173
+        },
+        {
+          "caller": "TEST",
+          "callee": "tm_start",
+          "lineNumber": 175
+        },
+        {
+          "caller": "TEST",
+          "callee": "EXPECT_TRUE",
+          "lineNumber": 176
+        },
+        {
+          "caller": "TEST",
+          "callee": "empty",
+          "lineNumber": 176
+        },
+        {
+          "caller": "TEST",
+          "callee": "make_dat",
+          "lineNumber": 178
+        },
+        {
+          "caller": "TEST",
+          "callee": "ASSERT_TRUE",
+          "lineNumber": 179
+        },
+        {
+          "caller": "TEST",
+          "callee": "accept_slot",
+          "lineNumber": 179
+        },
+        {
+          "caller": "TEST",
+          "callee": "tm_start",
+          "lineNumber": 180
+        },
+        {
+          "caller": "TEST",
+          "callee": "arrival_cycles",
+          "lineNumber": 180
+        },
+        {
+          "caller": "TEST",
+          "callee": "ASSERT_FALSE",
+          "lineNumber": 181
+        },
+        {
+          "caller": "TEST",
+          "callee": "empty",
+          "lineNumber": 181
+        },
+        {
+          "caller": "TEST",
+          "callee": "EXPECT_EQ",
+          "lineNumber": 182
+        },
+        {
+          "caller": "TEST",
+          "callee": "front",
+          "lineNumber": 182
+        },
+        {
+          "caller": "TEST",
+          "callee": "push_back",
+          "lineNumber": 189
+        },
+        {
+          "caller": "TEST",
+          "callee": "make_dat",
+          "lineNumber": 189
+        },
+        {
+          "caller": "TEST",
+          "callee": "push_back",
+          "lineNumber": 190
+        },
+        {
+          "caller": "TEST",
+          "callee": "make_dat",
+          "lineNumber": 190
+        },
+        {
+          "caller": "TEST",
+          "callee": "push_back",
+          "lineNumber": 191
+        },
+        {
+          "caller": "TEST",
+          "callee": "make_dat",
+          "lineNumber": 191
+        },
+        {
+          "caller": "TEST",
+          "callee": "ASSERT_TRUE",
+          "lineNumber": 193
+        },
+        {
+          "caller": "TEST",
+          "callee": "accept_slot",
+          "lineNumber": 193
+        },
+        {
+          "caller": "TEST",
+          "callee": "front",
+          "lineNumber": 193
+        },
+        {
+          "caller": "TEST",
+          "callee": "serialization_cycles",
+          "lineNumber": 196
+        },
+        {
+          "caller": "TEST",
+          "callee": "tm_start",
+          "lineNumber": 197
+        },
+        {
+          "caller": "TEST",
+          "callee": "ASSERT_TRUE",
+          "lineNumber": 198
+        },
+        {
+          "caller": "TEST",
+          "callee": "accept_slot",
+          "lineNumber": 198
+        },
+        {
+          "caller": "TEST",
+          "callee": "tm_start",
+          "lineNumber": 201
+        },
+        {
+          "caller": "TEST",
+          "callee": "arrival_cycles",
+          "lineNumber": 201
+        },
+        {
+          "caller": "TEST",
+          "callee": "back",
+          "lineNumber": 201
+        },
+        {
+          "caller": "TEST",
+          "callee": "ASSERT_FALSE",
+          "lineNumber": 203
+        },
+        {
+          "caller": "TEST",
+          "callee": "empty",
+          "lineNumber": 203
+        },
+        {
+          "caller": "TEST",
+          "callee": "EXPECT_EQ",
+          "lineNumber": 204
+        },
+        {
+          "caller": "TEST",
+          "callee": "front",
+          "lineNumber": 204
+        },
+        {
+          "caller": "TEST",
+          "callee": "pop_front",
+          "lineNumber": 205
+        },
+        {
+          "caller": "TEST",
+          "callee": "EXPECT_TRUE",
+          "lineNumber": 207
+        },
+        {
+          "caller": "TEST",
+          "callee": "empty",
+          "lineNumber": 207
+        }
+      ],
+      "metrics": {
+        "importCount": 1,
+        "exportCount": 13,
+        "functionCount": 14,
+        "classCount": 1
+      }
+    },
+    {
+      "path": "tm_ring_core.cc",
+      "language": "cpp",
+      "fileCategory": "code",
+      "totalLines": 735,
+      "nonEmptyLines": 669,
+      "functions": [
+        {
+          "name": "is_power_of_two",
+          "startLine": 18,
+          "endLine": 20,
+          "params": [
+            "value"
+          ]
+        },
+        {
+          "name": "validate_ring_config",
+          "startLine": 22,
+          "endLine": 106,
+          "params": [
+            "cfg"
+          ]
+        },
+        {
+          "name": "TmRingFabric",
+          "startLine": 120,
+          "endLine": 125,
+          "params": [
+            "clk",
+            "cfg"
+          ]
+        },
+        {
+          "name": "config",
+          "startLine": 127,
+          "endLine": 151,
+          "params": []
+        },
+        {
+          "name": "init_topology",
+          "startLine": 153,
+          "endLine": 156,
+          "params": []
+        },
+        {
+          "name": "clear_components",
+          "startLine": 158,
+          "endLine": 165,
+          "params": []
+        },
+        {
+          "name": "create_domain",
+          "startLine": 167,
+          "endLine": 200,
+          "params": [
+            "type",
+            "ring_id",
+            "station_count"
+          ]
+        },
+        {
+          "name": "attach_domain",
+          "startLine": 202,
+          "endLine": 220,
+          "params": [
+            "domain"
+          ]
+        },
+        {
+          "name": "station",
+          "startLine": 222,
+          "endLine": 228,
+          "params": [
+            "location"
+          ]
+        },
+        {
+          "name": "output_conn",
+          "startLine": 230,
+          "endLine": 235,
+          "params": [
+            "domain",
+            "station_id",
+            "direction"
+          ]
+        },
+        {
+          "name": "create_master_nius",
+          "startLine": 237,
+          "endLine": 246,
+          "params": []
+        },
+        {
+          "name": "create_mem_ports",
+          "startLine": 248,
+          "endLine": 257,
+          "params": []
+        },
+        {
+          "name": "create_l2_buffer_nodes",
+          "startLine": 259,
+          "endLine": 268,
+          "params": []
+        },
+        {
+          "name": "create_rbrgs",
+          "startLine": 270,
+          "endLine": 283,
+          "params": []
+        },
+        {
+          "name": "bind_master_nius",
+          "startLine": 285,
+          "endLine": 289,
+          "params": []
+        },
+        {
+          "name": "bind_master_niu",
+          "startLine": 291,
+          "endLine": 298,
+          "params": [
+            "idx",
+            "niu"
+          ]
+        },
+        {
+          "name": "bind_mem_ports",
+          "startLine": 300,
+          "endLine": 307,
+          "params": []
+        },
+        {
+          "name": "bind_l2_buffer_nodes",
+          "startLine": 309,
+          "endLine": 317,
+          "params": []
+        },
+        {
+          "name": "bind_rbrgs",
+          "startLine": 319,
+          "endLine": 326,
+          "params": []
+        },
+        {
+          "name": "attach_l2_buffers",
+          "startLine": 328,
+          "endLine": 333,
+          "params": []
+        },
+        {
+          "name": "build",
+          "startLine": 335,
+          "endLine": 335,
+          "params": []
+        },
+        {
+          "name": "reset",
+          "startLine": 337,
+          "endLine": 366,
+          "params": []
+        },
+        {
+          "name": "clear_stats",
+          "startLine": 368,
+          "endLine": 400,
+          "params": []
+        },
+        {
+          "name": "idle",
+          "startLine": 402,
+          "endLine": 449,
+          "params": []
+        },
+        {
+          "name": "ring_conn_stall_breakdown",
+          "startLine": 451,
+          "endLine": 463,
+          "params": []
+        },
+        {
+          "name": "ring_queue_stats",
+          "startLine": 465,
+          "endLine": 505,
+          "params": [
+            "snapshot_cycle"
+          ]
+        },
+        {
+          "name": "ring_domain_stats",
+          "startLine": 507,
+          "endLine": 576,
+          "params": []
+        },
+        {
+          "name": "rbrg_stats",
+          "startLine": 578,
+          "endLine": 585,
+          "params": []
+        },
+        {
+          "name": "ring_link_width_bytes",
+          "startLine": 587,
+          "endLine": 589,
+          "params": []
+        },
+        {
+          "name": "rbrg_width_bytes",
+          "startLine": 591,
+          "endLine": 593,
+          "params": []
+        },
+        {
+          "name": "conn_stats",
+          "startLine": 595,
+          "endLine": 604,
+          "params": [
+            "subnet"
+          ]
+        },
+        {
+          "name": "ring_top_busy_conns",
+          "startLine": 606,
+          "endLine": 660,
+          "params": [
+            "subnet",
+            "limit"
+          ]
+        },
+        {
+          "name": "ring_conn_stalls",
+          "startLine": 662,
+          "endLine": 664,
+          "params": []
+        },
+        {
+          "name": "l2_buffer_stats",
+          "startLine": 666,
+          "endLine": 672,
+          "params": []
+        },
+        {
+          "name": "csstats",
+          "startLine": 674,
+          "endLine": 685,
+          "params": []
+        },
+        {
+          "name": "home_agent_stats",
+          "startLine": 687,
+          "endLine": 694,
+          "params": []
+        },
+        {
+          "name": "ha_source_stats",
+          "startLine": 696,
+          "endLine": 706,
+          "params": []
+        },
+        {
+          "name": "attach_master",
+          "startLine": 713,
+          "endLine": 717,
+          "params": [
+            "idx",
+            "biu"
+          ]
+        },
+        {
+          "name": "attach_master",
+          "startLine": 719,
+          "endLine": 723,
+          "params": [
+            "idx",
+            "inf"
+          ]
+        },
+        {
+          "name": "attach_target",
+          "startLine": 725,
+          "endLine": 729,
+          "params": [
+            "idx",
+            "inf"
+          ]
+        },
+        {
+          "name": "attach_target",
+          "startLine": 731,
+          "endLine": 735,
+          "params": [
+            "idx",
+            "mem"
+          ]
+        }
+      ],
+      "exports": [
+        {
+          "name": "is_power_of_two",
+          "line": 18,
+          "isDefault": false
+        },
+        {
+          "name": "validate_ring_config",
+          "line": 22,
+          "isDefault": false
+        },
+        {
+          "name": "TmRingFabric",
+          "line": 120,
+          "isDefault": false
+        },
+        {
+          "name": "config",
+          "line": 127,
+          "isDefault": false
+        },
+        {
+          "name": "init_topology",
+          "line": 153,
+          "isDefault": false
+        },
+        {
+          "name": "clear_components",
+          "line": 158,
+          "isDefault": false
+        },
+        {
+          "name": "create_domain",
+          "line": 167,
+          "isDefault": false
+        },
+        {
+          "name": "attach_domain",
+          "line": 202,
+          "isDefault": false
+        },
+        {
+          "name": "station",
+          "line": 222,
+          "isDefault": false
+        },
+        {
+          "name": "output_conn",
+          "line": 230,
+          "isDefault": false
+        },
+        {
+          "name": "create_master_nius",
+          "line": 237,
+          "isDefault": false
+        },
+        {
+          "name": "create_mem_ports",
+          "line": 248,
+          "isDefault": false
+        },
+        {
+          "name": "create_l2_buffer_nodes",
+          "line": 259,
+          "isDefault": false
+        },
+        {
+          "name": "create_rbrgs",
+          "line": 270,
+          "isDefault": false
+        },
+        {
+          "name": "bind_master_nius",
+          "line": 285,
+          "isDefault": false
+        },
+        {
+          "name": "bind_master_niu",
+          "line": 291,
+          "isDefault": false
+        },
+        {
+          "name": "bind_mem_ports",
+          "line": 300,
+          "isDefault": false
+        },
+        {
+          "name": "bind_l2_buffer_nodes",
+          "line": 309,
+          "isDefault": false
+        },
+        {
+          "name": "bind_rbrgs",
+          "line": 319,
+          "isDefault": false
+        },
+        {
+          "name": "attach_l2_buffers",
+          "line": 328,
+          "isDefault": false
+        },
+        {
+          "name": "build",
+          "line": 335,
+          "isDefault": false
+        },
+        {
+          "name": "reset",
+          "line": 337,
+          "isDefault": false
+        },
+        {
+          "name": "clear_stats",
+          "line": 368,
+          "isDefault": false
+        },
+        {
+          "name": "idle",
+          "line": 402,
+          "isDefault": false
+        },
+        {
+          "name": "ring_conn_stall_breakdown",
+          "line": 451,
+          "isDefault": false
+        },
+        {
+          "name": "ring_queue_stats",
+          "line": 465,
+          "isDefault": false
+        },
+        {
+          "name": "ring_domain_stats",
+          "line": 507,
+          "isDefault": false
+        },
+        {
+          "name": "rbrg_stats",
+          "line": 578,
+          "isDefault": false
+        },
+        {
+          "name": "ring_link_width_bytes",
+          "line": 587,
+          "isDefault": false
+        },
+        {
+          "name": "rbrg_width_bytes",
+          "line": 591,
+          "isDefault": false
+        },
+        {
+          "name": "conn_stats",
+          "line": 595,
+          "isDefault": false
+        },
+        {
+          "name": "ring_top_busy_conns",
+          "line": 606,
+          "isDefault": false
+        },
+        {
+          "name": "ring_conn_stalls",
+          "line": 662,
+          "isDefault": false
+        },
+        {
+          "name": "l2_buffer_stats",
+          "line": 666,
+          "isDefault": false
+        },
+        {
+          "name": "csstats",
+          "line": 674,
+          "isDefault": false
+        },
+        {
+          "name": "home_agent_stats",
+          "line": 687,
+          "isDefault": false
+        },
+        {
+          "name": "ha_source_stats",
+          "line": 696,
+          "isDefault": false
+        },
+        {
+          "name": "attach_master",
+          "line": 713,
+          "isDefault": false
+        },
+        {
+          "name": "attach_master",
+          "line": 719,
+          "isDefault": false
+        },
+        {
+          "name": "attach_target",
+          "line": 725,
+          "isDefault": false
+        },
+        {
+          "name": "attach_target",
+          "line": 731,
+          "isDefault": false
+        }
+      ],
+      "callGraph": [
+        {
+          "caller": "validate_ring_config",
+          "callee": "std::invalid_argument",
+          "lineNumber": 24
+        },
+        {
+          "caller": "validate_ring_config",
+          "callee": "std::invalid_argument",
+          "lineNumber": 27
+        },
+        {
+          "caller": "validate_ring_config",
+          "callee": "std::invalid_argument",
+          "lineNumber": 31
+        },
+        {
+          "caller": "validate_ring_config",
+          "callee": "empty",
+          "lineNumber": 34
+        },
+        {
+          "caller": "validate_ring_config",
+          "callee": "std::invalid_argument",
+          "lineNumber": 35
+        },
+        {
+          "caller": "validate_ring_config",
+          "callee": "static_cast<uint64_t>",
+          "lineNumber": 37
+        },
+        {
+          "caller": "validate_ring_config",
+          "callee": "static_cast<uint64_t>",
+          "lineNumber": 39
+        },
+        {
+          "caller": "validate_ring_config",
+          "callee": "std::invalid_argument",
+          "lineNumber": 48
+        },
+        {
+          "caller": "validate_ring_config",
+          "callee": "static_cast<uint64_t>",
+          "lineNumber": 52
+        },
+        {
+          "caller": "validate_ring_config",
+          "callee": "size",
+          "lineNumber": 52
+        },
+        {
+          "caller": "validate_ring_config",
+          "callee": "std::invalid_argument",
+          "lineNumber": 54
+        },
+        {
+          "caller": "validate_ring_config",
+          "callee": "static_cast<uint32_t>",
+          "lineNumber": 57
+        },
+        {
+          "caller": "validate_ring_config",
+          "callee": "tm_ring_subnet_count",
+          "lineNumber": 61
+        },
+        {
+          "caller": "validate_ring_config",
+          "callee": "std::invalid_argument",
+          "lineNumber": 64
+        },
+        {
+          "caller": "validate_ring_config",
+          "callee": "std::invalid_argument",
+          "lineNumber": 70
+        },
+        {
+          "caller": "validate_ring_config",
+          "callee": "std::invalid_argument",
+          "lineNumber": 75
+        },
+        {
+          "caller": "validate_ring_config",
+          "callee": "is_power_of_two",
+          "lineNumber": 81
+        },
+        {
+          "caller": "validate_ring_config",
+          "callee": "is_power_of_two",
+          "lineNumber": 81
+        },
+        {
+          "caller": "validate_ring_config",
+          "callee": "std::invalid_argument",
+          "lineNumber": 83
+        },
+        {
+          "caller": "validate_ring_config",
+          "callee": "std::invalid_argument",
+          "lineNumber": 91
+        },
+        {
+          "caller": "validate_ring_config",
+          "callee": "is_power_of_two",
+          "lineNumber": 95
+        },
+        {
+          "caller": "validate_ring_config",
+          "callee": "std::invalid_argument",
+          "lineNumber": 97
+        },
+        {
+          "caller": "validate_ring_config",
+          "callee": "std::invalid_argument",
+          "lineNumber": 102
+        },
+        {
+          "caller": "TmRingFabric",
+          "callee": "validate_ring_config",
+          "lineNumber": 122
+        },
+        {
+          "caller": "TmRingFabric",
+          "callee": "name",
+          "lineNumber": 123
+        },
+        {
+          "caller": "TmRingFabric",
+          "callee": "config",
+          "lineNumber": 124
+        },
+        {
+          "caller": "config",
+          "callee": "init_topology",
+          "lineNumber": 128
+        },
+        {
+          "caller": "config",
+          "callee": "clear_components",
+          "lineNumber": 129
+        },
+        {
+          "caller": "config",
+          "callee": "create_domain",
+          "lineNumber": 130
+        },
+        {
+          "caller": "config",
+          "callee": "h_ring_station_count",
+          "lineNumber": 131
+        },
+        {
+          "caller": "config",
+          "callee": "v_ring_count",
+          "lineNumber": 132
+        },
+        {
+          "caller": "config",
+          "callee": "push_back",
+          "lineNumber": 133
+        },
+        {
+          "caller": "config",
+          "callee": "create_domain",
+          "lineNumber": 133
+        },
+        {
+          "caller": "config",
+          "callee": "v_ring_station_count",
+          "lineNumber": 135
+        },
+        {
+          "caller": "config",
+          "callee": "create_master_nius",
+          "lineNumber": 137
+        },
+        {
+          "caller": "config",
+          "callee": "create_mem_ports",
+          "lineNumber": 138
+        },
+        {
+          "caller": "config",
+          "callee": "create_l2_buffer_nodes",
+          "lineNumber": 139
+        },
+        {
+          "caller": "config",
+          "callee": "create_rbrgs",
+          "lineNumber": 140
+        },
+        {
+          "caller": "config",
+          "callee": "bind_master_nius",
+          "lineNumber": 141
+        },
+        {
+          "caller": "config",
+          "callee": "bind_mem_ports",
+          "lineNumber": 142
+        },
+        {
+          "caller": "config",
+          "callee": "bind_l2_buffer_nodes",
+          "lineNumber": 143
+        },
+        {
+          "caller": "config",
+          "callee": "bind_rbrgs",
+          "lineNumber": 144
+        },
+        {
+          "caller": "config",
+          "callee": "attach_domain",
+          "lineNumber": 145
+        },
+        {
+          "caller": "config",
+          "callee": "size",
+          "lineNumber": 146
+        },
+        {
+          "caller": "config",
+          "callee": "attach_domain",
+          "lineNumber": 147
+        },
+        {
+          "caller": "config",
+          "callee": "attach_l2_buffers",
+          "lineNumber": 149
+        },
+        {
+          "caller": "config",
+          "callee": "reset",
+          "lineNumber": 150
+        },
+        {
+          "caller": "init_topology",
+          "callee": "std::make_shared<TmRingTopology>",
+          "lineNumber": 154
+        },
+        {
+          "caller": "init_topology",
+          "callee": "config",
+          "lineNumber": 155
+        },
+        {
+          "caller": "clear_components",
+          "callee": "clear",
+          "lineNumber": 159
+        },
+        {
+          "caller": "clear_components",
+          "callee": "clear",
+          "lineNumber": 160
+        },
+        {
+          "caller": "clear_components",
+          "callee": "clear",
+          "lineNumber": 161
+        },
+        {
+          "caller": "clear_components",
+          "callee": "TmRingDomain",
+          "lineNumber": 162
+        },
+        {
+          "caller": "clear_components",
+          "callee": "clear",
+          "lineNumber": 163
+        },
+        {
+          "caller": "clear_components",
+          "callee": "clear",
+          "lineNumber": 164
+        },
+        {
+          "caller": "create_domain",
+          "callee": "tm_make_ring_slot_pool",
+          "lineNumber": 173
+        },
+        {
+          "caller": "create_domain",
+          "callee": "name",
+          "lineNumber": 176
+        },
+        {
+          "caller": "create_domain",
+          "callee": "std::to_string",
+          "lineNumber": 179
+        },
+        {
+          "caller": "create_domain",
+          "callee": "push_back",
+          "lineNumber": 181
+        },
+        {
+          "caller": "create_domain",
+          "callee": "tm_make_ring_cs",
+          "lineNumber": 181
+        },
+        {
+          "caller": "create_domain",
+          "callee": "std::to_string",
+          "lineNumber": 182
+        },
+        {
+          "caller": "create_domain",
+          "callee": "neighbor_station",
+          "lineNumber": 187
+        },
+        {
+          "caller": "create_domain",
+          "callee": "tm_ring_opposite_dir",
+          "lineNumber": 189
+        },
+        {
+          "caller": "create_domain",
+          "callee": "std::to_string",
+          "lineNumber": 191
+        },
+        {
+          "caller": "create_domain",
+          "callee": "ring_dir_name",
+          "lineNumber": 192
+        },
+        {
+          "caller": "create_domain",
+          "callee": "std::to_string",
+          "lineNumber": 192
+        },
+        {
+          "caller": "create_domain",
+          "callee": "ring_dir_name",
+          "lineNumber": 193
+        },
+        {
+          "caller": "create_domain",
+          "callee": "push_back",
+          "lineNumber": 194
+        },
+        {
+          "caller": "create_domain",
+          "callee": "tm_make_ring_conn",
+          "lineNumber": 194
+        },
+        {
+          "caller": "attach_domain",
+          "callee": "size",
+          "lineNumber": 203
+        },
+        {
+          "caller": "attach_domain",
+          "callee": "attach",
+          "lineNumber": 205
+        },
+        {
+          "caller": "attach_domain",
+          "callee": "output_conn",
+          "lineNumber": 207
+        },
+        {
+          "caller": "attach_domain",
+          "callee": "output_conn",
+          "lineNumber": 208
+        },
+        {
+          "caller": "attach_domain",
+          "callee": "dst_station",
+          "lineNumber": 214
+        },
+        {
+          "caller": "attach_domain",
+          "callee": "attach",
+          "lineNumber": 215
+        },
+        {
+          "caller": "attach_domain",
+          "callee": "transit_in_reg",
+          "lineNumber": 216
+        },
+        {
+          "caller": "attach_domain",
+          "callee": "dst_dir",
+          "lineNumber": 216
+        },
+        {
+          "caller": "attach_domain",
+          "callee": "transit_in_reg",
+          "lineNumber": 217
+        },
+        {
+          "caller": "attach_domain",
+          "callee": "dst_dir",
+          "lineNumber": 217
+        },
+        {
+          "caller": "attach_domain",
+          "callee": "transit_in_reg",
+          "lineNumber": 218
+        },
+        {
+          "caller": "attach_domain",
+          "callee": "dst_dir",
+          "lineNumber": 218
+        },
+        {
+          "caller": "create_master_nius",
+          "callee": "static_cast<uint32_t>",
+          "lineNumber": 239
+        },
+        {
+          "caller": "create_master_nius",
+          "callee": "push_back",
+          "lineNumber": 242
+        },
+        {
+          "caller": "create_master_nius",
+          "callee": "tm_make_ring_master_niu",
+          "lineNumber": 242
+        },
+        {
+          "caller": "create_master_nius",
+          "callee": "name",
+          "lineNumber": 243
+        },
+        {
+          "caller": "create_master_nius",
+          "callee": "std::to_string",
+          "lineNumber": 243
+        },
+        {
+          "caller": "create_mem_ports",
+          "callee": "static_cast<uint32_t>",
+          "lineNumber": 250
+        },
+        {
+          "caller": "create_mem_ports",
+          "callee": "size",
+          "lineNumber": 252
+        },
+        {
+          "caller": "create_mem_ports",
+          "callee": "push_back",
+          "lineNumber": 253
+        },
+        {
+          "caller": "create_mem_ports",
+          "callee": "tm_make_ring_mem_port",
+          "lineNumber": 253
+        },
+        {
+          "caller": "create_mem_ports",
+          "callee": "name",
+          "lineNumber": 254
+        },
+        {
+          "caller": "create_mem_ports",
+          "callee": "std::to_string",
+          "lineNumber": 254
+        },
+        {
+          "caller": "create_l2_buffer_nodes",
+          "callee": "static_cast<uint32_t>",
+          "lineNumber": 261
+        },
+        {
+          "caller": "create_l2_buffer_nodes",
+          "callee": "size",
+          "lineNumber": 263
+        },
+        {
+          "caller": "create_l2_buffer_nodes",
+          "callee": "push_back",
+          "lineNumber": 264
+        },
+        {
+          "caller": "create_l2_buffer_nodes",
+          "callee": "tm_make_ring_l2_buffer_node",
+          "lineNumber": 264
+        },
+        {
+          "caller": "create_l2_buffer_nodes",
+          "callee": "name",
+          "lineNumber": 265
+        },
+        {
+          "caller": "create_l2_buffer_nodes",
+          "callee": "std::to_string",
+          "lineNumber": 265
+        },
+        {
+          "caller": "create_rbrgs",
+          "callee": "static_cast<uint32_t>",
+          "lineNumber": 272
+        },
+        {
+          "caller": "create_rbrgs",
+          "callee": "static_cast<uint32_t>",
+          "lineNumber": 275
+        },
+        {
+          "caller": "create_rbrgs",
+          "callee": "v_ring_count",
+          "lineNumber": 277
+        },
+        {
+          "caller": "create_rbrgs",
+          "callee": "push_back",
+          "lineNumber": 278
+        },
+        {
+          "caller": "create_rbrgs",
+          "callee": "tm_make_ring_rbrg_l1",
+          "lineNumber": 278
+        },
+        {
+          "caller": "create_rbrgs",
+          "callee": "name",
+          "lineNumber": 279
+        },
+        {
+          "caller": "create_rbrgs",
+          "callee": "std::to_string",
+          "lineNumber": 279
+        },
+        {
+          "caller": "bind_master_nius",
+          "callee": "size",
+          "lineNumber": 286
+        },
+        {
+          "caller": "bind_master_nius",
+          "callee": "bind_master_niu",
+          "lineNumber": 287
+        },
+        {
+          "caller": "bind_master_niu",
+          "callee": "attach",
+          "lineNumber": 295
+        },
+        {
+          "caller": "bind_master_niu",
+          "callee": "bind_node_interface",
+          "lineNumber": 296
+        },
+        {
+          "caller": "bind_master_niu",
+          "callee": "station",
+          "lineNumber": 296
+        },
+        {
+          "caller": "bind_master_niu",
+          "callee": "master_location",
+          "lineNumber": 296
+        },
+        {
+          "caller": "bind_master_niu",
+          "callee": "node_interface",
+          "lineNumber": 297
+        },
+        {
+          "caller": "bind_mem_ports",
+          "callee": "size",
+          "lineNumber": 301
+        },
+        {
+          "caller": "bind_mem_ports",
+          "callee": "attach",
+          "lineNumber": 303
+        },
+        {
+          "caller": "bind_mem_ports",
+          "callee": "bind_node_interface",
+          "lineNumber": 304
+        },
+        {
+          "caller": "bind_mem_ports",
+          "callee": "station",
+          "lineNumber": 304
+        },
+        {
+          "caller": "bind_mem_ports",
+          "callee": "ha_location",
+          "lineNumber": 304
+        },
+        {
+          "caller": "bind_mem_ports",
+          "callee": "node_interface",
+          "lineNumber": 305
+        },
+        {
+          "caller": "bind_l2_buffer_nodes",
+          "callee": "size",
+          "lineNumber": 310
+        },
+        {
+          "caller": "bind_l2_buffer_nodes",
+          "callee": "attach",
+          "lineNumber": 313
+        },
+        {
+          "caller": "bind_l2_buffer_nodes",
+          "callee": "bind_node_interface",
+          "lineNumber": 314
+        },
+        {
+          "caller": "bind_l2_buffer_nodes",
+          "callee": "station",
+          "lineNumber": 314
+        },
+        {
+          "caller": "bind_l2_buffer_nodes",
+          "callee": "l2_location",
+          "lineNumber": 314
+        },
+        {
+          "caller": "bind_l2_buffer_nodes",
+          "callee": "node_interface",
+          "lineNumber": 315
+        },
+        {
+          "caller": "bind_rbrgs",
+          "callee": "size",
+          "lineNumber": 320
+        },
+        {
+          "caller": "bind_rbrgs",
+          "callee": "bind_node_interface",
+          "lineNumber": 321
+        },
+        {
+          "caller": "bind_rbrgs",
+          "callee": "station",
+          "lineNumber": 321
+        },
+        {
+          "caller": "bind_rbrgs",
+          "callee": "rbrg_v_location",
+          "lineNumber": 321
+        },
+        {
+          "caller": "bind_rbrgs",
+          "callee": "v_node_interface",
+          "lineNumber": 322
+        },
+        {
+          "caller": "bind_rbrgs",
+          "callee": "bind_node_interface",
+          "lineNumber": 323
+        },
+        {
+          "caller": "bind_rbrgs",
+          "callee": "station",
+          "lineNumber": 323
+        },
+        {
+          "caller": "bind_rbrgs",
+          "callee": "rbrg_h_location",
+          "lineNumber": 323
+        },
+        {
+          "caller": "bind_rbrgs",
+          "callee": "h_node_interface",
+          "lineNumber": 324
+        },
+        {
+          "caller": "attach_l2_buffers",
+          "callee": "size",
+          "lineNumber": 329
+        },
+        {
+          "caller": "attach_l2_buffers",
+          "callee": "attach_l2_buffer",
+          "lineNumber": 331
+        },
+        {
+          "caller": "reset",
+          "callee": "reset",
+          "lineNumber": 338
+        },
+        {
+          "caller": "reset",
+          "callee": "reset",
+          "lineNumber": 340
+        },
+        {
+          "caller": "reset",
+          "callee": "reset",
+          "lineNumber": 343
+        },
+        {
+          "caller": "reset",
+          "callee": "reset",
+          "lineNumber": 346
+        },
+        {
+          "caller": "reset",
+          "callee": "reset",
+          "lineNumber": 348
+        },
+        {
+          "caller": "reset",
+          "callee": "reset",
+          "lineNumber": 351
+        },
+        {
+          "caller": "reset",
+          "callee": "reset",
+          "lineNumber": 355
+        },
+        {
+          "caller": "reset",
+          "callee": "reset",
+          "lineNumber": 358
+        },
+        {
+          "caller": "reset",
+          "callee": "reset",
+          "lineNumber": 361
+        },
+        {
+          "caller": "reset",
+          "callee": "reset",
+          "lineNumber": 364
+        },
+        {
+          "caller": "clear_stats",
+          "callee": "time",
+          "lineNumber": 369
+        },
+        {
+          "caller": "clear_stats",
+          "callee": "clear_stats",
+          "lineNumber": 371
+        },
+        {
+          "caller": "clear_stats",
+          "callee": "clear_stats",
+          "lineNumber": 374
+        },
+        {
+          "caller": "clear_stats",
+          "callee": "clear_stats",
+          "lineNumber": 378
+        },
+        {
+          "caller": "clear_stats",
+          "callee": "clear_stats",
+          "lineNumber": 381
+        },
+        {
+          "caller": "clear_stats",
+          "callee": "clear_stats",
+          "lineNumber": 385
+        },
+        {
+          "caller": "clear_stats",
+          "callee": "clear_stats",
+          "lineNumber": 386
+        },
+        {
+          "caller": "clear_stats",
+          "callee": "v_node_interface",
+          "lineNumber": 386
+        },
+        {
+          "caller": "clear_stats",
+          "callee": "clear_stats",
+          "lineNumber": 387
+        },
+        {
+          "caller": "clear_stats",
+          "callee": "h_node_interface",
+          "lineNumber": 387
+        },
+        {
+          "caller": "clear_stats",
+          "callee": "clear_stats",
+          "lineNumber": 390
+        },
+        {
+          "caller": "clear_stats",
+          "callee": "node_interface",
+          "lineNumber": 390
+        },
+        {
+          "caller": "clear_stats",
+          "callee": "clear_stats",
+          "lineNumber": 393
+        },
+        {
+          "caller": "clear_stats",
+          "callee": "clear_stats",
+          "lineNumber": 394
+        },
+        {
+          "caller": "clear_stats",
+          "callee": "node_interface",
+          "lineNumber": 394
+        },
+        {
+          "caller": "clear_stats",
+          "callee": "clear_stats",
+          "lineNumber": 397
+        },
+        {
+          "caller": "clear_stats",
+          "callee": "clear_stats",
+          "lineNumber": 398
+        },
+        {
+          "caller": "clear_stats",
+          "callee": "node_interface",
+          "lineNumber": 398
+        },
+        {
+          "caller": "idle",
+          "callee": "empty",
+          "lineNumber": 404
+        },
+        {
+          "caller": "idle",
+          "callee": "idle",
+          "lineNumber": 408
+        },
+        {
+          "caller": "idle",
+          "callee": "idle",
+          "lineNumber": 413
+        },
+        {
+          "caller": "idle",
+          "callee": "domain_idle",
+          "lineNumber": 420
+        },
+        {
+          "caller": "idle",
+          "callee": "domain_idle",
+          "lineNumber": 424
+        },
+        {
+          "caller": "idle",
+          "callee": "idle",
+          "lineNumber": 429
+        },
+        {
+          "caller": "idle",
+          "callee": "idle",
+          "lineNumber": 434
+        },
+        {
+          "caller": "idle",
+          "callee": "idle",
+          "lineNumber": 439
+        },
+        {
+          "caller": "idle",
+          "callee": "idle",
+          "lineNumber": 444
+        },
+        {
+          "caller": "ring_conn_stall_breakdown",
+          "callee": "merge_from",
+          "lineNumber": 454
+        },
+        {
+          "caller": "ring_conn_stall_breakdown",
+          "callee": "conn_stats",
+          "lineNumber": 454
+        },
+        {
+          "caller": "ring_conn_stall_breakdown",
+          "callee": "merge_from",
+          "lineNumber": 455
+        },
+        {
+          "caller": "ring_conn_stall_breakdown",
+          "callee": "conn_stats",
+          "lineNumber": 455
+        },
+        {
+          "caller": "ring_conn_stall_breakdown",
+          "callee": "merge_from",
+          "lineNumber": 456
+        },
+        {
+          "caller": "ring_conn_stall_breakdown",
+          "callee": "conn_stats",
+          "lineNumber": 456
+        },
+        {
+          "caller": "ring_queue_stats",
+          "callee": "reserve",
+          "lineNumber": 468
+        },
+        {
+          "caller": "ring_queue_stats",
+          "callee": "size",
+          "lineNumber": 468
+        },
+        {
+          "caller": "ring_queue_stats",
+          "callee": "size",
+          "lineNumber": 468
+        },
+        {
+          "caller": "ring_queue_stats",
+          "callee": "size",
+          "lineNumber": 469
+        },
+        {
+          "caller": "ring_queue_stats",
+          "callee": "size",
+          "lineNumber": 469
+        },
+        {
+          "caller": "ring_queue_stats",
+          "callee": "queue_stats",
+          "lineNumber": 476
+        },
+        {
+          "caller": "ring_queue_stats",
+          "callee": "push_back",
+          "lineNumber": 482
+        },
+        {
+          "caller": "ring_queue_stats",
+          "callee": "size",
+          "lineNumber": 486
+        },
+        {
+          "caller": "ring_queue_stats",
+          "callee": "append_endpoint",
+          "lineNumber": 487
+        },
+        {
+          "caller": "ring_queue_stats",
+          "callee": "node_interface",
+          "lineNumber": 488
+        },
+        {
+          "caller": "ring_queue_stats",
+          "callee": "size",
+          "lineNumber": 490
+        },
+        {
+          "caller": "ring_queue_stats",
+          "callee": "append_endpoint",
+          "lineNumber": 491
+        },
+        {
+          "caller": "ring_queue_stats",
+          "callee": "node_interface",
+          "lineNumber": 492
+        },
+        {
+          "caller": "ring_queue_stats",
+          "callee": "size",
+          "lineNumber": 494
+        },
+        {
+          "caller": "ring_queue_stats",
+          "callee": "append_endpoint",
+          "lineNumber": 495
+        },
+        {
+          "caller": "ring_queue_stats",
+          "callee": "node_interface",
+          "lineNumber": 496
+        },
+        {
+          "caller": "ring_queue_stats",
+          "callee": "size",
+          "lineNumber": 498
+        },
+        {
+          "caller": "ring_queue_stats",
+          "callee": "append_endpoint",
+          "lineNumber": 499
+        },
+        {
+          "caller": "ring_queue_stats",
+          "callee": "v_node_interface",
+          "lineNumber": 500
+        },
+        {
+          "caller": "ring_queue_stats",
+          "callee": "append_endpoint",
+          "lineNumber": 501
+        },
+        {
+          "caller": "ring_queue_stats",
+          "callee": "h_node_interface",
+          "lineNumber": 502
+        },
+        {
+          "caller": "ring_domain_stats",
+          "callee": "reserve",
+          "lineNumber": 509
+        },
+        {
+          "caller": "ring_domain_stats",
+          "callee": "size",
+          "lineNumber": 509
+        },
+        {
+          "caller": "ring_domain_stats",
+          "callee": "static_cast<uint32_t>",
+          "lineNumber": 516
+        },
+        {
+          "caller": "ring_domain_stats",
+          "callee": "size",
+          "lineNumber": 516
+        },
+        {
+          "caller": "ring_domain_stats",
+          "callee": "merge_from",
+          "lineNumber": 518
+        },
+        {
+          "caller": "ring_domain_stats",
+          "callee": "stats",
+          "lineNumber": 518
+        },
+        {
+          "caller": "ring_domain_stats",
+          "callee": "size",
+          "lineNumber": 522
+        },
+        {
+          "caller": "ring_domain_stats",
+          "callee": "static_cast<TmRingSubnet>",
+          "lineNumber": 528
+        },
+        {
+          "caller": "ring_domain_stats",
+          "callee": "subnet_stats",
+          "lineNumber": 529
+        },
+        {
+          "caller": "ring_domain_stats",
+          "callee": "merge_from",
+          "lineNumber": 533
+        },
+        {
+          "caller": "ring_domain_stats",
+          "callee": "dst_station",
+          "lineNumber": 538
+        },
+        {
+          "caller": "ring_domain_stats",
+          "callee": "dst_dir",
+          "lineNumber": 539
+        },
+        {
+          "caller": "ring_domain_stats",
+          "callee": "tm_ring_conn_total_stalls",
+          "lineNumber": 546
+        },
+        {
+          "caller": "ring_domain_stats",
+          "callee": "push_back",
+          "lineNumber": 548
+        },
+        {
+          "caller": "ring_domain_stats",
+          "callee": "push_back",
+          "lineNumber": 568
+        },
+        {
+          "caller": "ring_domain_stats",
+          "callee": "append_domain",
+          "lineNumber": 571
+        },
+        {
+          "caller": "ring_domain_stats",
+          "callee": "append_domain",
+          "lineNumber": 573
+        },
+        {
+          "caller": "rbrg_stats",
+          "callee": "reserve",
+          "lineNumber": 580
+        },
+        {
+          "caller": "rbrg_stats",
+          "callee": "size",
+          "lineNumber": 580
+        },
+        {
+          "caller": "rbrg_stats",
+          "callee": "push_back",
+          "lineNumber": 582
+        },
+        {
+          "caller": "rbrg_stats",
+          "callee": "stats",
+          "lineNumber": 582
+        },
+        {
+          "caller": "conn_stats",
+          "callee": "static_cast<uint32_t>",
+          "lineNumber": 597
+        },
+        {
+          "caller": "conn_stats",
+          "callee": "ring_domain_stats",
+          "lineNumber": 598
+        },
+        {
+          "caller": "conn_stats",
+          "callee": "merge_from",
+          "lineNumber": 600
+        },
+        {
+          "caller": "conn_stats",
+          "callee": "merge_from",
+          "lineNumber": 601
+        },
+        {
+          "caller": "ring_top_busy_conns",
+          "callee": "size",
+          "lineNumber": 611
+        },
+        {
+          "caller": "ring_top_busy_conns",
+          "callee": "subnet_stats",
+          "lineNumber": 613
+        },
+        {
+          "caller": "ring_top_busy_conns",
+          "callee": "dst_station",
+          "lineNumber": 618
+        },
+        {
+          "caller": "ring_top_busy_conns",
+          "callee": "dst_dir",
+          "lineNumber": 619
+        },
+        {
+          "caller": "ring_top_busy_conns",
+          "callee": "tm_ring_conn_total_stalls",
+          "lineNumber": 625
+        },
+        {
+          "caller": "ring_top_busy_conns",
+          "callee": "push_back",
+          "lineNumber": 627
+        },
+        {
+          "caller": "ring_top_busy_conns",
+          "callee": "append_domain",
+          "lineNumber": 630
+        },
+        {
+          "caller": "ring_top_busy_conns",
+          "callee": "append_domain",
+          "lineNumber": 632
+        },
+        {
+          "caller": "ring_top_busy_conns",
+          "callee": "std::sort",
+          "lineNumber": 635
+        },
+        {
+          "caller": "ring_top_busy_conns",
+          "callee": "begin",
+          "lineNumber": 636
+        },
+        {
+          "caller": "ring_top_busy_conns",
+          "callee": "end",
+          "lineNumber": 636
+        },
+        {
+          "caller": "ring_top_busy_conns",
+          "callee": "static_cast<uint32_t>",
+          "lineNumber": 652
+        },
+        {
+          "caller": "ring_top_busy_conns",
+          "callee": "static_cast<uint32_t>",
+          "lineNumber": 653
+        },
+        {
+          "caller": "ring_top_busy_conns",
+          "callee": "size",
+          "lineNumber": 656
+        },
+        {
+          "caller": "ring_top_busy_conns",
+          "callee": "resize",
+          "lineNumber": 657
+        },
+        {
+          "caller": "ring_conn_stalls",
+          "callee": "total",
+          "lineNumber": 663
+        },
+        {
+          "caller": "ring_conn_stalls",
+          "callee": "ring_conn_stall_breakdown",
+          "lineNumber": 663
+        },
+        {
+          "caller": "l2_buffer_stats",
+          "callee": "merge_from",
+          "lineNumber": 669
+        },
+        {
+          "caller": "l2_buffer_stats",
+          "callee": "stats",
+          "lineNumber": 669
+        },
+        {
+          "caller": "csstats",
+          "callee": "merge_from",
+          "lineNumber": 677
+        },
+        {
+          "caller": "csstats",
+          "callee": "stats",
+          "lineNumber": 677
+        },
+        {
+          "caller": "csstats",
+          "callee": "merge_from",
+          "lineNumber": 681
+        },
+        {
+          "caller": "csstats",
+          "callee": "stats",
+          "lineNumber": 681
+        },
+        {
+          "caller": "home_agent_stats",
+          "callee": "home_agent_stats",
+          "lineNumber": 690
+        },
+        {
+          "caller": "home_agent_stats",
+          "callee": "merge_from",
+          "lineNumber": 691
+        },
+        {
+          "caller": "ha_source_stats",
+          "callee": "ha_source_stats",
+          "lineNumber": 699
+        },
+        {
+          "caller": "ha_source_stats",
+          "callee": "push_back",
+          "lineNumber": 701
+        },
+        {
+          "caller": "attach_master",
+          "callee": "attach_master",
+          "lineNumber": 715
+        },
+        {
+          "caller": "attach_master",
+          "callee": "size",
+          "lineNumber": 720
+        },
+        {
+          "caller": "attach_master",
+          "callee": "attach",
+          "lineNumber": 721
+        },
+        {
+          "caller": "attach_target",
+          "callee": "size",
+          "lineNumber": 726
+        },
+        {
+          "caller": "attach_target",
+          "callee": "attach",
+          "lineNumber": 727
+        },
+        {
+          "caller": "attach_target",
+          "callee": "size",
+          "lineNumber": 732
+        },
+        {
+          "caller": "attach_target",
+          "callee": "attach",
+          "lineNumber": 733
+        }
+      ],
+      "metrics": {
+        "importCount": 6,
+        "exportCount": 41,
+        "functionCount": 41,
+        "classCount": 0
+      }
+    },
+    {
+      "path": "tm_ring_master_niu.cc",
+      "language": "cpp",
+      "fileCategory": "code",
+      "totalLines": 157,
+      "nonEmptyLines": 134,
+      "functions": [
+        {
+          "name": "TmRingMasterNiu",
+          "startLine": 7,
+          "endLine": 12,
+          "params": [
+            "name",
+            "clk",
+            "master_port",
+            "queue_depths"
+          ]
+        },
+        {
+          "name": "config",
+          "startLine": 14,
+          "endLine": 38,
+          "params": [
+            "clk",
+            "queue_depths"
+          ]
+        },
+        {
+          "name": "reset",
+          "startLine": 40,
+          "endLine": 44,
+          "params": []
+        },
+        {
+          "name": "idle",
+          "startLine": 46,
+          "endLine": 48,
+          "params": []
+        },
+        {
+          "name": "attach",
+          "startLine": 50,
+          "endLine": 52,
+          "params": [
+            "biu_inf"
+          ]
+        },
+        {
+          "name": "attach",
+          "startLine": 54,
+          "endLine": 56,
+          "params": [
+            "topology"
+          ]
+        },
+        {
+          "name": "node_interface",
+          "startLine": 58,
+          "endLine": 60,
+          "params": []
+        },
+        {
+          "name": "recv_biu_request",
+          "startLine": 62,
+          "endLine": 80,
+          "params": []
+        },
+        {
+          "name": "recv_biu_data",
+          "startLine": 82,
+          "endLine": 82,
+          "params": []
+        },
+        {
+          "name": "recv_rsp",
+          "startLine": 84,
+          "endLine": 99,
+          "params": []
+        },
+        {
+          "name": "recv_dat",
+          "startLine": 101,
+          "endLine": 112,
+          "params": []
+        },
+        {
+          "name": "forward_biu_request",
+          "startLine": 114,
+          "endLine": 127,
+          "params": [
+            "cmd"
+          ]
+        },
+        {
+          "name": "forward_biu_data",
+          "startLine": 129,
+          "endLine": 142,
+          "params": []
+        },
+        {
+          "name": "prepare_ring_request",
+          "startLine": 144,
+          "endLine": 157,
+          "params": [
+            "pld",
+            "cmd"
+          ]
+        }
+      ],
+      "exports": [
+        {
+          "name": "TmRingMasterNiu",
+          "line": 7,
+          "isDefault": false
+        },
+        {
+          "name": "config",
+          "line": 14,
+          "isDefault": false
+        },
+        {
+          "name": "reset",
+          "line": 40,
+          "isDefault": false
+        },
+        {
+          "name": "idle",
+          "line": 46,
+          "isDefault": false
+        },
+        {
+          "name": "attach",
+          "line": 50,
+          "isDefault": false
+        },
+        {
+          "name": "attach",
+          "line": 54,
+          "isDefault": false
+        },
+        {
+          "name": "node_interface",
+          "line": 58,
+          "isDefault": false
+        },
+        {
+          "name": "recv_biu_request",
+          "line": 62,
+          "isDefault": false
+        },
+        {
+          "name": "recv_biu_data",
+          "line": 82,
+          "isDefault": false
+        },
+        {
+          "name": "recv_rsp",
+          "line": 84,
+          "isDefault": false
+        },
+        {
+          "name": "recv_dat",
+          "line": 101,
+          "isDefault": false
+        },
+        {
+          "name": "forward_biu_request",
+          "line": 114,
+          "isDefault": false
+        },
+        {
+          "name": "forward_biu_data",
+          "line": 129,
+          "isDefault": false
+        },
+        {
+          "name": "prepare_ring_request",
+          "line": 144,
+          "isDefault": false
+        }
+      ],
+      "callGraph": [
+        {
+          "caller": "TmRingMasterNiu",
+          "callee": "config",
+          "lineNumber": 11
+        },
+        {
+          "caller": "config",
+          "callee": "tm_ring_rd_rsp_bus_channel",
+          "lineNumber": 19
+        },
+        {
+          "caller": "config",
+          "callee": "tm_make_com_inf",
+          "lineNumber": 21
+        },
+        {
+          "caller": "config",
+          "callee": "name",
+          "lineNumber": 21
+        },
+        {
+          "caller": "config",
+          "callee": "tm_ring_inf_depth",
+          "lineNumber": 21
+        },
+        {
+          "caller": "config",
+          "callee": "set_chan_num",
+          "lineNumber": 22
+        },
+        {
+          "caller": "config",
+          "callee": "tm_make_ring_node_interface",
+          "lineNumber": 24
+        },
+        {
+          "caller": "config",
+          "callee": "name",
+          "lineNumber": 25
+        },
+        {
+          "caller": "config",
+          "callee": "tm_sensitive",
+          "lineNumber": 27
+        },
+        {
+          "caller": "config",
+          "callee": "TM_MAKE_CPROC",
+          "lineNumber": 27
+        },
+        {
+          "caller": "config",
+          "callee": "tm_sensitive",
+          "lineNumber": 29
+        },
+        {
+          "caller": "config",
+          "callee": "TM_MAKE_CPROC",
+          "lineNumber": 29
+        },
+        {
+          "caller": "config",
+          "callee": "tm_sensitive",
+          "lineNumber": 30
+        },
+        {
+          "caller": "config",
+          "callee": "TM_MAKE_CPROC",
+          "lineNumber": 30
+        },
+        {
+          "caller": "config",
+          "callee": "eject_q",
+          "lineNumber": 31
+        },
+        {
+          "caller": "config",
+          "callee": "tm_sensitive",
+          "lineNumber": 32
+        },
+        {
+          "caller": "config",
+          "callee": "TM_MAKE_CPROC",
+          "lineNumber": 32
+        },
+        {
+          "caller": "config",
+          "callee": "eject_q",
+          "lineNumber": 33
+        },
+        {
+          "caller": "config",
+          "callee": "make_shared<RR_Arb>",
+          "lineNumber": 35
+        },
+        {
+          "caller": "config",
+          "callee": "reset",
+          "lineNumber": 37
+        },
+        {
+          "caller": "reset",
+          "callee": "reset",
+          "lineNumber": 41
+        },
+        {
+          "caller": "reset",
+          "callee": "reset",
+          "lineNumber": 42
+        },
+        {
+          "caller": "idle",
+          "callee": "idle",
+          "lineNumber": 47
+        },
+        {
+          "caller": "idle",
+          "callee": "idle",
+          "lineNumber": 47
+        },
+        {
+          "caller": "attach",
+          "callee": "connect",
+          "lineNumber": 51
+        },
+        {
+          "caller": "recv_biu_request",
+          "callee": "valid",
+          "lineNumber": 66
+        },
+        {
+          "caller": "recv_biu_request",
+          "callee": "tm_ring_cmd_bus_channel",
+          "lineNumber": 66
+        },
+        {
+          "caller": "recv_biu_request",
+          "callee": "req",
+          "lineNumber": 67
+        },
+        {
+          "caller": "recv_biu_request",
+          "callee": "get_arb",
+          "lineNumber": 70
+        },
+        {
+          "caller": "recv_biu_request",
+          "callee": "forward_biu_request",
+          "lineNumber": 77
+        },
+        {
+          "caller": "recv_biu_data",
+          "callee": "forward_biu_data",
+          "lineNumber": 82
+        },
+        {
+          "caller": "recv_rsp",
+          "callee": "eject_q",
+          "lineNumber": 85
+        },
+        {
+          "caller": "recv_rsp",
+          "callee": "empty",
+          "lineNumber": 86
+        },
+        {
+          "caller": "recv_rsp",
+          "callee": "front",
+          "lineNumber": 90
+        },
+        {
+          "caller": "recv_rsp",
+          "callee": "static_cast<PldCmd>",
+          "lineNumber": 91
+        },
+        {
+          "caller": "recv_rsp",
+          "callee": "tm_ring_cmd_bus_channel",
+          "lineNumber": 93
+        },
+        {
+          "caller": "recv_rsp",
+          "callee": "tm_ring_cmd_bus_channel",
+          "lineNumber": 94
+        },
+        {
+          "caller": "recv_rsp",
+          "callee": "send",
+          "lineNumber": 95
+        },
+        {
+          "caller": "recv_rsp",
+          "callee": "pop_eject",
+          "lineNumber": 98
+        },
+        {
+          "caller": "recv_dat",
+          "callee": "eject_q",
+          "lineNumber": 102
+        },
+        {
+          "caller": "recv_dat",
+          "callee": "empty",
+          "lineNumber": 103
+        },
+        {
+          "caller": "recv_dat",
+          "callee": "front",
+          "lineNumber": 107
+        },
+        {
+          "caller": "recv_dat",
+          "callee": "send",
+          "lineNumber": 108
+        },
+        {
+          "caller": "recv_dat",
+          "callee": "tm_ring_rd_rsp_bus_channel",
+          "lineNumber": 108
+        },
+        {
+          "caller": "recv_dat",
+          "callee": "pop_eject",
+          "lineNumber": 111
+        },
+        {
+          "caller": "forward_biu_request",
+          "callee": "tm_ring_cmd_bus_channel",
+          "lineNumber": 115
+        },
+        {
+          "caller": "forward_biu_request",
+          "callee": "valid",
+          "lineNumber": 116
+        },
+        {
+          "caller": "forward_biu_request",
+          "callee": "get_pld",
+          "lineNumber": 120
+        },
+        {
+          "caller": "forward_biu_request",
+          "callee": "prepare_ring_request",
+          "lineNumber": 121
+        },
+        {
+          "caller": "forward_biu_request",
+          "callee": "push_inject",
+          "lineNumber": 122
+        },
+        {
+          "caller": "forward_biu_request",
+          "callee": "pop_pld",
+          "lineNumber": 125
+        },
+        {
+          "caller": "forward_biu_data",
+          "callee": "tm_ring_cmd_bus_channel",
+          "lineNumber": 130
+        },
+        {
+          "caller": "forward_biu_data",
+          "callee": "valid",
+          "lineNumber": 131
+        },
+        {
+          "caller": "forward_biu_data",
+          "callee": "get_pld",
+          "lineNumber": 135
+        },
+        {
+          "caller": "forward_biu_data",
+          "callee": "prepare_ring_request",
+          "lineNumber": 136
+        },
+        {
+          "caller": "forward_biu_data",
+          "callee": "push_inject",
+          "lineNumber": 137
+        },
+        {
+          "caller": "forward_biu_data",
+          "callee": "pop_pld",
+          "lineNumber": 140
+        },
+        {
+          "caller": "prepare_ring_request",
+          "callee": "decode_target",
+          "lineNumber": 145
+        },
+        {
+          "caller": "prepare_ring_request",
+          "callee": "master_location",
+          "lineNumber": 146
+        },
+        {
+          "caller": "prepare_ring_request",
+          "callee": "rbrg_v_location",
+          "lineNumber": 148
+        },
+        {
+          "caller": "prepare_ring_request",
+          "callee": "master_vring",
+          "lineNumber": 148
+        },
+        {
+          "caller": "prepare_ring_request",
+          "callee": "static_cast<uint32_t>",
+          "lineNumber": 151
+        },
+        {
+          "caller": "prepare_ring_request",
+          "callee": "tm_ring_cmd_subnet",
+          "lineNumber": 151
+        },
+        {
+          "caller": "prepare_ring_request",
+          "callee": "static_cast<uint32_t>",
+          "lineNumber": 152
+        },
+        {
+          "caller": "prepare_ring_request",
+          "callee": "tm_pld_set_ring_route",
+          "lineNumber": 153
+        },
+        {
+          "caller": "prepare_ring_request",
+          "callee": "static_cast<uint32_t>",
+          "lineNumber": 153
+        },
+        {
+          "caller": "prepare_ring_request",
+          "callee": "static_cast<uint32_t>",
+          "lineNumber": 155
+        },
+        {
+          "caller": "prepare_ring_request",
+          "callee": "route_direction",
+          "lineNumber": 156
+        }
+      ],
+      "metrics": {
+        "importCount": 1,
+        "exportCount": 14,
+        "functionCount": 14,
+        "classCount": 0
+      }
+    },
+    {
+      "path": "tm_ring_master_niu.h",
+      "language": "c",
+      "fileCategory": "code",
+      "totalLines": 66,
+      "nonEmptyLines": 52,
+      "callGraph": [
+        {
+          "caller": "tm_make_ring_master_niu",
+          "callee": "std::make_shared<TmRingMasterNiu>",
+          "lineNumber": 62
+        }
+      ],
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 0,
+        "functionCount": 0,
+        "classCount": 0
+      }
+    },
+    {
+      "path": "tm_ring_mem_port.cc",
+      "language": "cpp",
+      "fileCategory": "code",
+      "totalLines": 643,
+      "nonEmptyLines": 574,
+      "functions": [
+        {
+          "name": "TmRingMemPort",
+          "startLine": 9,
+          "endLine": 70,
+          "params": [
+            "name",
+            "clk",
+            "target_cfg",
+            "ring_cfg",
+            "queue_depths"
+          ]
+        },
+        {
+          "name": "reset",
+          "startLine": 72,
+          "endLine": 95,
+          "params": []
+        },
+        {
+          "name": "attach",
+          "startLine": 97,
+          "endLine": 108,
+          "params": [
+            "target_id",
+            "topology"
+          ]
+        },
+        {
+          "name": "idle",
+          "startLine": 110,
+          "endLine": 118,
+          "params": []
+        },
+        {
+          "name": "attach",
+          "startLine": 120,
+          "endLine": 125,
+          "params": [
+            "inf"
+          ]
+        },
+        {
+          "name": "attach",
+          "startLine": 127,
+          "endLine": 132,
+          "params": [
+            "mem"
+          ]
+        },
+        {
+          "name": "attach_l2_buffer",
+          "startLine": 134,
+          "endLine": 137,
+          "params": [
+            "l2_buffer"
+          ]
+        },
+        {
+          "name": "node_interface",
+          "startLine": 139,
+          "endLine": 141,
+          "params": []
+        },
+        {
+          "name": "home_agent_stats",
+          "startLine": 143,
+          "endLine": 146,
+          "params": []
+        },
+        {
+          "name": "clear_stats",
+          "startLine": 152,
+          "endLine": 160,
+          "params": []
+        },
+        {
+          "name": "req_q",
+          "startLine": 162,
+          "endLine": 170,
+          "params": [
+            "cmd"
+          ]
+        },
+        {
+          "name": "prepare_ring_response",
+          "startLine": 172,
+          "endLine": 183,
+          "params": [
+            "pld",
+            "cmd"
+          ]
+        },
+        {
+          "name": "recv_ring_req",
+          "startLine": 191,
+          "endLine": 222,
+          "params": []
+        },
+        {
+          "name": "recv_ring_dat",
+          "startLine": 224,
+          "endLine": 243,
+          "params": []
+        },
+        {
+          "name": "send_rd_cmd",
+          "startLine": 245,
+          "endLine": 245,
+          "params": []
+        },
+        {
+          "name": "send_wr_cmd",
+          "startLine": 247,
+          "endLine": 247,
+          "params": []
+        },
+        {
+          "name": "send_wr_dat",
+          "startLine": 249,
+          "endLine": 249,
+          "params": []
+        },
+        {
+          "name": "send_cmd",
+          "startLine": 257,
+          "endLine": 288,
+          "params": [
+            "cmd"
+          ]
+        },
+        {
+          "name": "service_home_agent",
+          "startLine": 296,
+          "endLine": 322,
+          "params": []
+        },
+        {
+          "name": "service_home_agent_hit",
+          "startLine": 324,
+          "endLine": 338,
+          "params": []
+        },
+        {
+          "name": "accept_rd_into_home_agent",
+          "startLine": 346,
+          "endLine": 372,
+          "params": []
+        },
+        {
+          "name": "issue_home_agent_backend_read",
+          "startLine": 380,
+          "endLine": 401,
+          "params": []
+        },
+        {
+          "name": "capture_home_agent_backend_rsp",
+          "startLine": 410,
+          "endLine": 438,
+          "params": []
+        },
+        {
+          "name": "send_home_agent_l2_rsp",
+          "startLine": 448,
+          "endLine": 480,
+          "params": []
+        },
+        {
+          "name": "recv_mem_rsp",
+          "startLine": 488,
+          "endLine": 512,
+          "params": []
+        },
+        {
+          "name": "recv_rd_cmd_rsp",
+          "startLine": 520,
+          "endLine": 569,
+          "params": []
+        },
+        {
+          "name": "recv_wr_cmd_rsp",
+          "startLine": 577,
+          "endLine": 594,
+          "params": []
+        },
+        {
+          "name": "recv_wr_dat_rsp",
+          "startLine": 602,
+          "endLine": 624,
+          "params": []
+        },
+        {
+          "name": "has_response",
+          "startLine": 626,
+          "endLine": 628,
+          "params": [
+            "cmd",
+            "lane"
+          ]
+        },
+        {
+          "name": "front_response",
+          "startLine": 630,
+          "endLine": 632,
+          "params": [
+            "cmd",
+            "lane"
+          ]
+        },
+        {
+          "name": "pop_response",
+          "startLine": 634,
+          "endLine": 636,
+          "params": [
+            "cmd",
+            "lane"
+          ]
+        },
+        {
+          "name": "response_channel",
+          "startLine": 638,
+          "endLine": 643,
+          "params": [
+            "cmd",
+            "lane"
+          ]
+        }
+      ],
+      "exports": [
+        {
+          "name": "TmRingMemPort",
+          "line": 9,
+          "isDefault": false
+        },
+        {
+          "name": "reset",
+          "line": 72,
+          "isDefault": false
+        },
+        {
+          "name": "attach",
+          "line": 97,
+          "isDefault": false
+        },
+        {
+          "name": "idle",
+          "line": 110,
+          "isDefault": false
+        },
+        {
+          "name": "attach",
+          "line": 120,
+          "isDefault": false
+        },
+        {
+          "name": "attach",
+          "line": 127,
+          "isDefault": false
+        },
+        {
+          "name": "attach_l2_buffer",
+          "line": 134,
+          "isDefault": false
+        },
+        {
+          "name": "node_interface",
+          "line": 139,
+          "isDefault": false
+        },
+        {
+          "name": "home_agent_stats",
+          "line": 143,
+          "isDefault": false
+        },
+        {
+          "name": "clear_stats",
+          "line": 152,
+          "isDefault": false
+        },
+        {
+          "name": "req_q",
+          "line": 162,
+          "isDefault": false
+        },
+        {
+          "name": "prepare_ring_response",
+          "line": 172,
+          "isDefault": false
+        },
+        {
+          "name": "recv_ring_req",
+          "line": 191,
+          "isDefault": false
+        },
+        {
+          "name": "recv_ring_dat",
+          "line": 224,
+          "isDefault": false
+        },
+        {
+          "name": "send_rd_cmd",
+          "line": 245,
+          "isDefault": false
+        },
+        {
+          "name": "send_wr_cmd",
+          "line": 247,
+          "isDefault": false
+        },
+        {
+          "name": "send_wr_dat",
+          "line": 249,
+          "isDefault": false
+        },
+        {
+          "name": "send_cmd",
+          "line": 257,
+          "isDefault": false
+        },
+        {
+          "name": "service_home_agent",
+          "line": 296,
+          "isDefault": false
+        },
+        {
+          "name": "service_home_agent_hit",
+          "line": 324,
+          "isDefault": false
+        },
+        {
+          "name": "accept_rd_into_home_agent",
+          "line": 346,
+          "isDefault": false
+        },
+        {
+          "name": "issue_home_agent_backend_read",
+          "line": 380,
+          "isDefault": false
+        },
+        {
+          "name": "capture_home_agent_backend_rsp",
+          "line": 410,
+          "isDefault": false
+        },
+        {
+          "name": "send_home_agent_l2_rsp",
+          "line": 448,
+          "isDefault": false
+        },
+        {
+          "name": "recv_mem_rsp",
+          "line": 488,
+          "isDefault": false
+        },
+        {
+          "name": "recv_rd_cmd_rsp",
+          "line": 520,
+          "isDefault": false
+        },
+        {
+          "name": "recv_wr_cmd_rsp",
+          "line": 577,
+          "isDefault": false
+        },
+        {
+          "name": "recv_wr_dat_rsp",
+          "line": 602,
+          "isDefault": false
+        },
+        {
+          "name": "has_response",
+          "line": 626,
+          "isDefault": false
+        },
+        {
+          "name": "front_response",
+          "line": 630,
+          "isDefault": false
+        },
+        {
+          "name": "pop_response",
+          "line": 634,
+          "isDefault": false
+        },
+        {
+          "name": "response_channel",
+          "line": 638,
+          "isDefault": false
+        }
+      ],
+      "callGraph": [
+        {
+          "caller": "TmRingMemPort",
+          "callee": "pem_log::create_logger",
+          "lineNumber": 17
+        },
+        {
+          "caller": "TmRingMemPort",
+          "callee": "PEM_LOG_INFO",
+          "lineNumber": 18
+        },
+        {
+          "caller": "TmRingMemPort",
+          "callee": "time",
+          "lineNumber": 18
+        },
+        {
+          "caller": "TmRingMemPort",
+          "callee": "resize",
+          "lineNumber": 22
+        },
+        {
+          "caller": "TmRingMemPort",
+          "callee": "std::max<uint32_t>",
+          "lineNumber": 27
+        },
+        {
+          "caller": "TmRingMemPort",
+          "callee": "tm_ring_cmd_bus_channel",
+          "lineNumber": 28
+        },
+        {
+          "caller": "TmRingMemPort",
+          "callee": "tm_ring_cmd_bus_channel",
+          "lineNumber": 29
+        },
+        {
+          "caller": "TmRingMemPort",
+          "callee": "std::max<uint32_t>",
+          "lineNumber": 30
+        },
+        {
+          "caller": "TmRingMemPort",
+          "callee": "tm_ring_rd_rsp_bus_channel",
+          "lineNumber": 32
+        },
+        {
+          "caller": "TmRingMemPort",
+          "callee": "tm_make_com_inf",
+          "lineNumber": 33
+        },
+        {
+          "caller": "TmRingMemPort",
+          "callee": "tm_ring_inf_depth",
+          "lineNumber": 33
+        },
+        {
+          "caller": "TmRingMemPort",
+          "callee": "set_chan_num",
+          "lineNumber": 34
+        },
+        {
+          "caller": "TmRingMemPort",
+          "callee": "std::make_shared<TmRingHomeAgent>",
+          "lineNumber": 42
+        },
+        {
+          "caller": "TmRingMemPort",
+          "callee": "tm_sensitive",
+          "lineNumber": 46
+        },
+        {
+          "caller": "TmRingMemPort",
+          "callee": "TM_MAKE_CPROC",
+          "lineNumber": 46
+        },
+        {
+          "caller": "TmRingMemPort",
+          "callee": "tm_sensitive",
+          "lineNumber": 49
+        },
+        {
+          "caller": "TmRingMemPort",
+          "callee": "TM_MAKE_CPROC",
+          "lineNumber": 49
+        },
+        {
+          "caller": "TmRingMemPort",
+          "callee": "tm_make_ring_node_interface",
+          "lineNumber": 51
+        },
+        {
+          "caller": "TmRingMemPort",
+          "callee": "tm_sensitive",
+          "lineNumber": 53
+        },
+        {
+          "caller": "TmRingMemPort",
+          "callee": "TM_MAKE_CPROC",
+          "lineNumber": 53
+        },
+        {
+          "caller": "TmRingMemPort",
+          "callee": "eject_q",
+          "lineNumber": 54
+        },
+        {
+          "caller": "TmRingMemPort",
+          "callee": "tm_sensitive",
+          "lineNumber": 55
+        },
+        {
+          "caller": "TmRingMemPort",
+          "callee": "TM_MAKE_CPROC",
+          "lineNumber": 55
+        },
+        {
+          "caller": "TmRingMemPort",
+          "callee": "eject_q",
+          "lineNumber": 56
+        },
+        {
+          "caller": "TmRingMemPort",
+          "callee": "tm_make_com_que",
+          "lineNumber": 59
+        },
+        {
+          "caller": "TmRingMemPort",
+          "callee": "tm_make_com_que",
+          "lineNumber": 61
+        },
+        {
+          "caller": "TmRingMemPort",
+          "callee": "tm_make_com_que",
+          "lineNumber": 63
+        },
+        {
+          "caller": "TmRingMemPort",
+          "callee": "tm_sensitive",
+          "lineNumber": 65
+        },
+        {
+          "caller": "TmRingMemPort",
+          "callee": "TM_MAKE_CPROC",
+          "lineNumber": 65
+        },
+        {
+          "caller": "TmRingMemPort",
+          "callee": "tm_sensitive",
+          "lineNumber": 66
+        },
+        {
+          "caller": "TmRingMemPort",
+          "callee": "TM_MAKE_CPROC",
+          "lineNumber": 66
+        },
+        {
+          "caller": "TmRingMemPort",
+          "callee": "tm_sensitive",
+          "lineNumber": 67
+        },
+        {
+          "caller": "TmRingMemPort",
+          "callee": "TM_MAKE_CPROC",
+          "lineNumber": 67
+        },
+        {
+          "caller": "TmRingMemPort",
+          "callee": "reset",
+          "lineNumber": 69
+        },
+        {
+          "caller": "reset",
+          "callee": "reset",
+          "lineNumber": 74
+        },
+        {
+          "caller": "reset",
+          "callee": "reset",
+          "lineNumber": 77
+        },
+        {
+          "caller": "reset",
+          "callee": "clear",
+          "lineNumber": 80
+        },
+        {
+          "caller": "reset",
+          "callee": "clear",
+          "lineNumber": 83
+        },
+        {
+          "caller": "reset",
+          "callee": "clear",
+          "lineNumber": 86
+        },
+        {
+          "caller": "reset",
+          "callee": "reset",
+          "lineNumber": 89
+        },
+        {
+          "caller": "reset",
+          "callee": "clear_stats",
+          "lineNumber": 94
+        },
+        {
+          "caller": "attach",
+          "callee": "PEM_LOG_INFO",
+          "lineNumber": 105
+        },
+        {
+          "caller": "attach",
+          "callee": "time",
+          "lineNumber": 105
+        },
+        {
+          "caller": "idle",
+          "callee": "idle",
+          "lineNumber": 111
+        },
+        {
+          "caller": "idle",
+          "callee": "idle",
+          "lineNumber": 112
+        },
+        {
+          "caller": "idle",
+          "callee": "empty",
+          "lineNumber": 113
+        },
+        {
+          "caller": "idle",
+          "callee": "empty",
+          "lineNumber": 114
+        },
+        {
+          "caller": "idle",
+          "callee": "empty",
+          "lineNumber": 115
+        },
+        {
+          "caller": "idle",
+          "callee": "idle",
+          "lineNumber": 117
+        },
+        {
+          "caller": "attach",
+          "callee": "connect",
+          "lineNumber": 121
+        },
+        {
+          "caller": "attach",
+          "callee": "PEM_LOG_INFO",
+          "lineNumber": 123
+        },
+        {
+          "caller": "attach",
+          "callee": "time",
+          "lineNumber": 123
+        },
+        {
+          "caller": "attach",
+          "callee": "attach",
+          "lineNumber": 130
+        },
+        {
+          "caller": "home_agent_stats",
+          "callee": "TmRingHomeAgentStats",
+          "lineNumber": 144
+        },
+        {
+          "caller": "home_agent_stats",
+          "callee": "stats",
+          "lineNumber": 145
+        },
+        {
+          "caller": "clear_stats",
+          "callee": "clear_stats",
+          "lineNumber": 154
+        },
+        {
+          "caller": "prepare_ring_response",
+          "callee": "ha_location",
+          "lineNumber": 173
+        },
+        {
+          "caller": "prepare_ring_response",
+          "callee": "rbrg_h_location",
+          "lineNumber": 175
+        },
+        {
+          "caller": "prepare_ring_response",
+          "callee": "master_vring",
+          "lineNumber": 175
+        },
+        {
+          "caller": "prepare_ring_response",
+          "callee": "static_cast<uint32_t>",
+          "lineNumber": 177
+        },
+        {
+          "caller": "prepare_ring_response",
+          "callee": "tm_ring_cmd_subnet",
+          "lineNumber": 177
+        },
+        {
+          "caller": "prepare_ring_response",
+          "callee": "static_cast<uint32_t>",
+          "lineNumber": 178
+        },
+        {
+          "caller": "prepare_ring_response",
+          "callee": "tm_pld_set_ring_route",
+          "lineNumber": 179
+        },
+        {
+          "caller": "prepare_ring_response",
+          "callee": "tm_pld_req_type",
+          "lineNumber": 179
+        },
+        {
+          "caller": "prepare_ring_response",
+          "callee": "static_cast<uint32_t>",
+          "lineNumber": 181
+        },
+        {
+          "caller": "prepare_ring_response",
+          "callee": "route_direction",
+          "lineNumber": 182
+        },
+        {
+          "caller": "recv_ring_req",
+          "callee": "eject_q",
+          "lineNumber": 192
+        },
+        {
+          "caller": "recv_ring_req",
+          "callee": "empty",
+          "lineNumber": 193
+        },
+        {
+          "caller": "recv_ring_req",
+          "callee": "front",
+          "lineNumber": 197
+        },
+        {
+          "caller": "recv_ring_req",
+          "callee": "static_cast<PldCmd>",
+          "lineNumber": 198
+        },
+        {
+          "caller": "recv_ring_req",
+          "callee": "req_q",
+          "lineNumber": 202
+        },
+        {
+          "caller": "recv_ring_req",
+          "callee": "full",
+          "lineNumber": 203
+        },
+        {
+          "caller": "recv_ring_req",
+          "callee": "push_back",
+          "lineNumber": 207
+        },
+        {
+          "caller": "recv_ring_req",
+          "callee": "pop_eject",
+          "lineNumber": 208
+        },
+        {
+          "caller": "recv_ring_req",
+          "callee": "PEM_LOG_INFO",
+          "lineNumber": 216
+        },
+        {
+          "caller": "recv_ring_req",
+          "callee": "time",
+          "lineNumber": 219
+        },
+        {
+          "caller": "recv_ring_req",
+          "callee": "static_cast<uint32_t>",
+          "lineNumber": 219
+        },
+        {
+          "caller": "recv_ring_dat",
+          "callee": "eject_q",
+          "lineNumber": 225
+        },
+        {
+          "caller": "recv_ring_dat",
+          "callee": "empty",
+          "lineNumber": 226
+        },
+        {
+          "caller": "recv_ring_dat",
+          "callee": "front",
+          "lineNumber": 230
+        },
+        {
+          "caller": "recv_ring_dat",
+          "callee": "static_cast<PldCmd>",
+          "lineNumber": 231
+        },
+        {
+          "caller": "recv_ring_dat",
+          "callee": "full",
+          "lineNumber": 232
+        },
+        {
+          "caller": "recv_ring_dat",
+          "callee": "push_back",
+          "lineNumber": 235
+        },
+        {
+          "caller": "recv_ring_dat",
+          "callee": "pop_eject",
+          "lineNumber": 236
+        },
+        {
+          "caller": "recv_ring_dat",
+          "callee": "PEM_LOG_INFO",
+          "lineNumber": 238
+        },
+        {
+          "caller": "recv_ring_dat",
+          "callee": "time",
+          "lineNumber": 241
+        },
+        {
+          "caller": "send_rd_cmd",
+          "callee": "send_cmd",
+          "lineNumber": 245
+        },
+        {
+          "caller": "send_wr_cmd",
+          "callee": "send_cmd",
+          "lineNumber": 247
+        },
+        {
+          "caller": "send_wr_dat",
+          "callee": "send_cmd",
+          "lineNumber": 249
+        },
+        {
+          "caller": "send_cmd",
+          "callee": "req_q",
+          "lineNumber": 262
+        },
+        {
+          "caller": "send_cmd",
+          "callee": "empty",
+          "lineNumber": 263
+        },
+        {
+          "caller": "send_cmd",
+          "callee": "front",
+          "lineNumber": 267
+        },
+        {
+          "caller": "send_cmd",
+          "callee": "reserve_write",
+          "lineNumber": 270
+        },
+        {
+          "caller": "send_cmd",
+          "callee": "send",
+          "lineNumber": 274
+        },
+        {
+          "caller": "send_cmd",
+          "callee": "tm_ring_cmd_bus_channel",
+          "lineNumber": 274
+        },
+        {
+          "caller": "send_cmd",
+          "callee": "pop_front",
+          "lineNumber": 276
+        },
+        {
+          "caller": "send_cmd",
+          "callee": "PEM_LOG_INFO",
+          "lineNumber": 281
+        },
+        {
+          "caller": "send_cmd",
+          "callee": "time",
+          "lineNumber": 284
+        },
+        {
+          "caller": "send_cmd",
+          "callee": "static_cast<uint32_t>",
+          "lineNumber": 284
+        },
+        {
+          "caller": "service_home_agent",
+          "callee": "take_frozen_summaries",
+          "lineNumber": 305
+        },
+        {
+          "caller": "service_home_agent",
+          "callee": "consume_l2_group_summary",
+          "lineNumber": 307
+        },
+        {
+          "caller": "service_home_agent",
+          "callee": "service_home_agent_hit",
+          "lineNumber": 313
+        },
+        {
+          "caller": "service_home_agent",
+          "callee": "accept_rd_into_home_agent",
+          "lineNumber": 314
+        },
+        {
+          "caller": "service_home_agent",
+          "callee": "issue_home_agent_backend_read",
+          "lineNumber": 315
+        },
+        {
+          "caller": "service_home_agent",
+          "callee": "capture_home_agent_backend_rsp",
+          "lineNumber": 316
+        },
+        {
+          "caller": "service_home_agent",
+          "callee": "send_home_agent_l2_rsp",
+          "lineNumber": 317
+        },
+        {
+          "caller": "service_home_agent",
+          "callee": "recv_rd_cmd_rsp",
+          "lineNumber": 318
+        },
+        {
+          "caller": "service_home_agent",
+          "callee": "send_wr_cmd",
+          "lineNumber": 320
+        },
+        {
+          "caller": "service_home_agent",
+          "callee": "send_wr_dat",
+          "lineNumber": 321
+        },
+        {
+          "caller": "service_home_agent_hit",
+          "callee": "has_functional_read",
+          "lineNumber": 326
+        },
+        {
+          "caller": "service_home_agent_hit",
+          "callee": "front_functional_read",
+          "lineNumber": 330
+        },
+        {
+          "caller": "service_home_agent_hit",
+          "callee": "direct_read",
+          "lineNumber": 335
+        },
+        {
+          "caller": "service_home_agent_hit",
+          "callee": "commit_functional_read",
+          "lineNumber": 336
+        },
+        {
+          "caller": "accept_rd_into_home_agent",
+          "callee": "empty",
+          "lineNumber": 347
+        },
+        {
+          "caller": "accept_rd_into_home_agent",
+          "callee": "front",
+          "lineNumber": 351
+        },
+        {
+          "caller": "accept_rd_into_home_agent",
+          "callee": "accept_read",
+          "lineNumber": 352
+        },
+        {
+          "caller": "accept_rd_into_home_agent",
+          "callee": "send",
+          "lineNumber": 356
+        },
+        {
+          "caller": "accept_rd_into_home_agent",
+          "callee": "tm_ring_cmd_bus_channel",
+          "lineNumber": 356
+        },
+        {
+          "caller": "accept_rd_into_home_agent",
+          "callee": "pop_front",
+          "lineNumber": 362
+        },
+        {
+          "caller": "accept_rd_into_home_agent",
+          "callee": "PEM_LOG_INFO",
+          "lineNumber": 365
+        },
+        {
+          "caller": "accept_rd_into_home_agent",
+          "callee": "time",
+          "lineNumber": 368
+        },
+        {
+          "caller": "accept_rd_into_home_agent",
+          "callee": "static_cast<uint32_t>",
+          "lineNumber": 368
+        },
+        {
+          "caller": "issue_home_agent_backend_read",
+          "callee": "has_backend_request",
+          "lineNumber": 381
+        },
+        {
+          "caller": "issue_home_agent_backend_read",
+          "callee": "front_backend_request",
+          "lineNumber": 385
+        },
+        {
+          "caller": "issue_home_agent_backend_read",
+          "callee": "send",
+          "lineNumber": 387
+        },
+        {
+          "caller": "issue_home_agent_backend_read",
+          "callee": "tm_ring_cmd_bus_channel",
+          "lineNumber": 387
+        },
+        {
+          "caller": "issue_home_agent_backend_read",
+          "callee": "commit_backend_request",
+          "lineNumber": 392
+        },
+        {
+          "caller": "issue_home_agent_backend_read",
+          "callee": "PEM_LOG_INFO",
+          "lineNumber": 394
+        },
+        {
+          "caller": "issue_home_agent_backend_read",
+          "callee": "time",
+          "lineNumber": 397
+        },
+        {
+          "caller": "capture_home_agent_backend_rsp",
+          "callee": "has_response",
+          "lineNumber": 418
+        },
+        {
+          "caller": "capture_home_agent_backend_rsp",
+          "callee": "front_response",
+          "lineNumber": 422
+        },
+        {
+          "caller": "capture_home_agent_backend_rsp",
+          "callee": "accept_backend_response",
+          "lineNumber": 423
+        },
+        {
+          "caller": "capture_home_agent_backend_rsp",
+          "callee": "pop_response",
+          "lineNumber": 427
+        },
+        {
+          "caller": "capture_home_agent_backend_rsp",
+          "callee": "PEM_LOG_INFO",
+          "lineNumber": 430
+        },
+        {
+          "caller": "capture_home_agent_backend_rsp",
+          "callee": "time",
+          "lineNumber": 433
+        },
+        {
+          "caller": "send_home_agent_l2_rsp",
+          "callee": "has_l2_response",
+          "lineNumber": 450
+        },
+        {
+          "caller": "send_home_agent_l2_rsp",
+          "callee": "front_l2_response",
+          "lineNumber": 455
+        },
+        {
+          "caller": "send_home_agent_l2_rsp",
+          "callee": "accept_response",
+          "lineNumber": 460
+        },
+        {
+          "caller": "send_home_agent_l2_rsp",
+          "callee": "accepted",
+          "lineNumber": 461
+        },
+        {
+          "caller": "send_home_agent_l2_rsp",
+          "callee": "record_private_l2_full_stall",
+          "lineNumber": 463
+        },
+        {
+          "caller": "send_home_agent_l2_rsp",
+          "callee": "commit_l2_response",
+          "lineNumber": 468
+        },
+        {
+          "caller": "send_home_agent_l2_rsp",
+          "callee": "PEM_LOG_INFO",
+          "lineNumber": 473
+        },
+        {
+          "caller": "send_home_agent_l2_rsp",
+          "callee": "time",
+          "lineNumber": 476
+        },
+        {
+          "caller": "recv_mem_rsp",
+          "callee": "recv_rd_cmd_rsp",
+          "lineNumber": 501
+        },
+        {
+          "caller": "recv_mem_rsp",
+          "callee": "recv_wr_cmd_rsp",
+          "lineNumber": 503
+        },
+        {
+          "caller": "recv_mem_rsp",
+          "callee": "recv_wr_dat_rsp",
+          "lineNumber": 505
+        },
+        {
+          "caller": "recv_rd_cmd_rsp",
+          "callee": "has_response",
+          "lineNumber": 528
+        },
+        {
+          "caller": "recv_rd_cmd_rsp",
+          "callee": "front_response",
+          "lineNumber": 532
+        },
+        {
+          "caller": "recv_rd_cmd_rsp",
+          "callee": "size",
+          "lineNumber": 539
+        },
+        {
+          "caller": "recv_rd_cmd_rsp",
+          "callee": "std::make_shared<std::vector<uint8_t>>",
+          "lineNumber": 543
+        },
+        {
+          "caller": "recv_rd_cmd_rsp",
+          "callee": "std::memcpy",
+          "lineNumber": 545
+        },
+        {
+          "caller": "recv_rd_cmd_rsp",
+          "callee": "data",
+          "lineNumber": 545
+        },
+        {
+          "caller": "recv_rd_cmd_rsp",
+          "callee": "accept_response",
+          "lineNumber": 549
+        },
+        {
+          "caller": "recv_rd_cmd_rsp",
+          "callee": "accepted",
+          "lineNumber": 550
+        },
+        {
+          "caller": "recv_rd_cmd_rsp",
+          "callee": "pop_response",
+          "lineNumber": 553
+        },
+        {
+          "caller": "recv_rd_cmd_rsp",
+          "callee": "PEM_LOG_INFO",
+          "lineNumber": 558
+        },
+        {
+          "caller": "recv_rd_cmd_rsp",
+          "callee": "time",
+          "lineNumber": 561
+        },
+        {
+          "caller": "recv_wr_cmd_rsp",
+          "callee": "has_response",
+          "lineNumber": 578
+        },
+        {
+          "caller": "recv_wr_cmd_rsp",
+          "callee": "front_response",
+          "lineNumber": 582
+        },
+        {
+          "caller": "recv_wr_cmd_rsp",
+          "callee": "prepare_ring_response",
+          "lineNumber": 583
+        },
+        {
+          "caller": "recv_wr_cmd_rsp",
+          "callee": "push_inject",
+          "lineNumber": 584
+        },
+        {
+          "caller": "recv_wr_cmd_rsp",
+          "callee": "pop_response",
+          "lineNumber": 587
+        },
+        {
+          "caller": "recv_wr_cmd_rsp",
+          "callee": "PEM_LOG_INFO",
+          "lineNumber": 589
+        },
+        {
+          "caller": "recv_wr_cmd_rsp",
+          "callee": "time",
+          "lineNumber": 590
+        },
+        {
+          "caller": "recv_wr_dat_rsp",
+          "callee": "has_response",
+          "lineNumber": 603
+        },
+        {
+          "caller": "recv_wr_dat_rsp",
+          "callee": "front_response",
+          "lineNumber": 607
+        },
+        {
+          "caller": "recv_wr_dat_rsp",
+          "callee": "prepare_ring_response",
+          "lineNumber": 608
+        },
+        {
+          "caller": "recv_wr_dat_rsp",
+          "callee": "push_inject",
+          "lineNumber": 609
+        },
+        {
+          "caller": "recv_wr_dat_rsp",
+          "callee": "complete_write",
+          "lineNumber": 613
+        },
+        {
+          "caller": "recv_wr_dat_rsp",
+          "callee": "pop_response",
+          "lineNumber": 615
+        },
+        {
+          "caller": "recv_wr_dat_rsp",
+          "callee": "PEM_LOG_INFO",
+          "lineNumber": 617
+        },
+        {
+          "caller": "recv_wr_dat_rsp",
+          "callee": "time",
+          "lineNumber": 620
+        },
+        {
+          "caller": "has_response",
+          "callee": "valid",
+          "lineNumber": 627
+        },
+        {
+          "caller": "has_response",
+          "callee": "response_channel",
+          "lineNumber": 627
+        },
+        {
+          "caller": "front_response",
+          "callee": "get_pld",
+          "lineNumber": 631
+        },
+        {
+          "caller": "front_response",
+          "callee": "response_channel",
+          "lineNumber": 631
+        },
+        {
+          "caller": "pop_response",
+          "callee": "pop_pld",
+          "lineNumber": 635
+        },
+        {
+          "caller": "pop_response",
+          "callee": "response_channel",
+          "lineNumber": 635
+        },
+        {
+          "caller": "response_channel",
+          "callee": "tm_ring_rd_rsp_bus_channel",
+          "lineNumber": 640
+        },
+        {
+          "caller": "response_channel",
+          "callee": "tm_ring_cmd_bus_channel",
+          "lineNumber": 642
+        }
+      ],
+      "metrics": {
+        "importCount": 1,
+        "exportCount": 32,
+        "functionCount": 32,
+        "classCount": 0
+      }
+    },
+    {
+      "path": "tm_ring_mem_port.h",
+      "language": "c",
+      "fileCategory": "code",
+      "totalLines": 108,
+      "nonEmptyLines": 94,
+      "callGraph": [
+        {
+          "caller": "tm_make_ring_mem_port",
+          "callee": "std::make_shared<TmRingMemPort>",
+          "lineNumber": 104
+        }
+      ],
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 0,
+        "functionCount": 0,
+        "classCount": 0
+      }
+    },
+    {
+      "path": "tm_ring_slot_pool.h",
+      "language": "c",
+      "fileCategory": "code",
+      "totalLines": 79,
+      "nonEmptyLines": 65,
+      "callGraph": [
+        {
+          "caller": "TmRingSlotPool",
+          "callee": "std::max<uint32_t>",
+          "lineNumber": 21
+        },
+        {
+          "caller": "TmRingSlotPool",
+          "callee": "assign",
+          "lineNumber": 23
+        },
+        {
+          "caller": "TmRingSlotPool",
+          "callee": "tm_ring_subnet_count",
+          "lineNumber": 23
+        },
+        {
+          "caller": "reset",
+          "callee": "std::fill",
+          "lineNumber": 27
+        },
+        {
+          "caller": "reset",
+          "callee": "begin",
+          "lineNumber": 27
+        },
+        {
+          "caller": "reset",
+          "callee": "end",
+          "lineNumber": 27
+        },
+        {
+          "caller": "can_acquire",
+          "callee": "slot_index",
+          "lineNumber": 31
+        },
+        {
+          "caller": "try_acquire",
+          "callee": "slot_index",
+          "lineNumber": 36
+        },
+        {
+          "caller": "try_acquire",
+          "callee": "can_acquire",
+          "lineNumber": 37
+        },
+        {
+          "caller": "release",
+          "callee": "slot_index",
+          "lineNumber": 45
+        },
+        {
+          "caller": "release",
+          "callee": "assert",
+          "lineNumber": 46
+        },
+        {
+          "caller": "slot_index",
+          "callee": "static_cast<uint32_t>",
+          "lineNumber": 63
+        },
+        {
+          "caller": "tm_make_ring_slot_pool",
+          "callee": "std::make_shared<TmRingSlotPool>",
+          "lineNumber": 76
+        }
+      ],
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 0,
+        "functionCount": 0,
+        "classCount": 0
+      }
+    }
+  ]
+}

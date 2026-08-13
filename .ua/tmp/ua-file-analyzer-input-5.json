@@ -1,0 +1,117 @@
+{
+  "projectRoot": "C:\\Users\\wayne\\Downloads\\gem5-stable\\BUS\\aicore\\code",
+  "batchFiles": [
+    {
+      "path": "tm_bus_types.h",
+      "language": "c",
+      "sizeLines": 62,
+      "fileCategory": "code"
+    },
+    {
+      "path": "tm_ring_demo_test.h",
+      "language": "c",
+      "sizeLines": 1189,
+      "fileCategory": "code"
+    },
+    {
+      "path": "tm_ring_home_agent.cc",
+      "language": "cpp",
+      "sizeLines": 678,
+      "fileCategory": "code"
+    },
+    {
+      "path": "tm_ring_home_agent.h",
+      "language": "c",
+      "sizeLines": 149,
+      "fileCategory": "code"
+    },
+    {
+      "path": "tm_ring_node_interface.h",
+      "language": "c",
+      "sizeLines": 410,
+      "fileCategory": "code"
+    },
+    {
+      "path": "tm_ring_node_interface_test.cc",
+      "language": "cpp",
+      "sizeLines": 202,
+      "fileCategory": "code"
+    },
+    {
+      "path": "tm_ring_stats.cc",
+      "language": "cpp",
+      "sizeLines": 129,
+      "fileCategory": "code"
+    },
+    {
+      "path": "tm_ring_stats.h",
+      "language": "c",
+      "sizeLines": 144,
+      "fileCategory": "code"
+    },
+    {
+      "path": "tm_ring_topology.cc",
+      "language": "cpp",
+      "sizeLines": 255,
+      "fileCategory": "code"
+    },
+    {
+      "path": "tm_ring_topology.h",
+      "language": "c",
+      "sizeLines": 66,
+      "fileCategory": "code"
+    },
+    {
+      "path": "tools/generate_ring_demo_report.py",
+      "language": "python",
+      "sizeLines": 358,
+      "fileCategory": "code"
+    },
+    {
+      "path": "tools/generate_ring_perf_report.py",
+      "language": "python",
+      "sizeLines": 2101,
+      "fileCategory": "code"
+    },
+    {
+      "path": "tools/test_generate_ring_demo_report.py",
+      "language": "python",
+      "sizeLines": 59,
+      "fileCategory": "code"
+    },
+    {
+      "path": "tools/test_generate_ring_perf_report.py",
+      "language": "python",
+      "sizeLines": 714,
+      "fileCategory": "code"
+    }
+  ],
+  "batchImportData": {
+    "tm_bus_types.h": [],
+    "tm_ring_demo_test.h": [],
+    "tm_ring_home_agent.cc": [
+      "tm_ring_home_agent.h"
+    ],
+    "tm_ring_home_agent.h": [],
+    "tm_ring_node_interface.h": [],
+    "tm_ring_node_interface_test.cc": [
+      "tm_ring_node_interface.h"
+    ],
+    "tm_ring_stats.cc": [
+      "tm_ring_stats.h"
+    ],
+    "tm_ring_stats.h": [],
+    "tm_ring_topology.cc": [
+      "tm_ring_topology.h"
+    ],
+    "tm_ring_topology.h": [],
+    "tools/generate_ring_demo_report.py": [],
+    "tools/generate_ring_perf_report.py": [],
+    "tools/test_generate_ring_demo_report.py": [
+      "tools/generate_ring_demo_report.py"
+    ],
+    "tools/test_generate_ring_perf_report.py": [
+      "tools/generate_ring_perf_report.py"
+    ]
+  }
+}

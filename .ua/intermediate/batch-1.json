@@ -1,0 +1,1712 @@
+{
+  "nodes": [
+    {
+      "id": "file:tm_ring.h",
+      "type": "file",
+      "name": "tm_ring.h",
+      "filePath": "tm_ring.h",
+      "summary": "定义 Ring Fabric 的顶层接口、拓扑域容器、配置构造辅助函数与跨组件统计查询，是整套多环模型的公共入口。",
+      "tags": [
+        "ring-fabric",
+        "topology",
+        "interconnect"
+      ],
+      "complexity": "complex",
+      "languageNotes": "C++ 事件驱动时序模型以 FIFO 队首、显式反压和成功后提交为主要状态边界。"
+    },
+    {
+      "id": "file:tm_ring_multiring_test.cc",
+      "type": "file",
+      "name": "tm_ring_multiring_test.cc",
+      "filePath": "tm_ring_multiring_test.cc",
+      "summary": "验证多 V-Ring 与 H-Ring 的拓扑布局、路由、RBRG 重序列化，以及跨 V-Ring 单播和 fanout 的端到端行为。",
+      "tags": [
+        "test",
+        "ring-network",
+        "regression"
+      ],
+      "complexity": "complex",
+      "languageNotes": "C++ 事件驱动时序模型以 FIFO 队首、显式反压和成功后提交为主要状态边界。"
+    },
+    {
+      "id": "function:tm_ring_multiring_test.cc:make_multiring_cfg",
+      "type": "function",
+      "name": "make_multiring_cfg",
+      "filePath": "tm_ring_multiring_test.cc",
+      "lineRange": [
+        17,
+        30
+      ],
+      "summary": "make_multiring_cfg 承担该模块的一项关键处理步骤；其实现服务于“验证多 V-Ring 与 H-Ring 的拓扑布局、路由、RBRG 重序列化，以及跨 V-Ring 单播和 fanout 的端到端行为”这一职责。",
+      "tags": [
+        "test",
+        "ring-network",
+        "state-transition"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:tm_ring_multiring_test.cc:run_unicast_read_write",
+      "type": "function",
+      "name": "run_unicast_read_write",
+      "filePath": "tm_ring_multiring_test.cc",
+      "lineRange": [
+        185,
+        209
+      ],
+      "summary": "run_unicast_read_write 承担该模块的一项关键处理步骤；其实现服务于“验证多 V-Ring 与 H-Ring 的拓扑布局、路由、RBRG 重序列化，以及跨 V-Ring 单播和 fanout 的端到端行为”这一职责。",
+      "tags": [
+        "test",
+        "ring-network",
+        "state-transition"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:tm_ring_multiring_test.cc:run_cross_vring_fanout",
+      "type": "function",
+      "name": "run_cross_vring_fanout",
+      "filePath": "tm_ring_multiring_test.cc",
+      "lineRange": [
+        211,
+        226
+      ],
+      "summary": "run_cross_vring_fanout 承担该模块的一项关键处理步骤；其实现服务于“验证多 V-Ring 与 H-Ring 的拓扑布局、路由、RBRG 重序列化，以及跨 V-Ring 单播和 fanout 的端到端行为”这一职责。",
+      "tags": [
+        "test",
+        "ring-network",
+        "state-transition"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:tm_ring_multiring_test.cc:run_fabric",
+      "type": "function",
+      "name": "run_fabric",
+      "filePath": "tm_ring_multiring_test.cc",
+      "lineRange": [
+        228,
+        326
+      ],
+      "summary": "装配多环 Fabric、主端和内存模型，运行指定 trace 并收集端到端结果。",
+      "tags": [
+        "test",
+        "ring-network",
+        "state-transition"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "class:tm_ring_multiring_test.cc:TmRingMultiRingFabricTest",
+      "type": "class",
+      "name": "TmRingMultiRingFabricTest",
+      "filePath": "tm_ring_multiring_test.cc",
+      "lineRange": [
+        175,
+        327
+      ],
+      "summary": "TmRingMultiRingFabricTest 为该测试或模块集中保存共享状态并封装相关操作。",
+      "tags": [
+        "test",
+        "ring-network",
+        "component"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "file:tm_ring_perf.cc",
+      "type": "file",
+      "name": "tm_ring_perf.cc",
+      "filePath": "tm_ring_perf.cc",
+      "summary": "构建有限性能流量，并按显式 Ring 边、RBRG 路径和 fanout 载体估算理论开销，最终汇总实测吞吐、延迟与聚合收益。",
+      "tags": [
+        "performance",
+        "ring-network",
+        "metrics"
+      ],
+      "complexity": "complex",
+      "languageNotes": "C++ 事件驱动时序模型以 FIFO 队首、显式反压和成功后提交为主要状态边界。"
+    },
+    {
+      "id": "function:tm_ring_perf.cc:private_span",
+      "type": "function",
+      "name": "private_span",
+      "filePath": "tm_ring_perf.cc",
+      "lineRange": [
+        20,
+        29
+      ],
+      "summary": "private_span 承担该模块的一项关键处理步骤；其实现服务于“构建有限性能流量，并按显式 Ring 边、RBRG 路径和 fanout 载体估算理论开销，最终汇总实测吞吐、延迟与聚合收益”这一职责。",
+      "tags": [
+        "performance",
+        "ring-network",
+        "state-transition"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:tm_ring_perf.cc:base_address",
+      "type": "function",
+      "name": "base_address",
+      "filePath": "tm_ring_perf.cc",
+      "lineRange": [
+        31,
+        39
+      ],
+      "summary": "base_address 承担该模块的一项关键处理步骤；其实现服务于“构建有限性能流量，并按显式 Ring 边、RBRG 路径和 fanout 载体估算理论开销，最终汇总实测吞吐、延迟与聚合收益”这一职责。",
+      "tags": [
+        "performance",
+        "ring-network",
+        "state-transition"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:tm_ring_perf.cc:address_for",
+      "type": "function",
+      "name": "address_for",
+      "filePath": "tm_ring_perf.cc",
+      "lineRange": [
+        41,
+        59
+      ],
+      "summary": "address_for 承担该模块的一项关键处理步骤；其实现服务于“构建有限性能流量，并按显式 Ring 边、RBRG 路径和 fanout 载体估算理论开销，最终汇总实测吞吐、延迟与聚合收益”这一职责。",
+      "tags": [
+        "performance",
+        "ring-network",
+        "state-transition"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:tm_ring_perf.cc:append_transaction",
+      "type": "function",
+      "name": "append_transaction",
+      "filePath": "tm_ring_perf.cc",
+      "lineRange": [
+        61,
+        71
+      ],
+      "summary": "append_transaction 承担该模块的一项关键处理步骤；其实现服务于“构建有限性能流量，并按显式 Ring 边、RBRG 路径和 fanout 载体估算理论开销，最终汇总实测吞吐、延迟与聚合收益”这一职责。",
+      "tags": [
+        "performance",
+        "ring-network",
+        "state-transition"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:tm_ring_perf.cc:add_directed_path",
+      "type": "function",
+      "name": "add_directed_path",
+      "filePath": "tm_ring_perf.cc",
+      "lineRange": [
+        111,
+        125
+      ],
+      "summary": "add_directed_path 承担该模块的一项关键处理步骤；其实现服务于“构建有限性能流量，并按显式 Ring 边、RBRG 路径和 fanout 载体估算理论开销，最终汇总实测吞吐、延迟与聚合收益”这一职责。",
+      "tags": [
+        "performance",
+        "ring-network",
+        "state-transition"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:tm_ring_perf.cc:add_routed_path",
+      "type": "function",
+      "name": "add_routed_path",
+      "filePath": "tm_ring_perf.cc",
+      "lineRange": [
+        127,
+        139
+      ],
+      "summary": "add_routed_path 承担该模块的一项关键处理步骤；其实现服务于“构建有限性能流量，并按显式 Ring 边、RBRG 路径和 fanout 载体估算理论开销，最终汇总实测吞吐、延迟与聚合收益”这一职责。",
+      "tags": [
+        "performance",
+        "ring-network",
+        "state-transition"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:tm_ring_perf.cc:add_fanout_path",
+      "type": "function",
+      "name": "add_fanout_path",
+      "filePath": "tm_ring_perf.cc",
+      "lineRange": [
+        148,
+        168
+      ],
+      "summary": "add_fanout_path 承担该模块的一项关键处理步骤；其实现服务于“构建有限性能流量，并按显式 Ring 边、RBRG 路径和 fanout 载体估算理论开销，最终汇总实测吞吐、延迟与聚合收益”这一职责。",
+      "tags": [
+        "performance",
+        "ring-network",
+        "state-transition"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:tm_ring_perf.cc:add_v_to_h_packet",
+      "type": "function",
+      "name": "add_v_to_h_packet",
+      "filePath": "tm_ring_perf.cc",
+      "lineRange": [
+        170,
+        185
+      ],
+      "summary": "add_v_to_h_packet 承担该模块的一项关键处理步骤；其实现服务于“构建有限性能流量，并按显式 Ring 边、RBRG 路径和 fanout 载体估算理论开销，最终汇总实测吞吐、延迟与聚合收益”这一职责。",
+      "tags": [
+        "performance",
+        "ring-network",
+        "state-transition"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:tm_ring_perf.cc:add_h_to_v_packet",
+      "type": "function",
+      "name": "add_h_to_v_packet",
+      "filePath": "tm_ring_perf.cc",
+      "lineRange": [
+        187,
+        202
+      ],
+      "summary": "add_h_to_v_packet 承担该模块的一项关键处理步骤；其实现服务于“构建有限性能流量，并按显式 Ring 边、RBRG 路径和 fanout 载体估算理论开销，最终汇总实测吞吐、延迟与聚合收益”这一职责。",
+      "tags": [
+        "performance",
+        "ring-network",
+        "state-transition"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:tm_ring_perf.cc:add_unicast_read_response",
+      "type": "function",
+      "name": "add_unicast_read_response",
+      "filePath": "tm_ring_perf.cc",
+      "lineRange": [
+        204,
+        216
+      ],
+      "summary": "add_unicast_read_response 承担该模块的一项关键处理步骤；其实现服务于“构建有限性能流量，并按显式 Ring 边、RBRG 路径和 fanout 载体估算理论开销，最终汇总实测吞吐、延迟与聚合收益”这一职责。",
+      "tags": [
+        "performance",
+        "ring-network",
+        "state-transition"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:tm_ring_perf.cc:fanout_waiter_set_supported",
+      "type": "function",
+      "name": "fanout_waiter_set_supported",
+      "filePath": "tm_ring_perf.cc",
+      "lineRange": [
+        222,
+        235
+      ],
+      "summary": "fanout_waiter_set_supported 承担该模块的一项关键处理步骤；其实现服务于“构建有限性能流量，并按显式 Ring 边、RBRG 路径和 fanout 载体估算理论开销，最终汇总实测吞吐、延迟与聚合收益”这一职责。",
+      "tags": [
+        "performance",
+        "ring-network",
+        "state-transition"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:tm_ring_perf.cc:fanout_candidate_valid",
+      "type": "function",
+      "name": "fanout_candidate_valid",
+      "filePath": "tm_ring_perf.cc",
+      "lineRange": [
+        237,
+        253
+      ],
+      "summary": "fanout_candidate_valid 承担该模块的一项关键处理步骤；其实现服务于“构建有限性能流量，并按显式 Ring 边、RBRG 路径和 fanout 载体估算理论开销，最终汇总实测吞吐、延迟与聚合收益”这一职责。",
+      "tags": [
+        "performance",
+        "ring-network",
+        "state-transition"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:tm_ring_perf.cc:request_in_one_line",
+      "type": "function",
+      "name": "request_in_one_line",
+      "filePath": "tm_ring_perf.cc",
+      "lineRange": [
+        255,
+        264
+      ],
+      "summary": "request_in_one_line 承担该模块的一项关键处理步骤；其实现服务于“构建有限性能流量，并按显式 Ring 边、RBRG 路径和 fanout 载体估算理论开销，最终汇总实测吞吐、延迟与聚合收益”这一职责。",
+      "tags": [
+        "performance",
+        "ring-network",
+        "state-transition"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:tm_ring_perf.cc:fanout_carrier_size",
+      "type": "function",
+      "name": "fanout_carrier_size",
+      "filePath": "tm_ring_perf.cc",
+      "lineRange": [
+        266,
+        297
+      ],
+      "summary": "fanout_carrier_size 承担该模块的一项关键处理步骤；其实现服务于“构建有限性能流量，并按显式 Ring 边、RBRG 路径和 fanout 载体估算理论开销，最终汇总实测吞吐、延迟与聚合收益”这一职责。",
+      "tags": [
+        "performance",
+        "ring-network",
+        "state-transition"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:tm_ring_perf.cc:tm_ring_build_perf_trace",
+      "type": "function",
+      "name": "tm_ring_build_perf_trace",
+      "filePath": "tm_ring_perf.cc",
+      "lineRange": [
+        346,
+        420
+      ],
+      "summary": "tm_ring_build_perf_trace 承担该模块的一项关键处理步骤；其实现服务于“构建有限性能流量，并按显式 Ring 边、RBRG 路径和 fanout 载体估算理论开销，最终汇总实测吞吐、延迟与聚合收益”这一职责。",
+      "tags": [
+        "performance",
+        "ring-network",
+        "state-transition"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:tm_ring_perf.cc:tm_ring_estimate_fabric",
+      "type": "function",
+      "name": "tm_ring_estimate_fabric",
+      "filePath": "tm_ring_perf.cc",
+      "lineRange": [
+        422,
+        596
+      ],
+      "summary": "按 trace 显式累计 Ring 边、RBRG 路径和聚合载体开销，生成无运行时状态的理论估算。",
+      "tags": [
+        "performance",
+        "ring-network",
+        "state-transition"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:tm_ring_perf.cc:tm_ring_collect_perf_result",
+      "type": "function",
+      "name": "tm_ring_collect_perf_result",
+      "filePath": "tm_ring_perf.cc",
+      "lineRange": [
+        598,
+        705
+      ],
+      "summary": "汇总主端、Fabric 和内存统计，计算吞吐、延迟分位数、公平性、协议错误与理论对照。",
+      "tags": [
+        "performance",
+        "ring-network",
+        "state-transition"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:tm_ring_perf.cc:tm_ring_scaling_efficiency",
+      "type": "function",
+      "name": "tm_ring_scaling_efficiency",
+      "filePath": "tm_ring_perf.cc",
+      "lineRange": [
+        707,
+        718
+      ],
+      "summary": "tm_ring_scaling_efficiency 承担该模块的一项关键处理步骤；其实现服务于“构建有限性能流量，并按显式 Ring 边、RBRG 路径和 fanout 载体估算理论开销，最终汇总实测吞吐、延迟与聚合收益”这一职责。",
+      "tags": [
+        "performance",
+        "ring-network",
+        "state-transition"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:tm_ring_perf.h",
+      "type": "file",
+      "name": "tm_ring_perf.h",
+      "filePath": "tm_ring_perf.h",
+      "summary": "定义 Ring 性能用例、事务、主端统计、理论估算和最终结果的数据契约。",
+      "tags": [
+        "performance",
+        "ring-network",
+        "metrics"
+      ],
+      "complexity": "moderate",
+      "languageNotes": "C++ 事件驱动时序模型以 FIFO 队首、显式反压和成功后提交为主要状态边界。"
+    },
+    {
+      "id": "file:tm_ring_perf_master.cc",
+      "type": "file",
+      "name": "tm_ring_perf_master.cc",
+      "filePath": "tm_ring_perf_master.cc",
+      "summary": "实现性能主端及波次协调器，按读写事务序列驱动 BIU，并以接收成功为提交边界维护重试、延迟和完成统计。",
+      "tags": [
+        "performance",
+        "ring-network",
+        "metrics"
+      ],
+      "complexity": "complex",
+      "languageNotes": "C++ 事件驱动时序模型以 FIFO 队首、显式反压和成功后提交为主要状态边界。"
+    },
+    {
+      "id": "function:tm_ring_perf_master.cc:can_issue",
+      "type": "function",
+      "name": "can_issue",
+      "filePath": "tm_ring_perf_master.cc",
+      "lineRange": [
+        16,
+        25
+      ],
+      "summary": "can_issue 承担该模块的一项关键处理步骤；其实现服务于“实现性能主端及波次协调器，按读写事务序列驱动 BIU，并以接收成功为提交边界维护重试、延迟和完成统计”这一职责。",
+      "tags": [
+        "performance",
+        "ring-network",
+        "state-transition"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:tm_ring_perf_master.cc:record_completion",
+      "type": "function",
+      "name": "record_completion",
+      "filePath": "tm_ring_perf_master.cc",
+      "lineRange": [
+        27,
+        45
+      ],
+      "summary": "record_completion 承担该模块的一项关键处理步骤；其实现服务于“实现性能主端及波次协调器，按读写事务序列驱动 BIU，并以接收成功为提交边界维护重试、延迟和完成统计”这一职责。",
+      "tags": [
+        "performance",
+        "ring-network",
+        "state-transition"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:tm_ring_perf_master.cc:config",
+      "type": "function",
+      "name": "config",
+      "filePath": "tm_ring_perf_master.cc",
+      "lineRange": [
+        51,
+        94
+      ],
+      "summary": "配置组件依赖、队列和事件回调，建立可运行状态。",
+      "tags": [
+        "performance",
+        "ring-network",
+        "state-transition"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:tm_ring_perf_master.cc:reset",
+      "type": "function",
+      "name": "reset",
+      "filePath": "tm_ring_perf_master.cc",
+      "lineRange": [
+        103,
+        113
+      ],
+      "summary": "清空组件运行状态并安全退休未完成事件，为下一次仿真恢复初始条件。",
+      "tags": [
+        "performance",
+        "ring-network",
+        "state-transition"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:tm_ring_perf_master.cc:issue_read",
+      "type": "function",
+      "name": "issue_read",
+      "filePath": "tm_ring_perf_master.cc",
+      "lineRange": [
+        130,
+        165
+      ],
+      "summary": "issue_read 承担该模块的一项关键处理步骤；其实现服务于“实现性能主端及波次协调器，按读写事务序列驱动 BIU，并以接收成功为提交边界维护重试、延迟和完成统计”这一职责。",
+      "tags": [
+        "performance",
+        "ring-network",
+        "state-transition"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:tm_ring_perf_master.cc:issue_write",
+      "type": "function",
+      "name": "issue_write",
+      "filePath": "tm_ring_perf_master.cc",
+      "lineRange": [
+        167,
+        195
+      ],
+      "summary": "issue_write 承担该模块的一项关键处理步骤；其实现服务于“实现性能主端及波次协调器，按读写事务序列驱动 BIU，并以接收成功为提交边界维护重试、延迟和完成统计”这一职责。",
+      "tags": [
+        "performance",
+        "ring-network",
+        "state-transition"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:tm_ring_perf_master.cc:receive_response",
+      "type": "function",
+      "name": "receive_response",
+      "filePath": "tm_ring_perf_master.cc",
+      "lineRange": [
+        222,
+        261
+      ],
+      "summary": "receive_response 承担该模块的一项关键处理步骤；其实现服务于“实现性能主端及波次协调器，按读写事务序列驱动 BIU，并以接收成功为提交边界维护重试、延迟和完成统计”这一职责。",
+      "tags": [
+        "performance",
+        "ring-network",
+        "state-transition"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:tm_ring_perf_master.h",
+      "type": "file",
+      "name": "tm_ring_perf_master.h",
+      "filePath": "tm_ring_perf_master.h",
+      "summary": "声明性能流量主端与跨主端波次协调接口及其运行状态。",
+      "tags": [
+        "performance",
+        "ring-network",
+        "metrics"
+      ],
+      "complexity": "moderate",
+      "languageNotes": "C++ 事件驱动时序模型以 FIFO 队首、显式反压和成功后提交为主要状态边界。"
+    },
+    {
+      "id": "file:tm_ring_perf_report.cc",
+      "type": "file",
+      "name": "tm_ring_perf_report.cc",
+      "filePath": "tm_ring_perf_report.cc",
+      "summary": "将性能结果稳定序列化为 PERF_* 文本协议，覆盖配置、测量窗口、Ring/RBRG、fanout、HA、L2 和理论上界。",
+      "tags": [
+        "performance",
+        "serialization",
+        "reporting"
+      ],
+      "complexity": "complex",
+      "languageNotes": "C++ 事件驱动时序模型以 FIFO 队首、显式反压和成功后提交为主要状态边界。"
+    },
+    {
+      "id": "function:tm_ring_perf_report.cc:append_theory",
+      "type": "function",
+      "name": "append_theory",
+      "filePath": "tm_ring_perf_report.cc",
+      "lineRange": [
+        157,
+        183
+      ],
+      "summary": "append_theory 承担该模块的一项关键处理步骤；其实现服务于“将性能结果稳定序列化为 PERF_* 文本协议，覆盖配置、测量窗口、Ring/RBRG、fanout、HA、L2 和理论上界”这一职责。",
+      "tags": [
+        "performance",
+        "serialization",
+        "state-transition"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:tm_ring_perf_report.cc:tm_ring_format_perf_result",
+      "type": "function",
+      "name": "tm_ring_format_perf_result",
+      "filePath": "tm_ring_perf_report.cc",
+      "lineRange": [
+        187,
+        483
+      ],
+      "summary": "按稳定字段顺序输出完整 PERF_* 报告，供脚本解析和回归对比。",
+      "tags": [
+        "performance",
+        "serialization",
+        "state-transition"
+      ],
+      "complexity": "complex"
+    },
+    {
+      "id": "file:tm_ring_perf_report.h",
+      "type": "file",
+      "name": "tm_ring_perf_report.h",
+      "filePath": "tm_ring_perf_report.h",
+      "summary": "声明 Ring 性能结果到稳定文本报告的格式化入口。",
+      "tags": [
+        "performance",
+        "serialization",
+        "reporting"
+      ],
+      "complexity": "simple",
+      "languageNotes": "C++ 事件驱动时序模型以 FIFO 队首、显式反压和成功后提交为主要状态边界。"
+    },
+    {
+      "id": "file:tm_ring_perf_test.cc",
+      "type": "file",
+      "name": "tm_ring_perf_test.cc",
+      "filePath": "tm_ring_perf_test.cc",
+      "summary": "集中验证 Home Agent 聚合、性能 trace、理论估算器、主端重试、结果收集、报告字段和多 V-Ring 基准场景。",
+      "tags": [
+        "test",
+        "ring-network",
+        "regression"
+      ],
+      "complexity": "complex",
+      "languageNotes": "C++ 事件驱动时序模型以 FIFO 队首、显式反压和成功后提交为主要状态边界。"
+    },
+    {
+      "id": "function:tm_ring_perf_test.cc:run_perf_smoke",
+      "type": "function",
+      "name": "run_perf_smoke",
+      "filePath": "tm_ring_perf_test.cc",
+      "lineRange": [
+        843,
+        981
+      ],
+      "summary": "按性能用例创建仿真环境并执行到排空或超时，返回完整测量结果。",
+      "tags": [
+        "test",
+        "ring-network",
+        "state-transition"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:tm_ring_perf_test.cc:expect_perf_block_complete",
+      "type": "function",
+      "name": "expect_perf_block_complete",
+      "filePath": "tm_ring_perf_test.cc",
+      "lineRange": [
+        983,
+        1007
+      ],
+      "summary": "expect_perf_block_complete 承担该模块的一项关键处理步骤；其实现服务于“集中验证 Home Agent 聚合、性能 trace、理论估算器、主端重试、结果收集、报告字段和多 V-Ring 基准场景”这一职责。",
+      "tags": [
+        "test",
+        "ring-network",
+        "state-transition"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:tm_ring_perf_test.cc:make_128kb_case",
+      "type": "function",
+      "name": "make_128kb_case",
+      "filePath": "tm_ring_perf_test.cc",
+      "lineRange": [
+        1009,
+        1024
+      ],
+      "summary": "make_128kb_case 承担该模块的一项关键处理步骤；其实现服务于“集中验证 Home Agent 聚合、性能 trace、理论估算器、主端重试、结果收集、报告字段和多 V-Ring 基准场景”这一职责。",
+      "tags": [
+        "test",
+        "ring-network",
+        "state-transition"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:tm_ring_perf_test.cc:run_multi_vring_aggregated_read_benchmark",
+      "type": "function",
+      "name": "run_multi_vring_aggregated_read_benchmark",
+      "filePath": "tm_ring_perf_test.cc",
+      "lineRange": [
+        1048,
+        1088
+      ],
+      "summary": "run_multi_vring_aggregated_read_benchmark 承担该模块的一项关键处理步骤；其实现服务于“集中验证 Home Agent 聚合、性能 trace、理论估算器、主端重试、结果收集、报告字段和多 V-Ring 基准场景”这一职责。",
+      "tags": [
+        "test",
+        "ring-network",
+        "state-transition"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:tm_ring_perf_test.cc:run_multi_vring_128kb_benchmark",
+      "type": "function",
+      "name": "run_multi_vring_128kb_benchmark",
+      "filePath": "tm_ring_perf_test.cc",
+      "lineRange": [
+        1090,
+        1112
+      ],
+      "summary": "run_multi_vring_128kb_benchmark 承担该模块的一项关键处理步骤；其实现服务于“集中验证 Home Agent 聚合、性能 trace、理论估算器、主端重试、结果收集、报告字段和多 V-Ring 基准场景”这一职责。",
+      "tags": [
+        "test",
+        "ring-network",
+        "state-transition"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:tm_ring_perf_test.cc:run_multi_vring_no_merge_read_benchmark",
+      "type": "function",
+      "name": "run_multi_vring_no_merge_read_benchmark",
+      "filePath": "tm_ring_perf_test.cc",
+      "lineRange": [
+        1114,
+        1149
+      ],
+      "summary": "run_multi_vring_no_merge_read_benchmark 承担该模块的一项关键处理步骤；其实现服务于“集中验证 Home Agent 聚合、性能 trace、理论估算器、主端重试、结果收集、报告字段和多 V-Ring 基准场景”这一职责。",
+      "tags": [
+        "test",
+        "ring-network",
+        "state-transition"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:tm_ring_perf_test.cc:run_aggregation_wave_test",
+      "type": "function",
+      "name": "run_aggregation_wave_test",
+      "filePath": "tm_ring_perf_test.cc",
+      "lineRange": [
+        1151,
+        1256
+      ],
+      "summary": "run_aggregation_wave_test 承担该模块的一项关键处理步骤；其实现服务于“集中验证 Home Agent 聚合、性能 trace、理论估算器、主端重试、结果收集、报告字段和多 V-Ring 基准场景”这一职责。",
+      "tags": [
+        "test",
+        "ring-network",
+        "state-transition"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "file:tm_ring_rbrg_l1_test.cc",
+      "type": "file",
+      "name": "tm_ring_rbrg_l1_test.cc",
+      "filePath": "tm_ring_rbrg_l1_test.cc",
+      "summary": "验证 RBRG L1 的双向 FIFO 头仲裁、反压、序列化事件、跨环路由和 fanout 载体保持语义。",
+      "tags": [
+        "test",
+        "ring-network",
+        "regression"
+      ],
+      "complexity": "complex",
+      "languageNotes": "C++ 事件驱动时序模型以 FIFO 队首、显式反压和成功后提交为主要状态边界。"
+    },
+    {
+      "id": "function:tm_ring_rbrg_l1_test.cc:make_rbrg_test_cfg",
+      "type": "function",
+      "name": "make_rbrg_test_cfg",
+      "filePath": "tm_ring_rbrg_l1_test.cc",
+      "lineRange": [
+        12,
+        23
+      ],
+      "summary": "make_rbrg_test_cfg 承担该模块的一项关键处理步骤；其实现服务于“验证 RBRG L1 的双向 FIFO 头仲裁、反压、序列化事件、跨环路由和 fanout 载体保持语义”这一职责。",
+      "tags": [
+        "test",
+        "ring-network",
+        "state-transition"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:tm_ring_rbrg_l1_test.cc:SetUp",
+      "type": "function",
+      "name": "SetUp",
+      "filePath": "tm_ring_rbrg_l1_test.cc",
+      "lineRange": [
+        27,
+        38
+      ],
+      "summary": "SetUp 承担该模块的一项关键处理步骤；其实现服务于“验证 RBRG L1 的双向 FIFO 头仲裁、反压、序列化事件、跨环路由和 fanout 载体保持语义”这一职责。",
+      "tags": [
+        "test",
+        "ring-network",
+        "state-transition"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:tm_ring_rbrg_l1_test.cc:make_fanout_dat",
+      "type": "function",
+      "name": "make_fanout_dat",
+      "filePath": "tm_ring_rbrg_l1_test.cc",
+      "lineRange": [
+        68,
+        84
+      ],
+      "summary": "make_fanout_dat 承担该模块的一项关键处理步骤；其实现服务于“验证 RBRG L1 的双向 FIFO 头仲裁、反压、序列化事件、跨环路由和 fanout 载体保持语义”这一职责。",
+      "tags": [
+        "test",
+        "ring-network",
+        "state-transition"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "class:tm_ring_rbrg_l1_test.cc:TmRingRbrgL1DirectionalTest",
+      "type": "class",
+      "name": "TmRingRbrgL1DirectionalTest",
+      "filePath": "tm_ring_rbrg_l1_test.cc",
+      "lineRange": [
+        25,
+        89
+      ],
+      "summary": "TmRingRbrgL1DirectionalTest 为该测试或模块集中保存共享状态并封装相关操作。",
+      "tags": [
+        "test",
+        "ring-network",
+        "component"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "class:tm_ring.h:TmRingFabric",
+      "type": "class",
+      "name": "TmRingFabric",
+      "filePath": "tm_ring.h",
+      "lineRange": [
+        88,
+        164
+      ],
+      "summary": "组织多 V-Ring 和 H-Ring 的组件、连接、拓扑与统计查询。",
+      "tags": [
+        "ring-fabric",
+        "topology",
+        "component"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "class:tm_ring_perf_master.h:TmRingPerfWaveCoordinator",
+      "type": "class",
+      "name": "TmRingPerfWaveCoordinator",
+      "filePath": "tm_ring_perf_master.h",
+      "lineRange": [
+        16,
+        27
+      ],
+      "summary": "协调多个性能主端按完成屏障推进统一波次。",
+      "tags": [
+        "performance",
+        "ring-network",
+        "component"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "class:tm_ring_perf_master.h:TmRingPerfMaster",
+      "type": "class",
+      "name": "TmRingPerfMaster",
+      "filePath": "tm_ring_perf_master.h",
+      "lineRange": [
+        29,
+        78
+      ],
+      "summary": "按事务 trace 发起 Ring 访问并记录重试、完成与延迟统计。",
+      "tags": [
+        "performance",
+        "ring-network",
+        "component"
+      ],
+      "complexity": "moderate"
+    }
+  ],
+  "edges": [
+    {
+      "source": "file:tm_ring_multiring_test.cc",
+      "target": "function:tm_ring_multiring_test.cc:make_multiring_cfg",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:tm_ring_multiring_test.cc",
+      "target": "function:tm_ring_multiring_test.cc:make_multiring_cfg",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:tm_ring_multiring_test.cc",
+      "target": "function:tm_ring_multiring_test.cc:run_unicast_read_write",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:tm_ring_multiring_test.cc",
+      "target": "function:tm_ring_multiring_test.cc:run_cross_vring_fanout",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:tm_ring_multiring_test.cc",
+      "target": "function:tm_ring_multiring_test.cc:run_fabric",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:tm_ring_multiring_test.cc",
+      "target": "class:tm_ring_multiring_test.cc:TmRingMultiRingFabricTest",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:tm_ring_multiring_test.cc",
+      "target": "class:tm_ring_multiring_test.cc:TmRingMultiRingFabricTest",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:tm_ring_perf.cc",
+      "target": "function:tm_ring_perf.cc:private_span",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:tm_ring_perf.cc",
+      "target": "function:tm_ring_perf.cc:private_span",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:tm_ring_perf.cc",
+      "target": "function:tm_ring_perf.cc:base_address",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:tm_ring_perf.cc",
+      "target": "function:tm_ring_perf.cc:base_address",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:tm_ring_perf.cc",
+      "target": "function:tm_ring_perf.cc:address_for",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:tm_ring_perf.cc",
+      "target": "function:tm_ring_perf.cc:address_for",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:tm_ring_perf.cc",
+      "target": "function:tm_ring_perf.cc:append_transaction",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:tm_ring_perf.cc",
+      "target": "function:tm_ring_perf.cc:append_transaction",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:tm_ring_perf.cc",
+      "target": "function:tm_ring_perf.cc:add_directed_path",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:tm_ring_perf.cc",
+      "target": "function:tm_ring_perf.cc:add_directed_path",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:tm_ring_perf.cc",
+      "target": "function:tm_ring_perf.cc:add_routed_path",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:tm_ring_perf.cc",
+      "target": "function:tm_ring_perf.cc:add_routed_path",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:tm_ring_perf.cc",
+      "target": "function:tm_ring_perf.cc:add_fanout_path",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:tm_ring_perf.cc",
+      "target": "function:tm_ring_perf.cc:add_fanout_path",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:tm_ring_perf.cc",
+      "target": "function:tm_ring_perf.cc:add_v_to_h_packet",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:tm_ring_perf.cc",
+      "target": "function:tm_ring_perf.cc:add_v_to_h_packet",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:tm_ring_perf.cc",
+      "target": "function:tm_ring_perf.cc:add_h_to_v_packet",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:tm_ring_perf.cc",
+      "target": "function:tm_ring_perf.cc:add_h_to_v_packet",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:tm_ring_perf.cc",
+      "target": "function:tm_ring_perf.cc:add_unicast_read_response",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:tm_ring_perf.cc",
+      "target": "function:tm_ring_perf.cc:add_unicast_read_response",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:tm_ring_perf.cc",
+      "target": "function:tm_ring_perf.cc:fanout_waiter_set_supported",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:tm_ring_perf.cc",
+      "target": "function:tm_ring_perf.cc:fanout_waiter_set_supported",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:tm_ring_perf.cc",
+      "target": "function:tm_ring_perf.cc:fanout_candidate_valid",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:tm_ring_perf.cc",
+      "target": "function:tm_ring_perf.cc:fanout_candidate_valid",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:tm_ring_perf.cc",
+      "target": "function:tm_ring_perf.cc:request_in_one_line",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:tm_ring_perf.cc",
+      "target": "function:tm_ring_perf.cc:request_in_one_line",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:tm_ring_perf.cc",
+      "target": "function:tm_ring_perf.cc:fanout_carrier_size",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:tm_ring_perf.cc",
+      "target": "function:tm_ring_perf.cc:fanout_carrier_size",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:tm_ring_perf.cc",
+      "target": "function:tm_ring_perf.cc:tm_ring_build_perf_trace",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:tm_ring_perf.cc",
+      "target": "function:tm_ring_perf.cc:tm_ring_build_perf_trace",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:tm_ring_perf.cc",
+      "target": "function:tm_ring_perf.cc:tm_ring_estimate_fabric",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:tm_ring_perf.cc",
+      "target": "function:tm_ring_perf.cc:tm_ring_estimate_fabric",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:tm_ring_perf.cc",
+      "target": "function:tm_ring_perf.cc:tm_ring_collect_perf_result",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:tm_ring_perf.cc",
+      "target": "function:tm_ring_perf.cc:tm_ring_collect_perf_result",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:tm_ring_perf.cc",
+      "target": "function:tm_ring_perf.cc:tm_ring_scaling_efficiency",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:tm_ring_perf.cc",
+      "target": "function:tm_ring_perf.cc:tm_ring_scaling_efficiency",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:tm_ring_perf_master.cc",
+      "target": "function:tm_ring_perf_master.cc:can_issue",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:tm_ring_perf_master.cc",
+      "target": "function:tm_ring_perf_master.cc:can_issue",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:tm_ring_perf_master.cc",
+      "target": "function:tm_ring_perf_master.cc:record_completion",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:tm_ring_perf_master.cc",
+      "target": "function:tm_ring_perf_master.cc:record_completion",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:tm_ring_perf_master.cc",
+      "target": "function:tm_ring_perf_master.cc:config",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:tm_ring_perf_master.cc",
+      "target": "function:tm_ring_perf_master.cc:config",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:tm_ring_perf_master.cc",
+      "target": "function:tm_ring_perf_master.cc:reset",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:tm_ring_perf_master.cc",
+      "target": "function:tm_ring_perf_master.cc:reset",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:tm_ring_perf_master.cc",
+      "target": "function:tm_ring_perf_master.cc:issue_read",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:tm_ring_perf_master.cc",
+      "target": "function:tm_ring_perf_master.cc:issue_read",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:tm_ring_perf_master.cc",
+      "target": "function:tm_ring_perf_master.cc:issue_write",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:tm_ring_perf_master.cc",
+      "target": "function:tm_ring_perf_master.cc:issue_write",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:tm_ring_perf_master.cc",
+      "target": "function:tm_ring_perf_master.cc:receive_response",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:tm_ring_perf_master.cc",
+      "target": "function:tm_ring_perf_master.cc:receive_response",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:tm_ring_perf_report.cc",
+      "target": "function:tm_ring_perf_report.cc:append_theory",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:tm_ring_perf_report.cc",
+      "target": "function:tm_ring_perf_report.cc:append_theory",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:tm_ring_perf_report.cc",
+      "target": "function:tm_ring_perf_report.cc:tm_ring_format_perf_result",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:tm_ring_perf_report.cc",
+      "target": "function:tm_ring_perf_report.cc:tm_ring_format_perf_result",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:tm_ring_perf_test.cc",
+      "target": "function:tm_ring_perf_test.cc:run_perf_smoke",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:tm_ring_perf_test.cc",
+      "target": "function:tm_ring_perf_test.cc:run_perf_smoke",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:tm_ring_perf_test.cc",
+      "target": "function:tm_ring_perf_test.cc:expect_perf_block_complete",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:tm_ring_perf_test.cc",
+      "target": "function:tm_ring_perf_test.cc:expect_perf_block_complete",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:tm_ring_perf_test.cc",
+      "target": "function:tm_ring_perf_test.cc:make_128kb_case",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:tm_ring_perf_test.cc",
+      "target": "function:tm_ring_perf_test.cc:make_128kb_case",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:tm_ring_perf_test.cc",
+      "target": "function:tm_ring_perf_test.cc:run_multi_vring_aggregated_read_benchmark",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:tm_ring_perf_test.cc",
+      "target": "function:tm_ring_perf_test.cc:run_multi_vring_aggregated_read_benchmark",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:tm_ring_perf_test.cc",
+      "target": "function:tm_ring_perf_test.cc:run_multi_vring_128kb_benchmark",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:tm_ring_perf_test.cc",
+      "target": "function:tm_ring_perf_test.cc:run_multi_vring_128kb_benchmark",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:tm_ring_perf_test.cc",
+      "target": "function:tm_ring_perf_test.cc:run_multi_vring_no_merge_read_benchmark",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:tm_ring_perf_test.cc",
+      "target": "function:tm_ring_perf_test.cc:run_multi_vring_no_merge_read_benchmark",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:tm_ring_perf_test.cc",
+      "target": "function:tm_ring_perf_test.cc:run_aggregation_wave_test",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:tm_ring_perf_test.cc",
+      "target": "function:tm_ring_perf_test.cc:run_aggregation_wave_test",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:tm_ring_rbrg_l1_test.cc",
+      "target": "function:tm_ring_rbrg_l1_test.cc:make_rbrg_test_cfg",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:tm_ring_rbrg_l1_test.cc",
+      "target": "function:tm_ring_rbrg_l1_test.cc:make_rbrg_test_cfg",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:tm_ring_rbrg_l1_test.cc",
+      "target": "function:tm_ring_rbrg_l1_test.cc:SetUp",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:tm_ring_rbrg_l1_test.cc",
+      "target": "function:tm_ring_rbrg_l1_test.cc:make_fanout_dat",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:tm_ring_rbrg_l1_test.cc",
+      "target": "class:tm_ring_rbrg_l1_test.cc:TmRingRbrgL1DirectionalTest",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:tm_ring_rbrg_l1_test.cc",
+      "target": "class:tm_ring_rbrg_l1_test.cc:TmRingRbrgL1DirectionalTest",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:tm_ring.h",
+      "target": "class:tm_ring.h:TmRingFabric",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:tm_ring.h",
+      "target": "class:tm_ring.h:TmRingFabric",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:tm_ring_perf_master.h",
+      "target": "class:tm_ring_perf_master.h:TmRingPerfWaveCoordinator",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:tm_ring_perf_master.h",
+      "target": "class:tm_ring_perf_master.h:TmRingPerfWaveCoordinator",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:tm_ring_perf_master.h",
+      "target": "class:tm_ring_perf_master.h:TmRingPerfMaster",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:tm_ring_perf_master.h",
+      "target": "class:tm_ring_perf_master.h:TmRingPerfMaster",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:tm_ring_multiring_test.cc",
+      "target": "file:tm_ring.h",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:tm_ring.h",
+      "target": "file:tm_ring_multiring_test.cc",
+      "type": "tested_by",
+      "direction": "forward",
+      "weight": 0.5
+    },
+    {
+      "source": "file:tm_ring_multiring_test.cc",
+      "target": "file:tm_ring_perf.h",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:tm_ring_perf.h",
+      "target": "file:tm_ring_multiring_test.cc",
+      "type": "tested_by",
+      "direction": "forward",
+      "weight": 0.5
+    },
+    {
+      "source": "file:tm_ring_multiring_test.cc",
+      "target": "file:tm_ring_perf_master.h",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:tm_ring_perf_master.h",
+      "target": "file:tm_ring_multiring_test.cc",
+      "type": "tested_by",
+      "direction": "forward",
+      "weight": 0.5
+    },
+    {
+      "source": "file:tm_ring_perf.cc",
+      "target": "file:tm_ring.h",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:tm_ring_perf.cc",
+      "target": "file:tm_ring_perf.h",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:tm_ring_perf.cc",
+      "target": "file:tm_ring_perf_master.h",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:tm_ring_perf_master.cc",
+      "target": "file:tm_ring_perf_master.h",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:tm_ring_perf_report.cc",
+      "target": "file:tm_ring_perf_report.h",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:tm_ring_perf_test.cc",
+      "target": "file:tm_ring.h",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:tm_ring.h",
+      "target": "file:tm_ring_perf_test.cc",
+      "type": "tested_by",
+      "direction": "forward",
+      "weight": 0.5
+    },
+    {
+      "source": "file:tm_ring_perf_test.cc",
+      "target": "file:tm_ring_home_agent.h",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:tm_ring_home_agent.h",
+      "target": "file:tm_ring_perf_test.cc",
+      "type": "tested_by",
+      "direction": "forward",
+      "weight": 0.5
+    },
+    {
+      "source": "file:tm_ring_perf_test.cc",
+      "target": "file:tm_ring_perf.h",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:tm_ring_perf.h",
+      "target": "file:tm_ring_perf_test.cc",
+      "type": "tested_by",
+      "direction": "forward",
+      "weight": 0.5
+    },
+    {
+      "source": "file:tm_ring_perf_test.cc",
+      "target": "file:tm_ring_perf_master.h",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:tm_ring_perf_master.h",
+      "target": "file:tm_ring_perf_test.cc",
+      "type": "tested_by",
+      "direction": "forward",
+      "weight": 0.5
+    },
+    {
+      "source": "file:tm_ring_perf_test.cc",
+      "target": "file:tm_ring_perf_report.h",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:tm_ring_perf_report.h",
+      "target": "file:tm_ring_perf_test.cc",
+      "type": "tested_by",
+      "direction": "forward",
+      "weight": 0.5
+    },
+    {
+      "source": "file:tm_ring_rbrg_l1_test.cc",
+      "target": "file:tm_ring.h",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:tm_ring.h",
+      "target": "file:tm_ring_rbrg_l1_test.cc",
+      "type": "tested_by",
+      "direction": "forward",
+      "weight": 0.5
+    },
+    {
+      "source": "file:tm_ring_rbrg_l1_test.cc",
+      "target": "file:tm_ring_fanout.h",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:tm_ring_fanout.h",
+      "target": "file:tm_ring_rbrg_l1_test.cc",
+      "type": "tested_by",
+      "direction": "forward",
+      "weight": 0.5
+    }
+  ]
+}

@@ -1,0 +1,1662 @@
+{
+  "nodes": [
+    {
+      "id": "file:tm_ring_cross_station.cc",
+      "type": "file",
+      "name": "tm_ring_cross_station.cc",
+      "filePath": "tm_ring_cross_station.cc",
+      "summary": "实现 Cross Station 的双向输出调度、transit 与本地注入仲裁、弹出提交，以及 I-tag、E-tag 和 fanout 转发。",
+      "tags": [
+        "cross-station",
+        "scheduler",
+        "flow-control"
+      ],
+      "complexity": "complex",
+      "languageNotes": "C++ 事件驱动时序模型以 FIFO 队首、显式反压和成功后提交为主要状态边界。"
+    },
+    {
+      "id": "function:tm_ring_cross_station.cc:TmRingCrossStation",
+      "type": "function",
+      "name": "TmRingCrossStation",
+      "filePath": "tm_ring_cross_station.cc",
+      "lineRange": [
+        9,
+        40
+      ],
+      "summary": "TmRingCrossStation 承担该模块的一项关键处理步骤；其实现服务于“实现 Cross Station 的双向输出调度、transit 与本地注入仲裁、弹出提交，以及 I-tag、E-tag 和 fanout 转发”这一职责。",
+      "tags": [
+        "cross-station",
+        "scheduler",
+        "state-transition"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:tm_ring_cross_station.cc:reset",
+      "type": "function",
+      "name": "reset",
+      "filePath": "tm_ring_cross_station.cc",
+      "lineRange": [
+        42,
+        53
+      ],
+      "summary": "清空组件运行状态并安全退休未完成事件，为下一次仿真恢复初始条件。",
+      "tags": [
+        "cross-station",
+        "scheduler",
+        "state-transition"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:tm_ring_cross_station.cc:idle",
+      "type": "function",
+      "name": "idle",
+      "filePath": "tm_ring_cross_station.cc",
+      "lineRange": [
+        57,
+        73
+      ],
+      "summary": "检查内部队列、序列化器和待处理事件，判断组件是否已经排空。",
+      "tags": [
+        "cross-station",
+        "scheduler",
+        "state-transition"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:tm_ring_cross_station.cc:attach",
+      "type": "function",
+      "name": "attach",
+      "filePath": "tm_ring_cross_station.cc",
+      "lineRange": [
+        75,
+        83
+      ],
+      "summary": "attach 承担该模块的一项关键处理步骤；其实现服务于“实现 Cross Station 的双向输出调度、transit 与本地注入仲裁、弹出提交，以及 I-tag、E-tag 和 fanout 转发”这一职责。",
+      "tags": [
+        "cross-station",
+        "scheduler",
+        "state-transition"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:tm_ring_cross_station.cc:bind_node_interface",
+      "type": "function",
+      "name": "bind_node_interface",
+      "filePath": "tm_ring_cross_station.cc",
+      "lineRange": [
+        85,
+        97
+      ],
+      "summary": "bind_node_interface 承担该模块的一项关键处理步骤；其实现服务于“实现 Cross Station 的双向输出调度、transit 与本地注入仲裁、弹出提交，以及 I-tag、E-tag 和 fanout 转发”这一职责。",
+      "tags": [
+        "cross-station",
+        "scheduler",
+        "state-transition"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:tm_ring_cross_station.cc:schedule_output",
+      "type": "function",
+      "name": "schedule_output",
+      "filePath": "tm_ring_cross_station.cc",
+      "lineRange": [
+        120,
+        168
+      ],
+      "summary": "在 transit 和本地 FIFO 头之间为指定子网方向选择唯一输出并保持公平性。",
+      "tags": [
+        "cross-station",
+        "scheduler",
+        "state-transition"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:tm_ring_cross_station.cc:process_transit",
+      "type": "function",
+      "name": "process_transit",
+      "filePath": "tm_ring_cross_station.cc",
+      "lineRange": [
+        170,
+        285
+      ],
+      "summary": "处理普通中转槽位的转发、弹出、替换和 I-tag/E-tag 承诺，失败时回滚临时状态。",
+      "tags": [
+        "cross-station",
+        "scheduler",
+        "state-transition"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:tm_ring_cross_station.cc:process_fanout_transit",
+      "type": "function",
+      "name": "process_fanout_transit",
+      "filePath": "tm_ring_cross_station.cc",
+      "lineRange": [
+        287,
+        371
+      ],
+      "summary": "在本站拆出 fanout 收件人响应，并保留剩余收件人的载体继续沿环转发。",
+      "tags": [
+        "cross-station",
+        "scheduler",
+        "state-transition"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:tm_ring_cross_station.cc:try_normal_injection",
+      "type": "function",
+      "name": "try_normal_injection",
+      "filePath": "tm_ring_cross_station.cc",
+      "lineRange": [
+        373,
+        394
+      ],
+      "summary": "try_normal_injection 承担该模块的一项关键处理步骤；其实现服务于“实现 Cross Station 的双向输出调度、transit 与本地注入仲裁、弹出提交，以及 I-tag、E-tag 和 fanout 转发”这一职责。",
+      "tags": [
+        "cross-station",
+        "scheduler",
+        "state-transition"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:tm_ring_cross_station.cc:try_slot_replacement",
+      "type": "function",
+      "name": "try_slot_replacement",
+      "filePath": "tm_ring_cross_station.cc",
+      "lineRange": [
+        396,
+        427
+      ],
+      "summary": "尝试用本地 FIFO 头替换可用槽位，或发送带 I-tag 的空槽维持注入承诺。",
+      "tags": [
+        "cross-station",
+        "scheduler",
+        "state-transition"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:tm_ring_cross_station.cc:try_preserve_or_replace_i_tag",
+      "type": "function",
+      "name": "try_preserve_or_replace_i_tag",
+      "filePath": "tm_ring_cross_station.cc",
+      "lineRange": [
+        429,
+        451
+      ],
+      "summary": "try_preserve_or_replace_i_tag 承担该模块的一项关键处理步骤；其实现服务于“实现 Cross Station 的双向输出调度、transit 与本地注入仲裁、弹出提交，以及 I-tag、E-tag 和 fanout 转发”这一职责。",
+      "tags": [
+        "cross-station",
+        "scheduler",
+        "state-transition"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:tm_ring_cross_station.cc:can_eject",
+      "type": "function",
+      "name": "can_eject",
+      "filePath": "tm_ring_cross_station.cc",
+      "lineRange": [
+        457,
+        466
+      ],
+      "summary": "can_eject 承担该模块的一项关键处理步骤；其实现服务于“实现 Cross Station 的双向输出调度、transit 与本地注入仲裁、弹出提交，以及 I-tag、E-tag 和 fanout 转发”这一职责。",
+      "tags": [
+        "cross-station",
+        "scheduler",
+        "state-transition"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:tm_ring_cross_station.cc:commit_eject",
+      "type": "function",
+      "name": "commit_eject",
+      "filePath": "tm_ring_cross_station.cc",
+      "lineRange": [
+        507,
+        525
+      ],
+      "summary": "commit_eject 承担该模块的一项关键处理步骤；其实现服务于“实现 Cross Station 的双向输出调度、transit 与本地注入仲裁、弹出提交，以及 I-tag、E-tag 和 fanout 转发”这一职责。",
+      "tags": [
+        "cross-station",
+        "scheduler",
+        "state-transition"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:tm_ring_cross_station.cc:commit_fanout_eject",
+      "type": "function",
+      "name": "commit_fanout_eject",
+      "filePath": "tm_ring_cross_station.cc",
+      "lineRange": [
+        527,
+        538
+      ],
+      "summary": "commit_fanout_eject 承担该模块的一项关键处理步骤；其实现服务于“实现 Cross Station 的双向输出调度、transit 与本地注入仲裁、弹出提交，以及 I-tag、E-tag 和 fanout 转发”这一职责。",
+      "tags": [
+        "cross-station",
+        "scheduler",
+        "state-transition"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:tm_ring_cross_station.cc:fanout_recipient_for_station",
+      "type": "function",
+      "name": "fanout_recipient_for_station",
+      "filePath": "tm_ring_cross_station.cc",
+      "lineRange": [
+        557,
+        572
+      ],
+      "summary": "fanout_recipient_for_station 承担该模块的一项关键处理步骤；其实现服务于“实现 Cross Station 的双向输出调度、transit 与本地注入仲裁、弹出提交，以及 I-tag、E-tag 和 fanout 转发”这一职责。",
+      "tags": [
+        "cross-station",
+        "scheduler",
+        "state-transition"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:tm_ring_cross_station.cc:make_fanout_forward",
+      "type": "function",
+      "name": "make_fanout_forward",
+      "filePath": "tm_ring_cross_station.cc",
+      "lineRange": [
+        574,
+        582
+      ],
+      "summary": "make_fanout_forward 承担该模块的一项关键处理步骤；其实现服务于“实现 Cross Station 的双向输出调度、transit 与本地注入仲裁、弹出提交，以及 I-tag、E-tag 和 fanout 转发”这一职责。",
+      "tags": [
+        "cross-station",
+        "scheduler",
+        "state-transition"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:tm_ring_cross_station.cc:make_fanout_response",
+      "type": "function",
+      "name": "make_fanout_response",
+      "filePath": "tm_ring_cross_station.cc",
+      "lineRange": [
+        584,
+        613
+      ],
+      "summary": "make_fanout_response 承担该模块的一项关键处理步骤；其实现服务于“实现 Cross Station 的双向输出调度、transit 与本地注入仲裁、弹出提交，以及 I-tag、E-tag 和 fanout 转发”这一职责。",
+      "tags": [
+        "cross-station",
+        "scheduler",
+        "state-transition"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:tm_ring_cross_station.cc:make_tagged_empty_slot",
+      "type": "function",
+      "name": "make_tagged_empty_slot",
+      "filePath": "tm_ring_cross_station.cc",
+      "lineRange": [
+        657,
+        666
+      ],
+      "summary": "make_tagged_empty_slot 承担该模块的一项关键处理步骤；其实现服务于“实现 Cross Station 的双向输出调度、transit 与本地注入仲裁、弹出提交，以及 I-tag、E-tag 和 fanout 转发”这一职责。",
+      "tags": [
+        "cross-station",
+        "scheduler",
+        "state-transition"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:tm_ring_cross_station.h",
+      "type": "file",
+      "name": "tm_ring_cross_station.h",
+      "filePath": "tm_ring_cross_station.h",
+      "summary": "声明 Cross Station 的连接、调度、标签保护、fanout 处理和状态查询契约。",
+      "tags": [
+        "cross-station",
+        "scheduler",
+        "flow-control"
+      ],
+      "complexity": "moderate",
+      "languageNotes": "C++ 事件驱动时序模型以 FIFO 队首、显式反压和成功后提交为主要状态边界。"
+    },
+    {
+      "id": "file:tm_ring_cross_station_test.cc",
+      "type": "file",
+      "name": "tm_ring_cross_station_test.cc",
+      "filePath": "tm_ring_cross_station_test.cc",
+      "summary": "验证槽位池探测、Cross Station 的公平输出仲裁、失败重试、标签和双向弹出隔离。",
+      "tags": [
+        "test",
+        "ring-network",
+        "regression"
+      ],
+      "complexity": "complex",
+      "languageNotes": "C++ 事件驱动时序模型以 FIFO 队首、显式反压和成功后提交为主要状态边界。"
+    },
+    {
+      "id": "class:tm_ring_cross_station_test.cc:TmRingCrossStationFixture",
+      "type": "class",
+      "name": "TmRingCrossStationFixture",
+      "filePath": "tm_ring_cross_station_test.cc",
+      "lineRange": [
+        21,
+        133
+      ],
+      "summary": "TmRingCrossStationFixture 为该测试或模块集中保存共享状态并封装相关操作。",
+      "tags": [
+        "test",
+        "ring-network",
+        "component"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "file:tm_ring_fanout.h",
+      "type": "file",
+      "name": "tm_ring_fanout.h",
+      "filePath": "tm_ring_fanout.h",
+      "summary": "定义 fanout 收件人、载体状态、L2 接收结果和站点位图辅助操作的数据模型。",
+      "tags": [
+        "fanout",
+        "data-model",
+        "ring-network"
+      ],
+      "complexity": "moderate",
+      "languageNotes": "C++ 事件驱动时序模型以 FIFO 队首、显式反压和成功后提交为主要状态边界。"
+    },
+    {
+      "id": "file:tm_ring_l2_buffer_node.cc",
+      "type": "file",
+      "name": "tm_ring_l2_buffer_node.cc",
+      "filePath": "tm_ring_l2_buffer_node.cc",
+      "summary": "实现 L2 响应缓冲节点，将同一缓存行响应聚合为单播、multicast 或 scatter 载体并受控注入 DAT 子网。",
+      "tags": [
+        "l2-buffer",
+        "fanout",
+        "flow-control"
+      ],
+      "complexity": "complex",
+      "languageNotes": "C++ 事件驱动时序模型以 FIFO 队首、显式反压和成功后提交为主要状态边界。"
+    },
+    {
+      "id": "function:tm_ring_l2_buffer_node.cc:TmRingL2BufferNode",
+      "type": "function",
+      "name": "TmRingL2BufferNode",
+      "filePath": "tm_ring_l2_buffer_node.cc",
+      "lineRange": [
+        12,
+        29
+      ],
+      "summary": "TmRingL2BufferNode 承担该模块的一项关键处理步骤；其实现服务于“实现 L2 响应缓冲节点，将同一缓存行响应聚合为单播、multicast 或 scatter 载体并受控注入 DAT 子网”这一职责。",
+      "tags": [
+        "l2-buffer",
+        "fanout",
+        "state-transition"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:tm_ring_l2_buffer_node.cc:reset",
+      "type": "function",
+      "name": "reset",
+      "filePath": "tm_ring_l2_buffer_node.cc",
+      "lineRange": [
+        37,
+        53
+      ],
+      "summary": "清空组件运行状态并安全退休未完成事件，为下一次仿真恢复初始条件。",
+      "tags": [
+        "l2-buffer",
+        "fanout",
+        "state-transition"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:tm_ring_l2_buffer_node.cc:fanout_candidate_valid",
+      "type": "function",
+      "name": "fanout_candidate_valid",
+      "filePath": "tm_ring_l2_buffer_node.cc",
+      "lineRange": [
+        70,
+        86
+      ],
+      "summary": "fanout_candidate_valid 承担该模块的一项关键处理步骤；其实现服务于“实现 L2 响应缓冲节点，将同一缓存行响应聚合为单播、multicast 或 scatter 载体并受控注入 DAT 子网”这一职责。",
+      "tags": [
+        "l2-buffer",
+        "fanout",
+        "state-transition"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:tm_ring_l2_buffer_node.cc:accept_response",
+      "type": "function",
+      "name": "accept_response",
+      "filePath": "tm_ring_l2_buffer_node.cc",
+      "lineRange": [
+        96,
+        167
+      ],
+      "summary": "验证响应并选择单播入队、加入开放 fanout 组或创建新组，返回精确准入状态。",
+      "tags": [
+        "l2-buffer",
+        "fanout",
+        "state-transition"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:tm_ring_l2_buffer_node.cc:make_unicast_response",
+      "type": "function",
+      "name": "make_unicast_response",
+      "filePath": "tm_ring_l2_buffer_node.cc",
+      "lineRange": [
+        182,
+        205
+      ],
+      "summary": "make_unicast_response 承担该模块的一项关键处理步骤；其实现服务于“实现 L2 响应缓冲节点，将同一缓存行响应聚合为单播、multicast 或 scatter 载体并受控注入 DAT 子网”这一职责。",
+      "tags": [
+        "l2-buffer",
+        "fanout",
+        "state-transition"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:tm_ring_l2_buffer_node.cc:make_fanout_envelope",
+      "type": "function",
+      "name": "make_fanout_envelope",
+      "filePath": "tm_ring_l2_buffer_node.cc",
+      "lineRange": [
+        207,
+        233
+      ],
+      "summary": "make_fanout_envelope 承担该模块的一项关键处理步骤；其实现服务于“实现 L2 响应缓冲节点，将同一缓存行响应聚合为单播、multicast 或 scatter 载体并受控注入 DAT 子网”这一职责。",
+      "tags": [
+        "l2-buffer",
+        "fanout",
+        "state-transition"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:tm_ring_l2_buffer_node.cc:append_fanout_recipient",
+      "type": "function",
+      "name": "append_fanout_recipient",
+      "filePath": "tm_ring_l2_buffer_node.cc",
+      "lineRange": [
+        235,
+        280
+      ],
+      "summary": "校验并追加收件人，维护站点位图，并根据数据范围判定 multicast 或 scatter。",
+      "tags": [
+        "l2-buffer",
+        "fanout",
+        "state-transition"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:tm_ring_l2_buffer_node.cc:carrier_size",
+      "type": "function",
+      "name": "carrier_size",
+      "filePath": "tm_ring_l2_buffer_node.cc",
+      "lineRange": [
+        282,
+        330
+      ],
+      "summary": "carrier_size 承担该模块的一项关键处理步骤；其实现服务于“实现 L2 响应缓冲节点，将同一缓存行响应聚合为单播、multicast 或 scatter 载体并受控注入 DAT 子网”这一职责。",
+      "tags": [
+        "l2-buffer",
+        "fanout",
+        "state-transition"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:tm_ring_l2_buffer_node.cc:freeze_fanout_group",
+      "type": "function",
+      "name": "freeze_fanout_group",
+      "filePath": "tm_ring_l2_buffer_node.cc",
+      "lineRange": [
+        332,
+        360
+      ],
+      "summary": "freeze_fanout_group 承担该模块的一项关键处理步骤；其实现服务于“实现 L2 响应缓冲节点，将同一缓存行响应聚合为单播、multicast 或 scatter 载体并受控注入 DAT 子网”这一职责。",
+      "tags": [
+        "l2-buffer",
+        "fanout",
+        "state-transition"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:tm_ring_l2_buffer_node.cc:make_frozen_carrier",
+      "type": "function",
+      "name": "make_frozen_carrier",
+      "filePath": "tm_ring_l2_buffer_node.cc",
+      "lineRange": [
+        362,
+        404
+      ],
+      "summary": "make_frozen_carrier 承担该模块的一项关键处理步骤；其实现服务于“实现 L2 响应缓冲节点，将同一缓存行响应聚合为单播、multicast 或 scatter 载体并受控注入 DAT 子网”这一职责。",
+      "tags": [
+        "l2-buffer",
+        "fanout",
+        "state-transition"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:tm_ring_l2_buffer_node.cc:materialize_fanout",
+      "type": "function",
+      "name": "materialize_fanout",
+      "filePath": "tm_ring_l2_buffer_node.cc",
+      "lineRange": [
+        406,
+        439
+      ],
+      "summary": "冻结共享完成数据为物理载体，调整每个收件人的数据偏移并记录分组摘要。",
+      "tags": [
+        "l2-buffer",
+        "fanout",
+        "state-transition"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:tm_ring_l2_buffer_node.cc:prepare_dat_route",
+      "type": "function",
+      "name": "prepare_dat_route",
+      "filePath": "tm_ring_l2_buffer_node.cc",
+      "lineRange": [
+        449,
+        482
+      ],
+      "summary": "prepare_dat_route 承担该模块的一项关键处理步骤；其实现服务于“实现 L2 响应缓冲节点，将同一缓存行响应聚合为单播、multicast 或 scatter 载体并受控注入 DAT 子网”这一职责。",
+      "tags": [
+        "l2-buffer",
+        "fanout",
+        "state-transition"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:tm_ring_l2_buffer_node.cc:service_ready_response",
+      "type": "function",
+      "name": "service_ready_response",
+      "filePath": "tm_ring_l2_buffer_node.cc",
+      "lineRange": [
+        484,
+        499
+      ],
+      "summary": "service_ready_response 承担该模块的一项关键处理步骤；其实现服务于“实现 L2 响应缓冲节点，将同一缓存行响应聚合为单播、multicast 或 scatter 载体并受控注入 DAT 子网”这一职责。",
+      "tags": [
+        "l2-buffer",
+        "fanout",
+        "state-transition"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:tm_ring_l2_buffer_node.cc:release_issue_token",
+      "type": "function",
+      "name": "release_issue_token",
+      "filePath": "tm_ring_l2_buffer_node.cc",
+      "lineRange": [
+        501,
+        515
+      ],
+      "summary": "release_issue_token 承担该模块的一项关键处理步骤；其实现服务于“实现 L2 响应缓冲节点，将同一缓存行响应聚合为单播、multicast 或 scatter 载体并受控注入 DAT 子网”这一职责。",
+      "tags": [
+        "l2-buffer",
+        "fanout",
+        "state-transition"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:tm_ring_l2_buffer_node.cc:service",
+      "type": "function",
+      "name": "service",
+      "filePath": "tm_ring_l2_buffer_node.cc",
+      "lineRange": [
+        517,
+        620
+      ],
+      "summary": "在延迟到期且令牌可用时冻结、路由并提交队首响应，成功后才推进队列。",
+      "tags": [
+        "l2-buffer",
+        "fanout",
+        "state-transition"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "file:tm_ring_l2_buffer_node.h",
+      "type": "file",
+      "name": "tm_ring_l2_buffer_node.h",
+      "filePath": "tm_ring_l2_buffer_node.h",
+      "summary": "声明 L2 响应准入、fanout 分组冻结、载体物化和 DAT 注入接口。",
+      "tags": [
+        "l2-buffer",
+        "fanout",
+        "flow-control"
+      ],
+      "complexity": "moderate",
+      "languageNotes": "C++ 事件驱动时序模型以 FIFO 队首、显式反压和成功后提交为主要状态边界。"
+    },
+    {
+      "id": "file:tm_ring_rbrg_l1.cc",
+      "type": "file",
+      "name": "tm_ring_rbrg_l1.cc",
+      "filePath": "tm_ring_rbrg_l1.cc",
+      "summary": "实现 V-Ring 与 H-Ring 之间的 RBRG L1，按路径和方向仲裁 FIFO 头、重序列化并保持跨环 fanout 状态。",
+      "tags": [
+        "rbrg",
+        "arbitration",
+        "serialization"
+      ],
+      "complexity": "complex",
+      "languageNotes": "C++ 事件驱动时序模型以 FIFO 队首、显式反压和成功后提交为主要状态边界。"
+    },
+    {
+      "id": "function:tm_ring_rbrg_l1.cc:TmRingRbrgL1",
+      "type": "function",
+      "name": "TmRingRbrgL1",
+      "filePath": "tm_ring_rbrg_l1.cc",
+      "lineRange": [
+        10,
+        131
+      ],
+      "summary": "TmRingRbrgL1 承担该模块的一项关键处理步骤；其实现服务于“实现 V-Ring 与 H-Ring 之间的 RBRG L1，按路径和方向仲裁 FIFO 头、重序列化并保持跨环 fanout 状态”这一职责。",
+      "tags": [
+        "rbrg",
+        "arbitration",
+        "state-transition"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:tm_ring_rbrg_l1.cc:reset",
+      "type": "function",
+      "name": "reset",
+      "filePath": "tm_ring_rbrg_l1.cc",
+      "lineRange": [
+        133,
+        154
+      ],
+      "summary": "清空组件运行状态并安全退休未完成事件，为下一次仿真恢复初始条件。",
+      "tags": [
+        "rbrg",
+        "arbitration",
+        "state-transition"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:tm_ring_rbrg_l1.cc:idle",
+      "type": "function",
+      "name": "idle",
+      "filePath": "tm_ring_rbrg_l1.cc",
+      "lineRange": [
+        156,
+        173
+      ],
+      "summary": "检查内部队列、序列化器和待处理事件，判断组件是否已经排空。",
+      "tags": [
+        "rbrg",
+        "arbitration",
+        "state-transition"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:tm_ring_rbrg_l1.cc:schedule_path",
+      "type": "function",
+      "name": "schedule_path",
+      "filePath": "tm_ring_rbrg_l1.cc",
+      "lineRange": [
+        272,
+        360
+      ],
+      "summary": "仅在各输入 FIFO 头之间为跨环路径分配空闲方向和序列化器，不绕过被阻塞头。",
+      "tags": [
+        "rbrg",
+        "arbitration",
+        "state-transition"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:tm_ring_rbrg_l1.cc:start_serializer",
+      "type": "function",
+      "name": "start_serializer",
+      "filePath": "tm_ring_rbrg_l1.cc",
+      "lineRange": [
+        362,
+        398
+      ],
+      "summary": "锁定获胜 FIFO 头和输出方向，准备下一段路由并安排序列化交接事件。",
+      "tags": [
+        "rbrg",
+        "arbitration",
+        "state-transition"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:tm_ring_rbrg_l1.cc:head_candidate",
+      "type": "function",
+      "name": "head_candidate",
+      "filePath": "tm_ring_rbrg_l1.cc",
+      "lineRange": [
+        400,
+        412
+      ],
+      "summary": "head_candidate 承担该模块的一项关键处理步骤；其实现服务于“实现 V-Ring 与 H-Ring 之间的 RBRG L1，按路径和方向仲裁 FIFO 头、重序列化并保持跨环 fanout 状态”这一职责。",
+      "tags": [
+        "rbrg",
+        "arbitration",
+        "state-transition"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:tm_ring_rbrg_l1.cc:preferred_direction",
+      "type": "function",
+      "name": "preferred_direction",
+      "filePath": "tm_ring_rbrg_l1.cc",
+      "lineRange": [
+        414,
+        463
+      ],
+      "summary": "根据目标或 fanout 跨度选择 CW/CCW，等距时用轮转方向打破平局。",
+      "tags": [
+        "rbrg",
+        "arbitration",
+        "state-transition"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:tm_ring_rbrg_l1.cc:release_bandwidth",
+      "type": "function",
+      "name": "release_bandwidth",
+      "filePath": "tm_ring_rbrg_l1.cc",
+      "lineRange": [
+        465,
+        480
+      ],
+      "summary": "release_bandwidth 承担该模块的一项关键处理步骤；其实现服务于“实现 V-Ring 与 H-Ring 之间的 RBRG L1，按路径和方向仲裁 FIFO 头、重序列化并保持跨环 fanout 状态”这一职责。",
+      "tags": [
+        "rbrg",
+        "arbitration",
+        "state-transition"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:tm_ring_rbrg_l1.cc:handoff_serializer",
+      "type": "function",
+      "name": "handoff_serializer",
+      "filePath": "tm_ring_rbrg_l1.cc",
+      "lineRange": [
+        482,
+        506
+      ],
+      "summary": "序列化完成后尝试注入下一 Ring 段，成功才弹出原 FIFO 并释放序列化状态。",
+      "tags": [
+        "rbrg",
+        "arbitration",
+        "state-transition"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:tm_ring_rbrg_l1.cc:prepare_h_segment",
+      "type": "function",
+      "name": "prepare_h_segment",
+      "filePath": "tm_ring_rbrg_l1.cc",
+      "lineRange": [
+        508,
+        516
+      ],
+      "summary": "prepare_h_segment 承担该模块的一项关键处理步骤；其实现服务于“实现 V-Ring 与 H-Ring 之间的 RBRG L1，按路径和方向仲裁 FIFO 头、重序列化并保持跨环 fanout 状态”这一职责。",
+      "tags": [
+        "rbrg",
+        "arbitration",
+        "state-transition"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:tm_ring_rbrg_l1.cc:prepare_v_segment",
+      "type": "function",
+      "name": "prepare_v_segment",
+      "filePath": "tm_ring_rbrg_l1.cc",
+      "lineRange": [
+        518,
+        559
+      ],
+      "summary": "prepare_v_segment 承担该模块的一项关键处理步骤；其实现服务于“实现 V-Ring 与 H-Ring 之间的 RBRG L1，按路径和方向仲裁 FIFO 头、重序列化并保持跨环 fanout 状态”这一职责。",
+      "tags": [
+        "rbrg",
+        "arbitration",
+        "state-transition"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:tm_ring_rbrg_l1.h",
+      "type": "file",
+      "name": "tm_ring_rbrg_l1.h",
+      "filePath": "tm_ring_rbrg_l1.h",
+      "summary": "声明 RBRG L1 的四类跨环路径、双向序列化状态、调度和路由准备接口。",
+      "tags": [
+        "rbrg",
+        "arbitration",
+        "serialization"
+      ],
+      "complexity": "moderate",
+      "languageNotes": "C++ 事件驱动时序模型以 FIFO 队首、显式反压和成功后提交为主要状态边界。"
+    },
+    {
+      "id": "class:tm_ring_cross_station.h:TmRingCrossStation",
+      "type": "class",
+      "name": "TmRingCrossStation",
+      "filePath": "tm_ring_cross_station.h",
+      "lineRange": [
+        20,
+        120
+      ],
+      "summary": "执行站点级 transit、本地注入、弹出与标签保护调度。",
+      "tags": [
+        "cross-station",
+        "scheduler",
+        "component"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "class:tm_ring_l2_buffer_node.h:TmRingL2BufferNode",
+      "type": "class",
+      "name": "TmRingL2BufferNode",
+      "filePath": "tm_ring_l2_buffer_node.h",
+      "lineRange": [
+        20,
+        81
+      ],
+      "summary": "聚合 L2 响应并将单播或 fanout 载体注入 DAT 子网。",
+      "tags": [
+        "l2-buffer",
+        "fanout",
+        "component"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "class:tm_ring_rbrg_l1.h:TmRingRbrgL1",
+      "type": "class",
+      "name": "TmRingRbrgL1",
+      "filePath": "tm_ring_rbrg_l1.h",
+      "lineRange": [
+        23,
+        120
+      ],
+      "summary": "桥接 V-Ring 与 H-Ring 并维护分路径双向序列化状态。",
+      "tags": [
+        "rbrg",
+        "arbitration",
+        "component"
+      ],
+      "complexity": "moderate"
+    }
+  ],
+  "edges": [
+    {
+      "source": "file:tm_ring_cross_station.cc",
+      "target": "function:tm_ring_cross_station.cc:TmRingCrossStation",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:tm_ring_cross_station.cc",
+      "target": "function:tm_ring_cross_station.cc:TmRingCrossStation",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:tm_ring_cross_station.cc",
+      "target": "function:tm_ring_cross_station.cc:reset",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:tm_ring_cross_station.cc",
+      "target": "function:tm_ring_cross_station.cc:reset",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:tm_ring_cross_station.cc",
+      "target": "function:tm_ring_cross_station.cc:idle",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:tm_ring_cross_station.cc",
+      "target": "function:tm_ring_cross_station.cc:idle",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:tm_ring_cross_station.cc",
+      "target": "function:tm_ring_cross_station.cc:attach",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:tm_ring_cross_station.cc",
+      "target": "function:tm_ring_cross_station.cc:attach",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:tm_ring_cross_station.cc",
+      "target": "function:tm_ring_cross_station.cc:bind_node_interface",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:tm_ring_cross_station.cc",
+      "target": "function:tm_ring_cross_station.cc:bind_node_interface",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:tm_ring_cross_station.cc",
+      "target": "function:tm_ring_cross_station.cc:schedule_output",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:tm_ring_cross_station.cc",
+      "target": "function:tm_ring_cross_station.cc:schedule_output",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:tm_ring_cross_station.cc",
+      "target": "function:tm_ring_cross_station.cc:process_transit",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:tm_ring_cross_station.cc",
+      "target": "function:tm_ring_cross_station.cc:process_transit",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:tm_ring_cross_station.cc",
+      "target": "function:tm_ring_cross_station.cc:process_fanout_transit",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:tm_ring_cross_station.cc",
+      "target": "function:tm_ring_cross_station.cc:process_fanout_transit",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:tm_ring_cross_station.cc",
+      "target": "function:tm_ring_cross_station.cc:try_normal_injection",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:tm_ring_cross_station.cc",
+      "target": "function:tm_ring_cross_station.cc:try_normal_injection",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:tm_ring_cross_station.cc",
+      "target": "function:tm_ring_cross_station.cc:try_slot_replacement",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:tm_ring_cross_station.cc",
+      "target": "function:tm_ring_cross_station.cc:try_slot_replacement",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:tm_ring_cross_station.cc",
+      "target": "function:tm_ring_cross_station.cc:try_preserve_or_replace_i_tag",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:tm_ring_cross_station.cc",
+      "target": "function:tm_ring_cross_station.cc:try_preserve_or_replace_i_tag",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:tm_ring_cross_station.cc",
+      "target": "function:tm_ring_cross_station.cc:can_eject",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:tm_ring_cross_station.cc",
+      "target": "function:tm_ring_cross_station.cc:can_eject",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:tm_ring_cross_station.cc",
+      "target": "function:tm_ring_cross_station.cc:commit_eject",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:tm_ring_cross_station.cc",
+      "target": "function:tm_ring_cross_station.cc:commit_eject",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:tm_ring_cross_station.cc",
+      "target": "function:tm_ring_cross_station.cc:commit_fanout_eject",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:tm_ring_cross_station.cc",
+      "target": "function:tm_ring_cross_station.cc:commit_fanout_eject",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:tm_ring_cross_station.cc",
+      "target": "function:tm_ring_cross_station.cc:fanout_recipient_for_station",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:tm_ring_cross_station.cc",
+      "target": "function:tm_ring_cross_station.cc:fanout_recipient_for_station",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:tm_ring_cross_station.cc",
+      "target": "function:tm_ring_cross_station.cc:make_fanout_forward",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:tm_ring_cross_station.cc",
+      "target": "function:tm_ring_cross_station.cc:make_fanout_forward",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:tm_ring_cross_station.cc",
+      "target": "function:tm_ring_cross_station.cc:make_fanout_response",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:tm_ring_cross_station.cc",
+      "target": "function:tm_ring_cross_station.cc:make_fanout_response",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:tm_ring_cross_station.cc",
+      "target": "function:tm_ring_cross_station.cc:make_tagged_empty_slot",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:tm_ring_cross_station.cc",
+      "target": "function:tm_ring_cross_station.cc:make_tagged_empty_slot",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:tm_ring_cross_station_test.cc",
+      "target": "class:tm_ring_cross_station_test.cc:TmRingCrossStationFixture",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:tm_ring_cross_station_test.cc",
+      "target": "class:tm_ring_cross_station_test.cc:TmRingCrossStationFixture",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:tm_ring_l2_buffer_node.cc",
+      "target": "function:tm_ring_l2_buffer_node.cc:TmRingL2BufferNode",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:tm_ring_l2_buffer_node.cc",
+      "target": "function:tm_ring_l2_buffer_node.cc:TmRingL2BufferNode",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:tm_ring_l2_buffer_node.cc",
+      "target": "function:tm_ring_l2_buffer_node.cc:reset",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:tm_ring_l2_buffer_node.cc",
+      "target": "function:tm_ring_l2_buffer_node.cc:reset",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:tm_ring_l2_buffer_node.cc",
+      "target": "function:tm_ring_l2_buffer_node.cc:fanout_candidate_valid",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:tm_ring_l2_buffer_node.cc",
+      "target": "function:tm_ring_l2_buffer_node.cc:fanout_candidate_valid",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:tm_ring_l2_buffer_node.cc",
+      "target": "function:tm_ring_l2_buffer_node.cc:accept_response",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:tm_ring_l2_buffer_node.cc",
+      "target": "function:tm_ring_l2_buffer_node.cc:accept_response",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:tm_ring_l2_buffer_node.cc",
+      "target": "function:tm_ring_l2_buffer_node.cc:make_unicast_response",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:tm_ring_l2_buffer_node.cc",
+      "target": "function:tm_ring_l2_buffer_node.cc:make_unicast_response",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:tm_ring_l2_buffer_node.cc",
+      "target": "function:tm_ring_l2_buffer_node.cc:make_fanout_envelope",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:tm_ring_l2_buffer_node.cc",
+      "target": "function:tm_ring_l2_buffer_node.cc:make_fanout_envelope",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:tm_ring_l2_buffer_node.cc",
+      "target": "function:tm_ring_l2_buffer_node.cc:append_fanout_recipient",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:tm_ring_l2_buffer_node.cc",
+      "target": "function:tm_ring_l2_buffer_node.cc:append_fanout_recipient",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:tm_ring_l2_buffer_node.cc",
+      "target": "function:tm_ring_l2_buffer_node.cc:carrier_size",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:tm_ring_l2_buffer_node.cc",
+      "target": "function:tm_ring_l2_buffer_node.cc:carrier_size",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:tm_ring_l2_buffer_node.cc",
+      "target": "function:tm_ring_l2_buffer_node.cc:freeze_fanout_group",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:tm_ring_l2_buffer_node.cc",
+      "target": "function:tm_ring_l2_buffer_node.cc:freeze_fanout_group",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:tm_ring_l2_buffer_node.cc",
+      "target": "function:tm_ring_l2_buffer_node.cc:make_frozen_carrier",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:tm_ring_l2_buffer_node.cc",
+      "target": "function:tm_ring_l2_buffer_node.cc:make_frozen_carrier",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:tm_ring_l2_buffer_node.cc",
+      "target": "function:tm_ring_l2_buffer_node.cc:materialize_fanout",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:tm_ring_l2_buffer_node.cc",
+      "target": "function:tm_ring_l2_buffer_node.cc:materialize_fanout",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:tm_ring_l2_buffer_node.cc",
+      "target": "function:tm_ring_l2_buffer_node.cc:prepare_dat_route",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:tm_ring_l2_buffer_node.cc",
+      "target": "function:tm_ring_l2_buffer_node.cc:prepare_dat_route",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:tm_ring_l2_buffer_node.cc",
+      "target": "function:tm_ring_l2_buffer_node.cc:service_ready_response",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:tm_ring_l2_buffer_node.cc",
+      "target": "function:tm_ring_l2_buffer_node.cc:service_ready_response",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:tm_ring_l2_buffer_node.cc",
+      "target": "function:tm_ring_l2_buffer_node.cc:release_issue_token",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:tm_ring_l2_buffer_node.cc",
+      "target": "function:tm_ring_l2_buffer_node.cc:release_issue_token",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:tm_ring_l2_buffer_node.cc",
+      "target": "function:tm_ring_l2_buffer_node.cc:service",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:tm_ring_l2_buffer_node.cc",
+      "target": "function:tm_ring_l2_buffer_node.cc:service",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:tm_ring_rbrg_l1.cc",
+      "target": "function:tm_ring_rbrg_l1.cc:TmRingRbrgL1",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:tm_ring_rbrg_l1.cc",
+      "target": "function:tm_ring_rbrg_l1.cc:TmRingRbrgL1",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:tm_ring_rbrg_l1.cc",
+      "target": "function:tm_ring_rbrg_l1.cc:reset",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:tm_ring_rbrg_l1.cc",
+      "target": "function:tm_ring_rbrg_l1.cc:reset",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:tm_ring_rbrg_l1.cc",
+      "target": "function:tm_ring_rbrg_l1.cc:idle",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:tm_ring_rbrg_l1.cc",
+      "target": "function:tm_ring_rbrg_l1.cc:idle",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:tm_ring_rbrg_l1.cc",
+      "target": "function:tm_ring_rbrg_l1.cc:schedule_path",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:tm_ring_rbrg_l1.cc",
+      "target": "function:tm_ring_rbrg_l1.cc:schedule_path",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:tm_ring_rbrg_l1.cc",
+      "target": "function:tm_ring_rbrg_l1.cc:start_serializer",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:tm_ring_rbrg_l1.cc",
+      "target": "function:tm_ring_rbrg_l1.cc:start_serializer",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:tm_ring_rbrg_l1.cc",
+      "target": "function:tm_ring_rbrg_l1.cc:head_candidate",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:tm_ring_rbrg_l1.cc",
+      "target": "function:tm_ring_rbrg_l1.cc:head_candidate",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:tm_ring_rbrg_l1.cc",
+      "target": "function:tm_ring_rbrg_l1.cc:preferred_direction",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:tm_ring_rbrg_l1.cc",
+      "target": "function:tm_ring_rbrg_l1.cc:preferred_direction",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:tm_ring_rbrg_l1.cc",
+      "target": "function:tm_ring_rbrg_l1.cc:release_bandwidth",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:tm_ring_rbrg_l1.cc",
+      "target": "function:tm_ring_rbrg_l1.cc:release_bandwidth",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:tm_ring_rbrg_l1.cc",
+      "target": "function:tm_ring_rbrg_l1.cc:handoff_serializer",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:tm_ring_rbrg_l1.cc",
+      "target": "function:tm_ring_rbrg_l1.cc:handoff_serializer",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:tm_ring_rbrg_l1.cc",
+      "target": "function:tm_ring_rbrg_l1.cc:prepare_h_segment",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:tm_ring_rbrg_l1.cc",
+      "target": "function:tm_ring_rbrg_l1.cc:prepare_h_segment",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:tm_ring_rbrg_l1.cc",
+      "target": "function:tm_ring_rbrg_l1.cc:prepare_v_segment",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:tm_ring_rbrg_l1.cc",
+      "target": "function:tm_ring_rbrg_l1.cc:prepare_v_segment",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:tm_ring_cross_station.h",
+      "target": "class:tm_ring_cross_station.h:TmRingCrossStation",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:tm_ring_cross_station.h",
+      "target": "class:tm_ring_cross_station.h:TmRingCrossStation",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:tm_ring_l2_buffer_node.h",
+      "target": "class:tm_ring_l2_buffer_node.h:TmRingL2BufferNode",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:tm_ring_l2_buffer_node.h",
+      "target": "class:tm_ring_l2_buffer_node.h:TmRingL2BufferNode",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:tm_ring_rbrg_l1.h",
+      "target": "class:tm_ring_rbrg_l1.h:TmRingRbrgL1",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:tm_ring_rbrg_l1.h",
+      "target": "class:tm_ring_rbrg_l1.h:TmRingRbrgL1",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:tm_ring_cross_station.cc",
+      "target": "file:tm_ring_cross_station.h",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:tm_ring_cross_station.cc",
+      "target": "file:tm_ring_fanout.h",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:tm_ring_cross_station_test.cc",
+      "target": "file:tm_ring_cross_station.h",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:tm_ring_cross_station.h",
+      "target": "file:tm_ring_cross_station_test.cc",
+      "type": "tested_by",
+      "direction": "forward",
+      "weight": 0.5
+    },
+    {
+      "source": "file:tm_ring_l2_buffer_node.cc",
+      "target": "file:tm_ring_fanout.h",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:tm_ring_l2_buffer_node.cc",
+      "target": "file:tm_ring_l2_buffer_node.h",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:tm_ring_rbrg_l1.cc",
+      "target": "file:tm_ring_fanout.h",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:tm_ring_rbrg_l1.cc",
+      "target": "file:tm_ring_rbrg_l1.h",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    }
+  ]
+}

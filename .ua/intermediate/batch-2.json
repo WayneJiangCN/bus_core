@@ -1,0 +1,1728 @@
+{
+  "nodes": [
+    {
+      "id": "file:tm_ring_conn.cc",
+      "type": "file",
+      "name": "tm_ring_conn.cc",
+      "filePath": "tm_ring_conn.cc",
+      "summary": "实现相邻 Cross Station 之间的定向链路，按 REQ/RSP/DAT 独立建模序列化、固定延迟流水、下游反压与统计。",
+      "tags": [
+        "ring-link",
+        "serialization",
+        "backpressure"
+      ],
+      "complexity": "complex",
+      "languageNotes": "C++ 事件驱动时序模型以 FIFO 队首、显式反压和成功后提交为主要状态边界。"
+    },
+    {
+      "id": "function:tm_ring_conn.cc:TmRingConn",
+      "type": "function",
+      "name": "TmRingConn",
+      "filePath": "tm_ring_conn.cc",
+      "lineRange": [
+        7,
+        68
+      ],
+      "summary": "TmRingConn 承担该模块的一项关键处理步骤；其实现服务于“实现相邻 Cross Station 之间的定向链路，按 REQ/RSP/DAT 独立建模序列化、固定延迟流水、下游反压与统计”这一职责。",
+      "tags": [
+        "ring-link",
+        "serialization",
+        "state-transition"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:tm_ring_conn.cc:reset",
+      "type": "function",
+      "name": "reset",
+      "filePath": "tm_ring_conn.cc",
+      "lineRange": [
+        97,
+        115
+      ],
+      "summary": "清空组件运行状态并安全退休未完成事件，为下一次仿真恢复初始条件。",
+      "tags": [
+        "ring-link",
+        "serialization",
+        "state-transition"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:tm_ring_conn.cc:can_accept",
+      "type": "function",
+      "name": "can_accept",
+      "filePath": "tm_ring_conn.cc",
+      "lineRange": [
+        134,
+        154
+      ],
+      "summary": "无提交地检查对应子网序列化器和流水容量，拒绝时记录精确停顿原因。",
+      "tags": [
+        "ring-link",
+        "serialization",
+        "state-transition"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:tm_ring_conn.cc:reserve_slot",
+      "type": "function",
+      "name": "reserve_slot",
+      "filePath": "tm_ring_conn.cc",
+      "lineRange": [
+        164,
+        188
+      ],
+      "summary": "为已接收槽位预留序列化器，计算传输周期并安排进入延迟流水。",
+      "tags": [
+        "ring-link",
+        "serialization",
+        "state-transition"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:tm_ring_conn.cc:release_serializer",
+      "type": "function",
+      "name": "release_serializer",
+      "filePath": "tm_ring_conn.cc",
+      "lineRange": [
+        201,
+        212
+      ],
+      "summary": "release_serializer 承担该模块的一项关键处理步骤；其实现服务于“实现相邻 Cross Station 之间的定向链路，按 REQ/RSP/DAT 独立建模序列化、固定延迟流水、下游反压与统计”这一职责。",
+      "tags": [
+        "ring-link",
+        "serialization",
+        "state-transition"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:tm_ring_conn.cc:move_serializer_to_pipeline",
+      "type": "function",
+      "name": "move_serializer_to_pipeline",
+      "filePath": "tm_ring_conn.cc",
+      "lineRange": [
+        214,
+        226
+      ],
+      "summary": "move_serializer_to_pipeline 承担该模块的一项关键处理步骤；其实现服务于“实现相邻 Cross Station 之间的定向链路，按 REQ/RSP/DAT 独立建模序列化、固定延迟流水、下游反压与统计”这一职责。",
+      "tags": [
+        "ring-link",
+        "serialization",
+        "state-transition"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:tm_ring_conn.cc:drain_ready_slots",
+      "type": "function",
+      "name": "drain_ready_slots",
+      "filePath": "tm_ring_conn.cc",
+      "lineRange": [
+        261,
+        283
+      ],
+      "summary": "将已完成链路延迟的队首槽位送到目标寄存器，受阻时保持原顺序重试。",
+      "tags": [
+        "ring-link",
+        "serialization",
+        "state-transition"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:tm_ring_conn.h",
+      "type": "file",
+      "name": "tm_ring_conn.h",
+      "filePath": "tm_ring_conn.h",
+      "summary": "声明定向 Ring 链路的接收、序列化、流水转发和统计接口。",
+      "tags": [
+        "ring-link",
+        "serialization",
+        "backpressure"
+      ],
+      "complexity": "moderate",
+      "languageNotes": "C++ 事件驱动时序模型以 FIFO 队首、显式反压和成功后提交为主要状态边界。"
+    },
+    {
+      "id": "file:tm_ring_conn_test.cc",
+      "type": "file",
+      "name": "tm_ring_conn_test.cc",
+      "filePath": "tm_ring_conn_test.cc",
+      "summary": "验证 Ring 链路的序列化时序、分子网并行、下游阻塞、复位事件退休与同通道 FIFO 顺序。",
+      "tags": [
+        "test",
+        "ring-network",
+        "regression"
+      ],
+      "complexity": "moderate",
+      "languageNotes": "C++ 事件驱动时序模型以 FIFO 队首、显式反压和成功后提交为主要状态边界。"
+    },
+    {
+      "id": "class:tm_ring_conn_test.cc:TmRingConnFixture",
+      "type": "class",
+      "name": "TmRingConnFixture",
+      "filePath": "tm_ring_conn_test.cc",
+      "lineRange": [
+        11,
+        64
+      ],
+      "summary": "TmRingConnFixture 为该测试或模块集中保存共享状态并封装相关操作。",
+      "tags": [
+        "test",
+        "ring-network",
+        "component"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "file:tm_ring_core.cc",
+      "type": "file",
+      "name": "tm_ring_core.cc",
+      "filePath": "tm_ring_core.cc",
+      "summary": "实现多环 TmRingFabric 的配置校验、域与组件创建绑定、生命周期管理和全局运行统计汇总。",
+      "tags": [
+        "ring-fabric",
+        "topology",
+        "interconnect"
+      ],
+      "complexity": "complex",
+      "languageNotes": "C++ 事件驱动时序模型以 FIFO 队首、显式反压和成功后提交为主要状态边界。"
+    },
+    {
+      "id": "function:tm_ring_core.cc:validate_ring_config",
+      "type": "function",
+      "name": "validate_ring_config",
+      "filePath": "tm_ring_core.cc",
+      "lineRange": [
+        22,
+        106
+      ],
+      "summary": "校验多环拓扑、带宽、队列深度、目标布局以及 Home Agent 和 L2 参数约束。",
+      "tags": [
+        "ring-fabric",
+        "topology",
+        "state-transition"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:tm_ring_core.cc:config",
+      "type": "function",
+      "name": "config",
+      "filePath": "tm_ring_core.cc",
+      "lineRange": [
+        127,
+        151
+      ],
+      "summary": "配置组件依赖、队列和事件回调，建立可运行状态。",
+      "tags": [
+        "ring-fabric",
+        "topology",
+        "state-transition"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:tm_ring_core.cc:create_domain",
+      "type": "function",
+      "name": "create_domain",
+      "filePath": "tm_ring_core.cc",
+      "lineRange": [
+        167,
+        200
+      ],
+      "summary": "创建一个 Ring 域的站点、双向连接和共享槽位池。",
+      "tags": [
+        "ring-fabric",
+        "topology",
+        "state-transition"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:tm_ring_core.cc:attach_domain",
+      "type": "function",
+      "name": "attach_domain",
+      "filePath": "tm_ring_core.cc",
+      "lineRange": [
+        202,
+        220
+      ],
+      "summary": "attach_domain 承担该模块的一项关键处理步骤；其实现服务于“实现多环 TmRingFabric 的配置校验、域与组件创建绑定、生命周期管理和全局运行统计汇总”这一职责。",
+      "tags": [
+        "ring-fabric",
+        "topology",
+        "state-transition"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:tm_ring_core.cc:create_master_nius",
+      "type": "function",
+      "name": "create_master_nius",
+      "filePath": "tm_ring_core.cc",
+      "lineRange": [
+        237,
+        246
+      ],
+      "summary": "create_master_nius 承担该模块的一项关键处理步骤；其实现服务于“实现多环 TmRingFabric 的配置校验、域与组件创建绑定、生命周期管理和全局运行统计汇总”这一职责。",
+      "tags": [
+        "ring-fabric",
+        "topology",
+        "state-transition"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:tm_ring_core.cc:create_mem_ports",
+      "type": "function",
+      "name": "create_mem_ports",
+      "filePath": "tm_ring_core.cc",
+      "lineRange": [
+        248,
+        257
+      ],
+      "summary": "create_mem_ports 承担该模块的一项关键处理步骤；其实现服务于“实现多环 TmRingFabric 的配置校验、域与组件创建绑定、生命周期管理和全局运行统计汇总”这一职责。",
+      "tags": [
+        "ring-fabric",
+        "topology",
+        "state-transition"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:tm_ring_core.cc:create_l2_buffer_nodes",
+      "type": "function",
+      "name": "create_l2_buffer_nodes",
+      "filePath": "tm_ring_core.cc",
+      "lineRange": [
+        259,
+        268
+      ],
+      "summary": "create_l2_buffer_nodes 承担该模块的一项关键处理步骤；其实现服务于“实现多环 TmRingFabric 的配置校验、域与组件创建绑定、生命周期管理和全局运行统计汇总”这一职责。",
+      "tags": [
+        "ring-fabric",
+        "topology",
+        "state-transition"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:tm_ring_core.cc:create_rbrgs",
+      "type": "function",
+      "name": "create_rbrgs",
+      "filePath": "tm_ring_core.cc",
+      "lineRange": [
+        270,
+        283
+      ],
+      "summary": "create_rbrgs 承担该模块的一项关键处理步骤；其实现服务于“实现多环 TmRingFabric 的配置校验、域与组件创建绑定、生命周期管理和全局运行统计汇总”这一职责。",
+      "tags": [
+        "ring-fabric",
+        "topology",
+        "state-transition"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:tm_ring_core.cc:reset",
+      "type": "function",
+      "name": "reset",
+      "filePath": "tm_ring_core.cc",
+      "lineRange": [
+        337,
+        366
+      ],
+      "summary": "清空组件运行状态并安全退休未完成事件，为下一次仿真恢复初始条件。",
+      "tags": [
+        "ring-fabric",
+        "topology",
+        "state-transition"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:tm_ring_core.cc:clear_stats",
+      "type": "function",
+      "name": "clear_stats",
+      "filePath": "tm_ring_core.cc",
+      "lineRange": [
+        368,
+        400
+      ],
+      "summary": "清空组件统计计数，同时保留功能状态不变。",
+      "tags": [
+        "ring-fabric",
+        "topology",
+        "state-transition"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:tm_ring_core.cc:idle",
+      "type": "function",
+      "name": "idle",
+      "filePath": "tm_ring_core.cc",
+      "lineRange": [
+        402,
+        449
+      ],
+      "summary": "检查内部队列、序列化器和待处理事件，判断组件是否已经排空。",
+      "tags": [
+        "ring-fabric",
+        "topology",
+        "state-transition"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:tm_ring_core.cc:ring_queue_stats",
+      "type": "function",
+      "name": "ring_queue_stats",
+      "filePath": "tm_ring_core.cc",
+      "lineRange": [
+        465,
+        505
+      ],
+      "summary": "按快照周期聚合各端点和域的队列占用及积压统计。",
+      "tags": [
+        "ring-fabric",
+        "topology",
+        "state-transition"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:tm_ring_core.cc:ring_domain_stats",
+      "type": "function",
+      "name": "ring_domain_stats",
+      "filePath": "tm_ring_core.cc",
+      "lineRange": [
+        507,
+        576
+      ],
+      "summary": "汇总每个 Ring 域的链路热点、停顿、转发和 Cross Station 指标。",
+      "tags": [
+        "ring-fabric",
+        "topology",
+        "state-transition"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:tm_ring_core.cc:ring_top_busy_conns",
+      "type": "function",
+      "name": "ring_top_busy_conns",
+      "filePath": "tm_ring_core.cc",
+      "lineRange": [
+        606,
+        660
+      ],
+      "summary": "ring_top_busy_conns 承担该模块的一项关键处理步骤；其实现服务于“实现多环 TmRingFabric 的配置校验、域与组件创建绑定、生命周期管理和全局运行统计汇总”这一职责。",
+      "tags": [
+        "ring-fabric",
+        "topology",
+        "state-transition"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "file:tm_ring_master_niu.cc",
+      "type": "file",
+      "name": "tm_ring_master_niu.cc",
+      "filePath": "tm_ring_master_niu.cc",
+      "summary": "实现主端 NIU，在 BIU 与 Ring 节点接口之间转换请求、写数据和返回负载，并保持背压下的提交语义。",
+      "tags": [
+        "master-niu",
+        "routing",
+        "flow-control"
+      ],
+      "complexity": "moderate",
+      "languageNotes": "C++ 事件驱动时序模型以 FIFO 队首、显式反压和成功后提交为主要状态边界。"
+    },
+    {
+      "id": "function:tm_ring_master_niu.cc:config",
+      "type": "function",
+      "name": "config",
+      "filePath": "tm_ring_master_niu.cc",
+      "lineRange": [
+        14,
+        38
+      ],
+      "summary": "配置组件依赖、队列和事件回调，建立可运行状态。",
+      "tags": [
+        "master-niu",
+        "routing",
+        "state-transition"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:tm_ring_master_niu.cc:recv_biu_request",
+      "type": "function",
+      "name": "recv_biu_request",
+      "filePath": "tm_ring_master_niu.cc",
+      "lineRange": [
+        62,
+        80
+      ],
+      "summary": "读取 BIU 队首请求并按命令选择 Ring 请求或数据路径，仅在下游接受后提交。",
+      "tags": [
+        "master-niu",
+        "routing",
+        "state-transition"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:tm_ring_master_niu.cc:recv_rsp",
+      "type": "function",
+      "name": "recv_rsp",
+      "filePath": "tm_ring_master_niu.cc",
+      "lineRange": [
+        84,
+        99
+      ],
+      "summary": "recv_rsp 承担该模块的一项关键处理步骤；其实现服务于“实现主端 NIU，在 BIU 与 Ring 节点接口之间转换请求、写数据和返回负载，并保持背压下的提交语义”这一职责。",
+      "tags": [
+        "master-niu",
+        "routing",
+        "state-transition"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:tm_ring_master_niu.cc:recv_dat",
+      "type": "function",
+      "name": "recv_dat",
+      "filePath": "tm_ring_master_niu.cc",
+      "lineRange": [
+        101,
+        112
+      ],
+      "summary": "recv_dat 承担该模块的一项关键处理步骤；其实现服务于“实现主端 NIU，在 BIU 与 Ring 节点接口之间转换请求、写数据和返回负载，并保持背压下的提交语义”这一职责。",
+      "tags": [
+        "master-niu",
+        "routing",
+        "state-transition"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:tm_ring_master_niu.cc:forward_biu_request",
+      "type": "function",
+      "name": "forward_biu_request",
+      "filePath": "tm_ring_master_niu.cc",
+      "lineRange": [
+        114,
+        127
+      ],
+      "summary": "forward_biu_request 承担该模块的一项关键处理步骤；其实现服务于“实现主端 NIU，在 BIU 与 Ring 节点接口之间转换请求、写数据和返回负载，并保持背压下的提交语义”这一职责。",
+      "tags": [
+        "master-niu",
+        "routing",
+        "state-transition"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:tm_ring_master_niu.cc:forward_biu_data",
+      "type": "function",
+      "name": "forward_biu_data",
+      "filePath": "tm_ring_master_niu.cc",
+      "lineRange": [
+        129,
+        142
+      ],
+      "summary": "forward_biu_data 承担该模块的一项关键处理步骤；其实现服务于“实现主端 NIU，在 BIU 与 Ring 节点接口之间转换请求、写数据和返回负载，并保持背压下的提交语义”这一职责。",
+      "tags": [
+        "master-niu",
+        "routing",
+        "state-transition"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:tm_ring_master_niu.cc:prepare_ring_request",
+      "type": "function",
+      "name": "prepare_ring_request",
+      "filePath": "tm_ring_master_niu.cc",
+      "lineRange": [
+        144,
+        157
+      ],
+      "summary": "根据目标和拓扑填写源、目的、子网、方向及跨环路由元数据。",
+      "tags": [
+        "master-niu",
+        "routing",
+        "state-transition"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:tm_ring_master_niu.h",
+      "type": "file",
+      "name": "tm_ring_master_niu.h",
+      "filePath": "tm_ring_master_niu.h",
+      "summary": "声明主端 NIU 的配置、绑定、收发和 Ring 路由元数据准备接口。",
+      "tags": [
+        "master-niu",
+        "routing",
+        "flow-control"
+      ],
+      "complexity": "moderate",
+      "languageNotes": "C++ 事件驱动时序模型以 FIFO 队首、显式反压和成功后提交为主要状态边界。"
+    },
+    {
+      "id": "file:tm_ring_mem_port.cc",
+      "type": "file",
+      "name": "tm_ring_mem_port.cc",
+      "filePath": "tm_ring_mem_port.cc",
+      "summary": "实现目标侧内存端口，协调 Ring 本地 FIFO、TmMem、Home Agent 与 L2 Buffer 的请求和响应生命周期。",
+      "tags": [
+        "memory-port",
+        "home-agent",
+        "flow-control"
+      ],
+      "complexity": "complex",
+      "languageNotes": "C++ 事件驱动时序模型以 FIFO 队首、显式反压和成功后提交为主要状态边界。"
+    },
+    {
+      "id": "function:tm_ring_mem_port.cc:TmRingMemPort",
+      "type": "function",
+      "name": "TmRingMemPort",
+      "filePath": "tm_ring_mem_port.cc",
+      "lineRange": [
+        9,
+        70
+      ],
+      "summary": "TmRingMemPort 承担该模块的一项关键处理步骤；其实现服务于“实现目标侧内存端口，协调 Ring 本地 FIFO、TmMem、Home Agent 与 L2 Buffer 的请求和响应生命周期”这一职责。",
+      "tags": [
+        "memory-port",
+        "home-agent",
+        "state-transition"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:tm_ring_mem_port.cc:reset",
+      "type": "function",
+      "name": "reset",
+      "filePath": "tm_ring_mem_port.cc",
+      "lineRange": [
+        72,
+        95
+      ],
+      "summary": "清空组件运行状态并安全退休未完成事件，为下一次仿真恢复初始条件。",
+      "tags": [
+        "memory-port",
+        "home-agent",
+        "state-transition"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:tm_ring_mem_port.cc:prepare_ring_response",
+      "type": "function",
+      "name": "prepare_ring_response",
+      "filePath": "tm_ring_mem_port.cc",
+      "lineRange": [
+        172,
+        183
+      ],
+      "summary": "prepare_ring_response 承担该模块的一项关键处理步骤；其实现服务于“实现目标侧内存端口，协调 Ring 本地 FIFO、TmMem、Home Agent 与 L2 Buffer 的请求和响应生命周期”这一职责。",
+      "tags": [
+        "memory-port",
+        "home-agent",
+        "state-transition"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:tm_ring_mem_port.cc:recv_ring_req",
+      "type": "function",
+      "name": "recv_ring_req",
+      "filePath": "tm_ring_mem_port.cc",
+      "lineRange": [
+        191,
+        222
+      ],
+      "summary": "recv_ring_req 承担该模块的一项关键处理步骤；其实现服务于“实现目标侧内存端口，协调 Ring 本地 FIFO、TmMem、Home Agent 与 L2 Buffer 的请求和响应生命周期”这一职责。",
+      "tags": [
+        "memory-port",
+        "home-agent",
+        "state-transition"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:tm_ring_mem_port.cc:recv_ring_dat",
+      "type": "function",
+      "name": "recv_ring_dat",
+      "filePath": "tm_ring_mem_port.cc",
+      "lineRange": [
+        224,
+        243
+      ],
+      "summary": "recv_ring_dat 承担该模块的一项关键处理步骤；其实现服务于“实现目标侧内存端口，协调 Ring 本地 FIFO、TmMem、Home Agent 与 L2 Buffer 的请求和响应生命周期”这一职责。",
+      "tags": [
+        "memory-port",
+        "home-agent",
+        "state-transition"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:tm_ring_mem_port.cc:send_cmd",
+      "type": "function",
+      "name": "send_cmd",
+      "filePath": "tm_ring_mem_port.cc",
+      "lineRange": [
+        257,
+        288
+      ],
+      "summary": "send_cmd 承担该模块的一项关键处理步骤；其实现服务于“实现目标侧内存端口，协调 Ring 本地 FIFO、TmMem、Home Agent 与 L2 Buffer 的请求和响应生命周期”这一职责。",
+      "tags": [
+        "memory-port",
+        "home-agent",
+        "state-transition"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:tm_ring_mem_port.cc:service_home_agent",
+      "type": "function",
+      "name": "service_home_agent",
+      "filePath": "tm_ring_mem_port.cc",
+      "lineRange": [
+        296,
+        322
+      ],
+      "summary": "按固定次序推进 HA 请求准入、后端读、完成捕获和 L2 响应交付。",
+      "tags": [
+        "memory-port",
+        "home-agent",
+        "state-transition"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:tm_ring_mem_port.cc:service_home_agent_hit",
+      "type": "function",
+      "name": "service_home_agent_hit",
+      "filePath": "tm_ring_mem_port.cc",
+      "lineRange": [
+        324,
+        338
+      ],
+      "summary": "service_home_agent_hit 承担该模块的一项关键处理步骤；其实现服务于“实现目标侧内存端口，协调 Ring 本地 FIFO、TmMem、Home Agent 与 L2 Buffer 的请求和响应生命周期”这一职责。",
+      "tags": [
+        "memory-port",
+        "home-agent",
+        "state-transition"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:tm_ring_mem_port.cc:accept_rd_into_home_agent",
+      "type": "function",
+      "name": "accept_rd_into_home_agent",
+      "filePath": "tm_ring_mem_port.cc",
+      "lineRange": [
+        346,
+        372
+      ],
+      "summary": "将队首读请求提交给 HA 聚合或旁路路径，失败时保留 FIFO 头。",
+      "tags": [
+        "memory-port",
+        "home-agent",
+        "state-transition"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:tm_ring_mem_port.cc:issue_home_agent_backend_read",
+      "type": "function",
+      "name": "issue_home_agent_backend_read",
+      "filePath": "tm_ring_mem_port.cc",
+      "lineRange": [
+        380,
+        401
+      ],
+      "summary": "尝试发送 HA 后端读候选项，只有 TmMem 接受后才提交状态。",
+      "tags": [
+        "memory-port",
+        "home-agent",
+        "state-transition"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:tm_ring_mem_port.cc:capture_home_agent_backend_rsp",
+      "type": "function",
+      "name": "capture_home_agent_backend_rsp",
+      "filePath": "tm_ring_mem_port.cc",
+      "lineRange": [
+        410,
+        438
+      ],
+      "summary": "capture_home_agent_backend_rsp 承担该模块的一项关键处理步骤；其实现服务于“实现目标侧内存端口，协调 Ring 本地 FIFO、TmMem、Home Agent 与 L2 Buffer 的请求和响应生命周期”这一职责。",
+      "tags": [
+        "memory-port",
+        "home-agent",
+        "state-transition"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:tm_ring_mem_port.cc:send_home_agent_l2_rsp",
+      "type": "function",
+      "name": "send_home_agent_l2_rsp",
+      "filePath": "tm_ring_mem_port.cc",
+      "lineRange": [
+        448,
+        480
+      ],
+      "summary": "把 HA 当前响应候选项交给 L2 Buffer，成功后再提交 waiter。",
+      "tags": [
+        "memory-port",
+        "home-agent",
+        "state-transition"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:tm_ring_mem_port.cc:recv_mem_rsp",
+      "type": "function",
+      "name": "recv_mem_rsp",
+      "filePath": "tm_ring_mem_port.cc",
+      "lineRange": [
+        488,
+        512
+      ],
+      "summary": "recv_mem_rsp 承担该模块的一项关键处理步骤；其实现服务于“实现目标侧内存端口，协调 Ring 本地 FIFO、TmMem、Home Agent 与 L2 Buffer 的请求和响应生命周期”这一职责。",
+      "tags": [
+        "memory-port",
+        "home-agent",
+        "state-transition"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:tm_ring_mem_port.cc:recv_rd_cmd_rsp",
+      "type": "function",
+      "name": "recv_rd_cmd_rsp",
+      "filePath": "tm_ring_mem_port.cc",
+      "lineRange": [
+        520,
+        569
+      ],
+      "summary": "recv_rd_cmd_rsp 承担该模块的一项关键处理步骤；其实现服务于“实现目标侧内存端口，协调 Ring 本地 FIFO、TmMem、Home Agent 与 L2 Buffer 的请求和响应生命周期”这一职责。",
+      "tags": [
+        "memory-port",
+        "home-agent",
+        "state-transition"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:tm_ring_mem_port.cc:recv_wr_cmd_rsp",
+      "type": "function",
+      "name": "recv_wr_cmd_rsp",
+      "filePath": "tm_ring_mem_port.cc",
+      "lineRange": [
+        577,
+        594
+      ],
+      "summary": "recv_wr_cmd_rsp 承担该模块的一项关键处理步骤；其实现服务于“实现目标侧内存端口，协调 Ring 本地 FIFO、TmMem、Home Agent 与 L2 Buffer 的请求和响应生命周期”这一职责。",
+      "tags": [
+        "memory-port",
+        "home-agent",
+        "state-transition"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:tm_ring_mem_port.cc:recv_wr_dat_rsp",
+      "type": "function",
+      "name": "recv_wr_dat_rsp",
+      "filePath": "tm_ring_mem_port.cc",
+      "lineRange": [
+        602,
+        624
+      ],
+      "summary": "recv_wr_dat_rsp 承担该模块的一项关键处理步骤；其实现服务于“实现目标侧内存端口，协调 Ring 本地 FIFO、TmMem、Home Agent 与 L2 Buffer 的请求和响应生命周期”这一职责。",
+      "tags": [
+        "memory-port",
+        "home-agent",
+        "state-transition"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:tm_ring_mem_port.h",
+      "type": "file",
+      "name": "tm_ring_mem_port.h",
+      "filePath": "tm_ring_mem_port.h",
+      "summary": "声明目标侧内存端口及其普通访问、Home Agent 聚合和多响应通道接口。",
+      "tags": [
+        "memory-port",
+        "home-agent",
+        "flow-control"
+      ],
+      "complexity": "moderate",
+      "languageNotes": "C++ 事件驱动时序模型以 FIFO 队首、显式反压和成功后提交为主要状态边界。"
+    },
+    {
+      "id": "file:tm_ring_slot_pool.h",
+      "type": "file",
+      "name": "tm_ring_slot_pool.h",
+      "filePath": "tm_ring_slot_pool.h",
+      "summary": "实现按子网和方向划分的逻辑 Ring 槽位池，为反压传播保留容量并提供无副作用探测。",
+      "tags": [
+        "slot-pool",
+        "flow-control",
+        "capacity"
+      ],
+      "complexity": "moderate",
+      "languageNotes": "C++ 事件驱动时序模型以 FIFO 队首、显式反压和成功后提交为主要状态边界。"
+    },
+    {
+      "id": "class:tm_ring_conn.h:TmRingConn",
+      "type": "class",
+      "name": "TmRingConn",
+      "filePath": "tm_ring_conn.h",
+      "lineRange": [
+        16,
+        71
+      ],
+      "summary": "表示一条定向 Ring 链路及其分子网序列化和流水状态。",
+      "tags": [
+        "ring-link",
+        "serialization",
+        "component"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "class:tm_ring_master_niu.h:TmRingMasterNiu",
+      "type": "class",
+      "name": "TmRingMasterNiu",
+      "filePath": "tm_ring_master_niu.h",
+      "lineRange": [
+        22,
+        55
+      ],
+      "summary": "连接 BIU 与 Ring 节点接口并负责主端路由转换。",
+      "tags": [
+        "master-niu",
+        "routing",
+        "component"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "class:tm_ring_mem_port.h:TmRingMemPort",
+      "type": "class",
+      "name": "TmRingMemPort",
+      "filePath": "tm_ring_mem_port.h",
+      "lineRange": [
+        24,
+        95
+      ],
+      "summary": "协调目标侧 FIFO、内存后端、Home Agent 和 L2 Buffer。",
+      "tags": [
+        "memory-port",
+        "home-agent",
+        "component"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "class:tm_ring_slot_pool.h:TmRingSlotPool",
+      "type": "class",
+      "name": "TmRingSlotPool",
+      "filePath": "tm_ring_slot_pool.h",
+      "lineRange": [
+        17,
+        70
+      ],
+      "summary": "跟踪各子网方向的逻辑时隙容量并支持探测、获取与释放。",
+      "tags": [
+        "slot-pool",
+        "flow-control",
+        "component"
+      ],
+      "complexity": "moderate"
+    }
+  ],
+  "edges": [
+    {
+      "source": "file:tm_ring_conn.cc",
+      "target": "function:tm_ring_conn.cc:TmRingConn",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:tm_ring_conn.cc",
+      "target": "function:tm_ring_conn.cc:TmRingConn",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:tm_ring_conn.cc",
+      "target": "function:tm_ring_conn.cc:reset",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:tm_ring_conn.cc",
+      "target": "function:tm_ring_conn.cc:reset",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:tm_ring_conn.cc",
+      "target": "function:tm_ring_conn.cc:can_accept",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:tm_ring_conn.cc",
+      "target": "function:tm_ring_conn.cc:can_accept",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:tm_ring_conn.cc",
+      "target": "function:tm_ring_conn.cc:reserve_slot",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:tm_ring_conn.cc",
+      "target": "function:tm_ring_conn.cc:reserve_slot",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:tm_ring_conn.cc",
+      "target": "function:tm_ring_conn.cc:release_serializer",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:tm_ring_conn.cc",
+      "target": "function:tm_ring_conn.cc:release_serializer",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:tm_ring_conn.cc",
+      "target": "function:tm_ring_conn.cc:move_serializer_to_pipeline",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:tm_ring_conn.cc",
+      "target": "function:tm_ring_conn.cc:move_serializer_to_pipeline",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:tm_ring_conn.cc",
+      "target": "function:tm_ring_conn.cc:drain_ready_slots",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:tm_ring_conn.cc",
+      "target": "function:tm_ring_conn.cc:drain_ready_slots",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:tm_ring_conn_test.cc",
+      "target": "class:tm_ring_conn_test.cc:TmRingConnFixture",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:tm_ring_conn_test.cc",
+      "target": "class:tm_ring_conn_test.cc:TmRingConnFixture",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:tm_ring_core.cc",
+      "target": "function:tm_ring_core.cc:validate_ring_config",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:tm_ring_core.cc",
+      "target": "function:tm_ring_core.cc:validate_ring_config",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:tm_ring_core.cc",
+      "target": "function:tm_ring_core.cc:config",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:tm_ring_core.cc",
+      "target": "function:tm_ring_core.cc:config",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:tm_ring_core.cc",
+      "target": "function:tm_ring_core.cc:create_domain",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:tm_ring_core.cc",
+      "target": "function:tm_ring_core.cc:create_domain",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:tm_ring_core.cc",
+      "target": "function:tm_ring_core.cc:attach_domain",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:tm_ring_core.cc",
+      "target": "function:tm_ring_core.cc:attach_domain",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:tm_ring_core.cc",
+      "target": "function:tm_ring_core.cc:create_master_nius",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:tm_ring_core.cc",
+      "target": "function:tm_ring_core.cc:create_master_nius",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:tm_ring_core.cc",
+      "target": "function:tm_ring_core.cc:create_mem_ports",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:tm_ring_core.cc",
+      "target": "function:tm_ring_core.cc:create_mem_ports",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:tm_ring_core.cc",
+      "target": "function:tm_ring_core.cc:create_l2_buffer_nodes",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:tm_ring_core.cc",
+      "target": "function:tm_ring_core.cc:create_l2_buffer_nodes",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:tm_ring_core.cc",
+      "target": "function:tm_ring_core.cc:create_rbrgs",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:tm_ring_core.cc",
+      "target": "function:tm_ring_core.cc:create_rbrgs",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:tm_ring_core.cc",
+      "target": "function:tm_ring_core.cc:reset",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:tm_ring_core.cc",
+      "target": "function:tm_ring_core.cc:reset",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:tm_ring_core.cc",
+      "target": "function:tm_ring_core.cc:clear_stats",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:tm_ring_core.cc",
+      "target": "function:tm_ring_core.cc:clear_stats",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:tm_ring_core.cc",
+      "target": "function:tm_ring_core.cc:idle",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:tm_ring_core.cc",
+      "target": "function:tm_ring_core.cc:idle",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:tm_ring_core.cc",
+      "target": "function:tm_ring_core.cc:ring_queue_stats",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:tm_ring_core.cc",
+      "target": "function:tm_ring_core.cc:ring_queue_stats",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:tm_ring_core.cc",
+      "target": "function:tm_ring_core.cc:ring_domain_stats",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:tm_ring_core.cc",
+      "target": "function:tm_ring_core.cc:ring_domain_stats",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:tm_ring_core.cc",
+      "target": "function:tm_ring_core.cc:ring_top_busy_conns",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:tm_ring_core.cc",
+      "target": "function:tm_ring_core.cc:ring_top_busy_conns",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:tm_ring_master_niu.cc",
+      "target": "function:tm_ring_master_niu.cc:config",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:tm_ring_master_niu.cc",
+      "target": "function:tm_ring_master_niu.cc:config",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:tm_ring_master_niu.cc",
+      "target": "function:tm_ring_master_niu.cc:recv_biu_request",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:tm_ring_master_niu.cc",
+      "target": "function:tm_ring_master_niu.cc:recv_biu_request",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:tm_ring_master_niu.cc",
+      "target": "function:tm_ring_master_niu.cc:recv_rsp",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:tm_ring_master_niu.cc",
+      "target": "function:tm_ring_master_niu.cc:recv_rsp",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:tm_ring_master_niu.cc",
+      "target": "function:tm_ring_master_niu.cc:recv_dat",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:tm_ring_master_niu.cc",
+      "target": "function:tm_ring_master_niu.cc:recv_dat",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:tm_ring_master_niu.cc",
+      "target": "function:tm_ring_master_niu.cc:forward_biu_request",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:tm_ring_master_niu.cc",
+      "target": "function:tm_ring_master_niu.cc:forward_biu_request",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:tm_ring_master_niu.cc",
+      "target": "function:tm_ring_master_niu.cc:forward_biu_data",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:tm_ring_master_niu.cc",
+      "target": "function:tm_ring_master_niu.cc:forward_biu_data",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:tm_ring_master_niu.cc",
+      "target": "function:tm_ring_master_niu.cc:prepare_ring_request",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:tm_ring_master_niu.cc",
+      "target": "function:tm_ring_master_niu.cc:prepare_ring_request",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:tm_ring_mem_port.cc",
+      "target": "function:tm_ring_mem_port.cc:TmRingMemPort",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:tm_ring_mem_port.cc",
+      "target": "function:tm_ring_mem_port.cc:TmRingMemPort",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:tm_ring_mem_port.cc",
+      "target": "function:tm_ring_mem_port.cc:reset",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:tm_ring_mem_port.cc",
+      "target": "function:tm_ring_mem_port.cc:reset",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:tm_ring_mem_port.cc",
+      "target": "function:tm_ring_mem_port.cc:prepare_ring_response",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:tm_ring_mem_port.cc",
+      "target": "function:tm_ring_mem_port.cc:prepare_ring_response",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:tm_ring_mem_port.cc",
+      "target": "function:tm_ring_mem_port.cc:recv_ring_req",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:tm_ring_mem_port.cc",
+      "target": "function:tm_ring_mem_port.cc:recv_ring_req",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:tm_ring_mem_port.cc",
+      "target": "function:tm_ring_mem_port.cc:recv_ring_dat",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:tm_ring_mem_port.cc",
+      "target": "function:tm_ring_mem_port.cc:recv_ring_dat",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:tm_ring_mem_port.cc",
+      "target": "function:tm_ring_mem_port.cc:send_cmd",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:tm_ring_mem_port.cc",
+      "target": "function:tm_ring_mem_port.cc:send_cmd",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:tm_ring_mem_port.cc",
+      "target": "function:tm_ring_mem_port.cc:service_home_agent",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:tm_ring_mem_port.cc",
+      "target": "function:tm_ring_mem_port.cc:service_home_agent",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:tm_ring_mem_port.cc",
+      "target": "function:tm_ring_mem_port.cc:service_home_agent_hit",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:tm_ring_mem_port.cc",
+      "target": "function:tm_ring_mem_port.cc:service_home_agent_hit",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:tm_ring_mem_port.cc",
+      "target": "function:tm_ring_mem_port.cc:accept_rd_into_home_agent",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:tm_ring_mem_port.cc",
+      "target": "function:tm_ring_mem_port.cc:accept_rd_into_home_agent",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:tm_ring_mem_port.cc",
+      "target": "function:tm_ring_mem_port.cc:issue_home_agent_backend_read",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:tm_ring_mem_port.cc",
+      "target": "function:tm_ring_mem_port.cc:issue_home_agent_backend_read",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:tm_ring_mem_port.cc",
+      "target": "function:tm_ring_mem_port.cc:capture_home_agent_backend_rsp",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:tm_ring_mem_port.cc",
+      "target": "function:tm_ring_mem_port.cc:capture_home_agent_backend_rsp",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:tm_ring_mem_port.cc",
+      "target": "function:tm_ring_mem_port.cc:send_home_agent_l2_rsp",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:tm_ring_mem_port.cc",
+      "target": "function:tm_ring_mem_port.cc:send_home_agent_l2_rsp",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:tm_ring_mem_port.cc",
+      "target": "function:tm_ring_mem_port.cc:recv_mem_rsp",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:tm_ring_mem_port.cc",
+      "target": "function:tm_ring_mem_port.cc:recv_mem_rsp",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:tm_ring_mem_port.cc",
+      "target": "function:tm_ring_mem_port.cc:recv_rd_cmd_rsp",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:tm_ring_mem_port.cc",
+      "target": "function:tm_ring_mem_port.cc:recv_rd_cmd_rsp",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:tm_ring_mem_port.cc",
+      "target": "function:tm_ring_mem_port.cc:recv_wr_cmd_rsp",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:tm_ring_mem_port.cc",
+      "target": "function:tm_ring_mem_port.cc:recv_wr_cmd_rsp",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:tm_ring_mem_port.cc",
+      "target": "function:tm_ring_mem_port.cc:recv_wr_dat_rsp",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:tm_ring_mem_port.cc",
+      "target": "function:tm_ring_mem_port.cc:recv_wr_dat_rsp",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:tm_ring_conn.h",
+      "target": "class:tm_ring_conn.h:TmRingConn",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:tm_ring_conn.h",
+      "target": "class:tm_ring_conn.h:TmRingConn",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:tm_ring_master_niu.h",
+      "target": "class:tm_ring_master_niu.h:TmRingMasterNiu",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:tm_ring_master_niu.h",
+      "target": "class:tm_ring_master_niu.h:TmRingMasterNiu",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:tm_ring_mem_port.h",
+      "target": "class:tm_ring_mem_port.h:TmRingMemPort",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:tm_ring_mem_port.h",
+      "target": "class:tm_ring_mem_port.h:TmRingMemPort",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:tm_ring_slot_pool.h",
+      "target": "class:tm_ring_slot_pool.h:TmRingSlotPool",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:tm_ring_slot_pool.h",
+      "target": "class:tm_ring_slot_pool.h:TmRingSlotPool",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:tm_ring_conn.cc",
+      "target": "file:tm_ring_conn.h",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:tm_ring_conn_test.cc",
+      "target": "file:tm_ring_conn.h",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:tm_ring_conn.h",
+      "target": "file:tm_ring_conn_test.cc",
+      "type": "tested_by",
+      "direction": "forward",
+      "weight": 0.5
+    },
+    {
+      "source": "file:tm_ring_core.cc",
+      "target": "file:tm_ring.h",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:tm_ring_core.cc",
+      "target": "file:tm_ring_conn.h",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:tm_ring_core.cc",
+      "target": "file:tm_ring_cross_station.h",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:tm_ring_core.cc",
+      "target": "file:tm_ring_master_niu.h",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:tm_ring_core.cc",
+      "target": "file:tm_ring_mem_port.h",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:tm_ring_core.cc",
+      "target": "file:tm_ring_slot_pool.h",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:tm_ring_master_niu.cc",
+      "target": "file:tm_ring_master_niu.h",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:tm_ring_mem_port.cc",
+      "target": "file:tm_ring_mem_port.h",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    }
+  ]
+}

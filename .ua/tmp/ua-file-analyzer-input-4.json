@@ -1,0 +1,49 @@
+{
+  "projectRoot": "C:\\Users\\wayne\\Downloads\\gem5-stable\\BUS\\aicore\\code",
+  "batchFiles": [
+    {
+      "path": "pem_trdemo.cc",
+      "language": "cpp",
+      "sizeLines": 368,
+      "fileCategory": "code"
+    },
+    {
+      "path": "pem_trdemo.h",
+      "language": "c",
+      "sizeLines": 178,
+      "fileCategory": "code"
+    },
+    {
+      "path": "tm_ring_packet_cost_test.cc",
+      "language": "cpp",
+      "sizeLines": 38,
+      "fileCategory": "code"
+    },
+    {
+      "path": "tm_ring_stats_test.cc",
+      "language": "cpp",
+      "sizeLines": 22,
+      "fileCategory": "code"
+    },
+    {
+      "path": "tm_ring_types.h",
+      "language": "c",
+      "sizeLines": 220,
+      "fileCategory": "code"
+    }
+  ],
+  "batchImportData": {
+    "pem_trdemo.cc": [
+      "pem_trdemo.h",
+      "tm_ring_types.h"
+    ],
+    "pem_trdemo.h": [],
+    "tm_ring_packet_cost_test.cc": [
+      "tm_ring_types.h"
+    ],
+    "tm_ring_stats_test.cc": [
+      "tm_ring_types.h"
+    ],
+    "tm_ring_types.h": []
+  }
+}

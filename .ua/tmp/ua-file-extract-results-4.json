@@ -1,0 +1,1399 @@
+{
+  "scriptCompleted": true,
+  "filesAnalyzed": 5,
+  "filesSkipped": [],
+  "analysisOutcomes": {
+    "structure": {
+      "succeeded": 5,
+      "failed": 0
+    },
+    "callGraph": {
+      "succeeded": 5,
+      "failed": 0,
+      "skipped": 0
+    }
+  },
+  "results": [
+    {
+      "path": "pem_trdemo.cc",
+      "language": "cpp",
+      "fileCategory": "code",
+      "totalLines": 368,
+      "nonEmptyLines": 343,
+      "functions": [
+        {
+          "name": "PemTrDemo",
+          "startLine": 9,
+          "endLine": 12,
+          "params": [
+            "name",
+            "clk"
+          ]
+        },
+        {
+          "name": "~PemTrDemo",
+          "startLine": 14,
+          "endLine": 14,
+          "params": []
+        },
+        {
+          "name": "config",
+          "startLine": 17,
+          "endLine": 51,
+          "params": []
+        },
+        {
+          "name": "configure_traffic",
+          "startLine": 53,
+          "endLine": 65,
+          "params": [
+            "start_addr",
+            "end_addr",
+            "total_uop_count",
+            "read_size_bytes",
+            "read_stride_bytes",
+            "write_stride_bytes"
+          ]
+        },
+        {
+          "name": "attach",
+          "startLine": 67,
+          "endLine": 67,
+          "params": [
+            "biu"
+          ]
+        },
+        {
+          "name": "build",
+          "startLine": 69,
+          "endLine": 72,
+          "params": []
+        },
+        {
+          "name": "idle",
+          "startLine": 74,
+          "endLine": 80,
+          "params": []
+        },
+        {
+          "name": "reset",
+          "startLine": 82,
+          "endLine": 98,
+          "params": []
+        },
+        {
+          "name": "gen_uop",
+          "startLine": 100,
+          "endLine": 125,
+          "params": []
+        },
+        {
+          "name": "read_mem",
+          "startLine": 126,
+          "endLine": 153,
+          "params": []
+        },
+        {
+          "name": "recv_rsp",
+          "startLine": 154,
+          "endLine": 166,
+          "params": []
+        },
+        {
+          "name": "handle_read_response",
+          "startLine": 167,
+          "endLine": 260,
+          "params": [
+            "rd_resp"
+          ]
+        },
+        {
+          "name": "record_read_response",
+          "startLine": 262,
+          "endLine": 278,
+          "params": [
+            "addr"
+          ]
+        },
+        {
+          "name": "pipeline",
+          "startLine": 280,
+          "endLine": 315,
+          "params": []
+        },
+        {
+          "name": "wr_recv_rsp",
+          "startLine": 317,
+          "endLine": 355,
+          "params": []
+        },
+        {
+          "name": "allocate_write_buf",
+          "startLine": 357,
+          "endLine": 362,
+          "params": []
+        },
+        {
+          "name": "release_write_buf",
+          "startLine": 363,
+          "endLine": 366,
+          "params": [
+            "id"
+          ]
+        }
+      ],
+      "exports": [
+        {
+          "name": "PemTrDemo",
+          "line": 9,
+          "isDefault": false
+        },
+        {
+          "name": "~PemTrDemo",
+          "line": 14,
+          "isDefault": false
+        },
+        {
+          "name": "config",
+          "line": 17,
+          "isDefault": false
+        },
+        {
+          "name": "configure_traffic",
+          "line": 53,
+          "isDefault": false
+        },
+        {
+          "name": "attach",
+          "line": 67,
+          "isDefault": false
+        },
+        {
+          "name": "build",
+          "line": 69,
+          "isDefault": false
+        },
+        {
+          "name": "idle",
+          "line": 74,
+          "isDefault": false
+        },
+        {
+          "name": "reset",
+          "line": 82,
+          "isDefault": false
+        },
+        {
+          "name": "gen_uop",
+          "line": 100,
+          "isDefault": false
+        },
+        {
+          "name": "read_mem",
+          "line": 126,
+          "isDefault": false
+        },
+        {
+          "name": "recv_rsp",
+          "line": 154,
+          "isDefault": false
+        },
+        {
+          "name": "handle_read_response",
+          "line": 167,
+          "isDefault": false
+        },
+        {
+          "name": "record_read_response",
+          "line": 262,
+          "isDefault": false
+        },
+        {
+          "name": "pipeline",
+          "line": 280,
+          "isDefault": false
+        },
+        {
+          "name": "wr_recv_rsp",
+          "line": 317,
+          "isDefault": false
+        },
+        {
+          "name": "allocate_write_buf",
+          "line": 357,
+          "isDefault": false
+        },
+        {
+          "name": "release_write_buf",
+          "line": 363,
+          "isDefault": false
+        }
+      ],
+      "callGraph": [
+        {
+          "caller": "PemTrDemo",
+          "callee": "config",
+          "lineNumber": 11
+        },
+        {
+          "caller": "config",
+          "callee": "tm_make_que<p_isa_t>",
+          "lineNumber": 18
+        },
+        {
+          "caller": "config",
+          "callee": "tm_make_que<p_demo_uop_t>",
+          "lineNumber": 19
+        },
+        {
+          "caller": "config",
+          "callee": "tm_make_inf<p_tm_pld_t>",
+          "lineNumber": 21
+        },
+        {
+          "caller": "config",
+          "callee": "tm_make_inf<p_tm_pld_t>",
+          "lineNumber": 22
+        },
+        {
+          "caller": "config",
+          "callee": "tm_make_que<p_demo_uop_t>",
+          "lineNumber": 24
+        },
+        {
+          "caller": "config",
+          "callee": "tm_sensitive",
+          "lineNumber": 26
+        },
+        {
+          "caller": "config",
+          "callee": "TM_MAKE_CPROC",
+          "lineNumber": 26
+        },
+        {
+          "caller": "config",
+          "callee": "tm_sensitive",
+          "lineNumber": 27
+        },
+        {
+          "caller": "config",
+          "callee": "TM_MAKE_CPROC",
+          "lineNumber": 27
+        },
+        {
+          "caller": "config",
+          "callee": "tm_sensitive",
+          "lineNumber": 28
+        },
+        {
+          "caller": "config",
+          "callee": "TM_MAKE_CPROC",
+          "lineNumber": 28
+        },
+        {
+          "caller": "config",
+          "callee": "tm_sensitive",
+          "lineNumber": 29
+        },
+        {
+          "caller": "config",
+          "callee": "TM_MAKE_CPROC",
+          "lineNumber": 29
+        },
+        {
+          "caller": "config",
+          "callee": "tm_sensitive",
+          "lineNumber": 32
+        },
+        {
+          "caller": "config",
+          "callee": "TM_MAKE_CPROC",
+          "lineNumber": 32
+        },
+        {
+          "caller": "config",
+          "callee": "name",
+          "lineNumber": 35
+        },
+        {
+          "caller": "config",
+          "callee": "log_para_t",
+          "lineNumber": 36
+        },
+        {
+          "caller": "config",
+          "callee": "pem_log::create_logger",
+          "lineNumber": 37
+        },
+        {
+          "caller": "config",
+          "callee": "name",
+          "lineNumber": 38
+        },
+        {
+          "caller": "config",
+          "callee": "log_para_t",
+          "lineNumber": 39
+        },
+        {
+          "caller": "config",
+          "callee": "pem_log::create_logger",
+          "lineNumber": 40
+        },
+        {
+          "caller": "config",
+          "callee": "name",
+          "lineNumber": 41
+        },
+        {
+          "caller": "config",
+          "callee": "log_para_t",
+          "lineNumber": 42
+        },
+        {
+          "caller": "config",
+          "callee": "pem_log::create_logger",
+          "lineNumber": 43
+        },
+        {
+          "caller": "config",
+          "callee": "clear",
+          "lineNumber": 47
+        },
+        {
+          "caller": "config",
+          "callee": "push",
+          "lineNumber": 49
+        },
+        {
+          "caller": "build",
+          "callee": "connect",
+          "lineNumber": 70
+        },
+        {
+          "caller": "build",
+          "callee": "connect",
+          "lineNumber": 71
+        },
+        {
+          "caller": "idle",
+          "callee": "empty",
+          "lineNumber": 75
+        },
+        {
+          "caller": "idle",
+          "callee": "empty",
+          "lineNumber": 75
+        },
+        {
+          "caller": "idle",
+          "callee": "empty",
+          "lineNumber": 75
+        },
+        {
+          "caller": "idle",
+          "callee": "empty",
+          "lineNumber": 76
+        },
+        {
+          "caller": "idle",
+          "callee": "empty",
+          "lineNumber": 76
+        },
+        {
+          "caller": "idle",
+          "callee": "empty",
+          "lineNumber": 77
+        },
+        {
+          "caller": "idle",
+          "callee": "empty",
+          "lineNumber": 77
+        },
+        {
+          "caller": "idle",
+          "callee": "size",
+          "lineNumber": 78
+        },
+        {
+          "caller": "idle",
+          "callee": "idle",
+          "lineNumber": 79
+        },
+        {
+          "caller": "idle",
+          "callee": "idle",
+          "lineNumber": 79
+        },
+        {
+          "caller": "reset",
+          "callee": "clear",
+          "lineNumber": 84
+        },
+        {
+          "caller": "reset",
+          "callee": "clear",
+          "lineNumber": 85
+        },
+        {
+          "caller": "reset",
+          "callee": "clear",
+          "lineNumber": 86
+        },
+        {
+          "caller": "reset",
+          "callee": "clear",
+          "lineNumber": 87
+        },
+        {
+          "caller": "reset",
+          "callee": "empty",
+          "lineNumber": 89
+        },
+        {
+          "caller": "reset",
+          "callee": "pop",
+          "lineNumber": 90
+        },
+        {
+          "caller": "reset",
+          "callee": "push",
+          "lineNumber": 93
+        },
+        {
+          "caller": "reset",
+          "callee": "clear",
+          "lineNumber": 95
+        },
+        {
+          "caller": "reset",
+          "callee": "clear",
+          "lineNumber": 96
+        },
+        {
+          "caller": "reset",
+          "callee": "clear",
+          "lineNumber": 97
+        },
+        {
+          "caller": "gen_uop",
+          "callee": "valid",
+          "lineNumber": 101
+        },
+        {
+          "caller": "gen_uop",
+          "callee": "empty",
+          "lineNumber": 101
+        },
+        {
+          "caller": "gen_uop",
+          "callee": "front",
+          "lineNumber": 102
+        },
+        {
+          "caller": "gen_uop",
+          "callee": "pop_front",
+          "lineNumber": 105
+        },
+        {
+          "caller": "gen_uop",
+          "callee": "full",
+          "lineNumber": 109
+        },
+        {
+          "caller": "gen_uop",
+          "callee": "time",
+          "lineNumber": 113
+        },
+        {
+          "caller": "gen_uop",
+          "callee": "make_shared<demo_uop_t>",
+          "lineNumber": 114
+        },
+        {
+          "caller": "gen_uop",
+          "callee": "push_back",
+          "lineNumber": 117
+        },
+        {
+          "caller": "gen_uop",
+          "callee": "pop_front",
+          "lineNumber": 122
+        },
+        {
+          "caller": "read_mem",
+          "callee": "empty",
+          "lineNumber": 127
+        },
+        {
+          "caller": "read_mem",
+          "callee": "front",
+          "lineNumber": 128
+        },
+        {
+          "caller": "read_mem",
+          "callee": "tm_make_pld",
+          "lineNumber": 129
+        },
+        {
+          "caller": "read_mem",
+          "callee": "make_shared<vector<uint8_t>>",
+          "lineNumber": 130
+        },
+        {
+          "caller": "read_mem",
+          "callee": "data",
+          "lineNumber": 131
+        },
+        {
+          "caller": "read_mem",
+          "callee": "send",
+          "lineNumber": 132
+        },
+        {
+          "caller": "read_mem",
+          "callee": "pop_front",
+          "lineNumber": 133
+        },
+        {
+          "caller": "read_mem",
+          "callee": "static_cast<uint64_t>",
+          "lineNumber": 134
+        },
+        {
+          "caller": "read_mem",
+          "callee": "time",
+          "lineNumber": 134
+        },
+        {
+          "caller": "read_mem",
+          "callee": "PEM_LOG_INFO",
+          "lineNumber": 143
+        },
+        {
+          "caller": "read_mem",
+          "callee": "time",
+          "lineNumber": 145
+        },
+        {
+          "caller": "read_mem",
+          "callee": "PEM_LOG_INFO",
+          "lineNumber": 150
+        },
+        {
+          "caller": "read_mem",
+          "callee": "time",
+          "lineNumber": 150
+        },
+        {
+          "caller": "recv_rsp",
+          "callee": "valid",
+          "lineNumber": 155
+        },
+        {
+          "caller": "recv_rsp",
+          "callee": "get_pld",
+          "lineNumber": 156
+        },
+        {
+          "caller": "recv_rsp",
+          "callee": "handle_read_response",
+          "lineNumber": 160
+        },
+        {
+          "caller": "recv_rsp",
+          "callee": "record_read_response",
+          "lineNumber": 162
+        },
+        {
+          "caller": "recv_rsp",
+          "callee": "pop_pld",
+          "lineNumber": 163
+        },
+        {
+          "caller": "handle_read_response",
+          "callee": "PEM_LOG_ERROR",
+          "lineNumber": 174
+        },
+        {
+          "caller": "handle_read_response",
+          "callee": "PEM_LOG_ERROR",
+          "lineNumber": 183
+        },
+        {
+          "caller": "handle_read_response",
+          "callee": "PEM_LOG_INFO",
+          "lineNumber": 189
+        },
+        {
+          "caller": "handle_read_response",
+          "callee": "size",
+          "lineNumber": 190
+        },
+        {
+          "caller": "handle_read_response",
+          "callee": "PEM_LOG_INFO",
+          "lineNumber": 191
+        },
+        {
+          "caller": "handle_read_response",
+          "callee": "time",
+          "lineNumber": 191
+        },
+        {
+          "caller": "handle_read_response",
+          "callee": "PEM_LOG_ERROR",
+          "lineNumber": 197
+        },
+        {
+          "caller": "handle_read_response",
+          "callee": "memcpy",
+          "lineNumber": 202
+        },
+        {
+          "caller": "handle_read_response",
+          "callee": "data",
+          "lineNumber": 202
+        },
+        {
+          "caller": "handle_read_response",
+          "callee": "find",
+          "lineNumber": 203
+        },
+        {
+          "caller": "handle_read_response",
+          "callee": "end",
+          "lineNumber": 205
+        },
+        {
+          "caller": "handle_read_response",
+          "callee": "size",
+          "lineNumber": 206
+        },
+        {
+          "caller": "handle_read_response",
+          "callee": "PEM_LOG_ERROR",
+          "lineNumber": 209
+        },
+        {
+          "caller": "handle_read_response",
+          "callee": "resize",
+          "lineNumber": 217
+        },
+        {
+          "caller": "handle_read_response",
+          "callee": "memcpy",
+          "lineNumber": 218
+        },
+        {
+          "caller": "handle_read_response",
+          "callee": "data",
+          "lineNumber": 218
+        },
+        {
+          "caller": "handle_read_response",
+          "callee": "data",
+          "lineNumber": 218
+        },
+        {
+          "caller": "handle_read_response",
+          "callee": "full",
+          "lineNumber": 223
+        },
+        {
+          "caller": "handle_read_response",
+          "callee": "PEM_LOG_ERROR",
+          "lineNumber": 230
+        },
+        {
+          "caller": "handle_read_response",
+          "callee": "reinterpret_cast<const uint32_t*>",
+          "lineNumber": 237
+        },
+        {
+          "caller": "handle_read_response",
+          "callee": "data",
+          "lineNumber": 237
+        },
+        {
+          "caller": "handle_read_response",
+          "callee": "reinterpret_cast<const uint32_t*>",
+          "lineNumber": 238
+        },
+        {
+          "caller": "handle_read_response",
+          "callee": "data",
+          "lineNumber": 238
+        },
+        {
+          "caller": "handle_read_response",
+          "callee": "make_shared<demo_uop_t>",
+          "lineNumber": 244
+        },
+        {
+          "caller": "handle_read_response",
+          "callee": "time",
+          "lineNumber": 244
+        },
+        {
+          "caller": "handle_read_response",
+          "callee": "full",
+          "lineNumber": 246
+        },
+        {
+          "caller": "handle_read_response",
+          "callee": "push_back",
+          "lineNumber": 247
+        },
+        {
+          "caller": "handle_read_response",
+          "callee": "PEM_LOG_INFO",
+          "lineNumber": 250
+        },
+        {
+          "caller": "handle_read_response",
+          "callee": "PEM_LOG_ERROR",
+          "lineNumber": 254
+        },
+        {
+          "caller": "handle_read_response",
+          "callee": "erase",
+          "lineNumber": 258
+        },
+        {
+          "caller": "record_read_response",
+          "callee": "find",
+          "lineNumber": 264
+        },
+        {
+          "caller": "record_read_response",
+          "callee": "end",
+          "lineNumber": 265
+        },
+        {
+          "caller": "record_read_response",
+          "callee": "static_cast<uint64_t>",
+          "lineNumber": 270
+        },
+        {
+          "caller": "record_read_response",
+          "callee": "time",
+          "lineNumber": 270
+        },
+        {
+          "caller": "record_read_response",
+          "callee": "std::min",
+          "lineNumber": 275
+        },
+        {
+          "caller": "record_read_response",
+          "callee": "std::max",
+          "lineNumber": 276
+        },
+        {
+          "caller": "record_read_response",
+          "callee": "erase",
+          "lineNumber": 277
+        },
+        {
+          "caller": "pipeline",
+          "callee": "empty",
+          "lineNumber": 281
+        },
+        {
+          "caller": "pipeline",
+          "callee": "front",
+          "lineNumber": 282
+        },
+        {
+          "caller": "pipeline",
+          "callee": "allocate_write_buf",
+          "lineNumber": 283
+        },
+        {
+          "caller": "pipeline",
+          "callee": "PEM_LOG_INFO",
+          "lineNumber": 289
+        },
+        {
+          "caller": "pipeline",
+          "callee": "time",
+          "lineNumber": 289
+        },
+        {
+          "caller": "pipeline",
+          "callee": "static_cast<uint32_t>",
+          "lineNumber": 292
+        },
+        {
+          "caller": "pipeline",
+          "callee": "memcpy",
+          "lineNumber": 294
+        },
+        {
+          "caller": "pipeline",
+          "callee": "tm_make_pld",
+          "lineNumber": 295
+        },
+        {
+          "caller": "pipeline",
+          "callee": "send",
+          "lineNumber": 297
+        },
+        {
+          "caller": "pipeline",
+          "callee": "pop_front",
+          "lineNumber": 298
+        },
+        {
+          "caller": "pipeline",
+          "callee": "static_cast<uint64_t>",
+          "lineNumber": 299
+        },
+        {
+          "caller": "pipeline",
+          "callee": "time",
+          "lineNumber": 299
+        },
+        {
+          "caller": "pipeline",
+          "callee": "PEM_LOG_INFO",
+          "lineNumber": 305
+        },
+        {
+          "caller": "pipeline",
+          "callee": "time",
+          "lineNumber": 307
+        },
+        {
+          "caller": "pipeline",
+          "callee": "release_write_buf",
+          "lineNumber": 311
+        },
+        {
+          "caller": "wr_recv_rsp",
+          "callee": "valid",
+          "lineNumber": 318
+        },
+        {
+          "caller": "wr_recv_rsp",
+          "callee": "pop_pld",
+          "lineNumber": 322
+        },
+        {
+          "caller": "wr_recv_rsp",
+          "callee": "find",
+          "lineNumber": 328
+        },
+        {
+          "caller": "wr_recv_rsp",
+          "callee": "find",
+          "lineNumber": 329
+        },
+        {
+          "caller": "wr_recv_rsp",
+          "callee": "end",
+          "lineNumber": 331
+        },
+        {
+          "caller": "wr_recv_rsp",
+          "callee": "end",
+          "lineNumber": 332
+        },
+        {
+          "caller": "wr_recv_rsp",
+          "callee": "static_cast<uint64_t>",
+          "lineNumber": 339
+        },
+        {
+          "caller": "wr_recv_rsp",
+          "callee": "time",
+          "lineNumber": 339
+        },
+        {
+          "caller": "wr_recv_rsp",
+          "callee": "std::min",
+          "lineNumber": 342
+        },
+        {
+          "caller": "wr_recv_rsp",
+          "callee": "std::max",
+          "lineNumber": 343
+        },
+        {
+          "caller": "wr_recv_rsp",
+          "callee": "erase",
+          "lineNumber": 347
+        },
+        {
+          "caller": "wr_recv_rsp",
+          "callee": "erase",
+          "lineNumber": 348
+        },
+        {
+          "caller": "wr_recv_rsp",
+          "callee": "release_write_buf",
+          "lineNumber": 349
+        },
+        {
+          "caller": "wr_recv_rsp",
+          "callee": "PEM_LOG_INFO",
+          "lineNumber": 351
+        },
+        {
+          "caller": "wr_recv_rsp",
+          "callee": "time",
+          "lineNumber": 353
+        },
+        {
+          "caller": "allocate_write_buf",
+          "callee": "empty",
+          "lineNumber": 358
+        },
+        {
+          "caller": "allocate_write_buf",
+          "callee": "front",
+          "lineNumber": 359
+        },
+        {
+          "caller": "allocate_write_buf",
+          "callee": "pop",
+          "lineNumber": 360
+        },
+        {
+          "caller": "release_write_buf",
+          "callee": "push",
+          "lineNumber": 365
+        }
+      ],
+      "metrics": {
+        "importCount": 2,
+        "exportCount": 17,
+        "functionCount": 17,
+        "classCount": 0
+      }
+    },
+    {
+      "path": "pem_trdemo.h",
+      "language": "c",
+      "fileCategory": "code",
+      "totalLines": 178,
+      "nonEmptyLines": 151,
+      "callGraph": [
+        {
+          "caller": "reset",
+          "callee": "clear",
+          "lineNumber": 69
+        }
+      ],
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 0,
+        "functionCount": 0,
+        "classCount": 0
+      }
+    },
+    {
+      "path": "tm_ring_packet_cost_test.cc",
+      "language": "cpp",
+      "fileCategory": "code",
+      "totalLines": 38,
+      "nonEmptyLines": 31,
+      "functions": [
+        {
+          "name": "make_packet",
+          "startLine": 7,
+          "endLine": 13,
+          "params": [
+            "cmd",
+            "size"
+          ]
+        },
+        {
+          "name": "TEST",
+          "startLine": 15,
+          "endLine": 21,
+          "params": []
+        },
+        {
+          "name": "TEST",
+          "startLine": 23,
+          "endLine": 28,
+          "params": []
+        },
+        {
+          "name": "TEST",
+          "startLine": 30,
+          "endLine": 36,
+          "params": []
+        }
+      ],
+      "exports": [
+        {
+          "name": "make_packet",
+          "line": 7,
+          "isDefault": false
+        },
+        {
+          "name": "TEST",
+          "line": 15,
+          "isDefault": false
+        },
+        {
+          "name": "TEST",
+          "line": 23,
+          "isDefault": false
+        },
+        {
+          "name": "TEST",
+          "line": 30,
+          "isDefault": false
+        }
+      ],
+      "callGraph": [
+        {
+          "caller": "make_packet",
+          "callee": "tm_make_pld",
+          "lineNumber": 8
+        },
+        {
+          "caller": "make_packet",
+          "callee": "static_cast<uint32_t>",
+          "lineNumber": 10
+        },
+        {
+          "caller": "TEST",
+          "callee": "EXPECT_EQ",
+          "lineNumber": 16
+        },
+        {
+          "caller": "TEST",
+          "callee": "uint32_t",
+          "lineNumber": 16
+        },
+        {
+          "caller": "TEST",
+          "callee": "tm_ring_packet_bytes",
+          "lineNumber": 16
+        },
+        {
+          "caller": "TEST",
+          "callee": "make_packet",
+          "lineNumber": 16
+        },
+        {
+          "caller": "TEST",
+          "callee": "EXPECT_EQ",
+          "lineNumber": 17
+        },
+        {
+          "caller": "TEST",
+          "callee": "uint32_t",
+          "lineNumber": 17
+        },
+        {
+          "caller": "TEST",
+          "callee": "tm_ring_packet_bytes",
+          "lineNumber": 17
+        },
+        {
+          "caller": "TEST",
+          "callee": "make_packet",
+          "lineNumber": 17
+        },
+        {
+          "caller": "TEST",
+          "callee": "EXPECT_EQ",
+          "lineNumber": 18
+        },
+        {
+          "caller": "TEST",
+          "callee": "uint32_t",
+          "lineNumber": 18
+        },
+        {
+          "caller": "TEST",
+          "callee": "tm_ring_packet_bytes",
+          "lineNumber": 18
+        },
+        {
+          "caller": "TEST",
+          "callee": "make_packet",
+          "lineNumber": 18
+        },
+        {
+          "caller": "TEST",
+          "callee": "EXPECT_EQ",
+          "lineNumber": 19
+        },
+        {
+          "caller": "TEST",
+          "callee": "uint32_t",
+          "lineNumber": 19
+        },
+        {
+          "caller": "TEST",
+          "callee": "tm_ring_packet_bytes",
+          "lineNumber": 20
+        },
+        {
+          "caller": "TEST",
+          "callee": "make_packet",
+          "lineNumber": 20
+        },
+        {
+          "caller": "TEST",
+          "callee": "EXPECT_EQ",
+          "lineNumber": 24
+        },
+        {
+          "caller": "TEST",
+          "callee": "uint32_t",
+          "lineNumber": 24
+        },
+        {
+          "caller": "TEST",
+          "callee": "tm_ring_packet_bytes",
+          "lineNumber": 25
+        },
+        {
+          "caller": "TEST",
+          "callee": "make_packet",
+          "lineNumber": 25
+        },
+        {
+          "caller": "TEST",
+          "callee": "EXPECT_EQ",
+          "lineNumber": 26
+        },
+        {
+          "caller": "TEST",
+          "callee": "uint32_t",
+          "lineNumber": 26
+        },
+        {
+          "caller": "TEST",
+          "callee": "tm_ring_packet_bytes",
+          "lineNumber": 27
+        },
+        {
+          "caller": "TEST",
+          "callee": "make_packet",
+          "lineNumber": 27
+        },
+        {
+          "caller": "TEST",
+          "callee": "EXPECT_EQ",
+          "lineNumber": 31
+        },
+        {
+          "caller": "TEST",
+          "callee": "uint32_t",
+          "lineNumber": 31
+        },
+        {
+          "caller": "TEST",
+          "callee": "tm_ring_serialization_cycles",
+          "lineNumber": 31
+        },
+        {
+          "caller": "TEST",
+          "callee": "EXPECT_EQ",
+          "lineNumber": 32
+        },
+        {
+          "caller": "TEST",
+          "callee": "uint32_t",
+          "lineNumber": 32
+        },
+        {
+          "caller": "TEST",
+          "callee": "tm_ring_serialization_cycles",
+          "lineNumber": 32
+        },
+        {
+          "caller": "TEST",
+          "callee": "EXPECT_EQ",
+          "lineNumber": 33
+        },
+        {
+          "caller": "TEST",
+          "callee": "uint32_t",
+          "lineNumber": 33
+        },
+        {
+          "caller": "TEST",
+          "callee": "tm_ring_serialization_cycles",
+          "lineNumber": 33
+        },
+        {
+          "caller": "TEST",
+          "callee": "EXPECT_EQ",
+          "lineNumber": 34
+        },
+        {
+          "caller": "TEST",
+          "callee": "uint32_t",
+          "lineNumber": 34
+        },
+        {
+          "caller": "TEST",
+          "callee": "tm_ring_serialization_cycles",
+          "lineNumber": 34
+        },
+        {
+          "caller": "TEST",
+          "callee": "EXPECT_EQ",
+          "lineNumber": 35
+        },
+        {
+          "caller": "TEST",
+          "callee": "uint32_t",
+          "lineNumber": 35
+        },
+        {
+          "caller": "TEST",
+          "callee": "tm_ring_serialization_cycles",
+          "lineNumber": 35
+        }
+      ],
+      "metrics": {
+        "importCount": 1,
+        "exportCount": 4,
+        "functionCount": 4,
+        "classCount": 0
+      }
+    },
+    {
+      "path": "tm_ring_stats_test.cc",
+      "language": "cpp",
+      "fileCategory": "code",
+      "totalLines": 22,
+      "nonEmptyLines": 18,
+      "functions": [
+        {
+          "name": "TEST",
+          "startLine": 5,
+          "endLine": 13,
+          "params": []
+        },
+        {
+          "name": "TEST",
+          "startLine": 15,
+          "endLine": 22,
+          "params": []
+        }
+      ],
+      "exports": [
+        {
+          "name": "TEST",
+          "line": 5,
+          "isDefault": false
+        },
+        {
+          "name": "TEST",
+          "line": 15,
+          "isDefault": false
+        }
+      ],
+      "callGraph": [
+        {
+          "caller": "TEST",
+          "callee": "EXPECT_EQ",
+          "lineNumber": 12
+        },
+        {
+          "caller": "TEST",
+          "callee": "uint64_t",
+          "lineNumber": 12
+        },
+        {
+          "caller": "TEST",
+          "callee": "tm_ring_conn_total_stalls",
+          "lineNumber": 12
+        },
+        {
+          "caller": "TEST",
+          "callee": "merge_from",
+          "lineNumber": 20
+        },
+        {
+          "caller": "TEST",
+          "callee": "EXPECT_EQ",
+          "lineNumber": 21
+        },
+        {
+          "caller": "TEST",
+          "callee": "uint64_t",
+          "lineNumber": 21
+        }
+      ],
+      "metrics": {
+        "importCount": 1,
+        "exportCount": 2,
+        "functionCount": 2,
+        "classCount": 0
+      }
+    },
+    {
+      "path": "tm_ring_types.h",
+      "language": "c",
+      "fileCategory": "code",
+      "totalLines": 220,
+      "nonEmptyLines": 181,
+      "callGraph": [
+        {
+          "caller": "tm_ring_port_index",
+          "callee": "static_cast<uint32_t>",
+          "lineNumber": 100
+        },
+        {
+          "caller": "tm_ring_subnet_index",
+          "callee": "static_cast<uint32_t>",
+          "lineNumber": 104
+        },
+        {
+          "caller": "tm_ring_cmd_bus_channel",
+          "callee": "static_cast<uint32_t>",
+          "lineNumber": 131
+        },
+        {
+          "caller": "tm_ring_cmd_bus_channel",
+          "callee": "tm_ring_cmd_to_req",
+          "lineNumber": 131
+        },
+        {
+          "caller": "tm_ring_rd_rsp_bus_channel",
+          "callee": "static_cast<uint32_t>",
+          "lineNumber": 135
+        },
+        {
+          "caller": "tm_ring_packet_channel",
+          "callee": "static_cast<uint32_t>",
+          "lineNumber": 139
+        },
+        {
+          "caller": "tm_ring_packet_channel_count",
+          "callee": "static_cast<uint32_t>",
+          "lineNumber": 143
+        },
+        {
+          "caller": "tm_ring_packet_bytes",
+          "callee": "static_cast<PldCmd>",
+          "lineNumber": 157
+        },
+        {
+          "caller": "tm_ring_serialization_cycles",
+          "callee": "std::max<uint32_t>",
+          "lineNumber": 169
+        }
+      ],
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 0,
+        "functionCount": 0,
+        "classCount": 0
+      }
+    }
+  ]
+}
