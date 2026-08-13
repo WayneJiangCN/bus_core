@@ -9,8 +9,11 @@ using namespace std;
 TmRingMemPort::TmRingMemPort(const std::string& name, p_tm_clk_t clk,
                               const tm_ring_target_cfg_t& target_cfg,
                               const TmRingCfg& ring_cfg,
-                              const TmRingEndpointQueueDepths& queue_depths)
-    : TmModule(name), rd_rsp_port_num_(ring_cfg.rd_rsp_port_num) {
+                              const TmRingEndpointQueueDepths& queue_depths,
+                              const vector<TmRingQueuePmuPort>& queue_pmu_ports,
+                              TmRingHaPmuPort ha_pmu)
+    : TmModule(name), rd_rsp_port_num_(ring_cfg.rd_rsp_port_num),
+      ha_pmu_(ha_pmu) {
 
 #if TM_RING_LOG_ENABLE
   log_para_t log_para(name + ".log");
@@ -18,11 +21,6 @@ TmRingMemPort::TmRingMemPort(const std::string& name, p_tm_clk_t clk,
   PEM_LOG_INFO(log_, "[{0:d}] config rd_rsp_ports:{1:d}", time(),
                rd_rsp_port_num_);
 #endif
-
-  ha_source_stats_.resize(ring_cfg.num_masters);
-  for (uint32_t master = 0; master < ring_cfg.num_masters; ++master) {
-    ha_source_stats_[master].master_id = master;
-  }
 
   const uint32_t request_chan_num = std::max<uint32_t>(
       tm_ring_cmd_bus_channel(PldCmd::RD) + 1,
@@ -39,7 +37,7 @@ TmRingMemPort::TmRingMemPort(const std::string& name, p_tm_clk_t clk,
     home_agent_cfg.waiters_per_entry = ring_cfg.home_agent_waiters_per_entry;
     home_agent_cfg.hit_rate_pct = ring_cfg.l2_traffic.hit_rate_pct;
     home_agent_cfg.hit_seed = ring_cfg.l2_traffic.hit_seed;
-    home_agent_ = std::make_shared<TmRingHomeAgent>(home_agent_cfg);
+    home_agent_ = std::make_shared<TmRingHomeAgent>(home_agent_cfg, ha_pmu_);
   }
 
   if (home_agent_ != nullptr) {
@@ -49,7 +47,7 @@ TmRingMemPort::TmRingMemPort(const std::string& name, p_tm_clk_t clk,
   tm_sensitive(TM_MAKE_CPROC(&TmRingMemPort::recv_mem_rsp), inf_->vld);
 
   node_interface_ = tm_make_ring_node_interface(
-      clk, name + "_node_interface", queue_depths);
+      clk, name + "_node_interface", queue_depths, queue_pmu_ports);
   tm_sensitive(TM_MAKE_CPROC(&TmRingMemPort::recv_ring_req),
                node_interface_->eject_q(TmRingSubnet::REQ)->vld);
   tm_sensitive(TM_MAKE_CPROC(&TmRingMemPort::recv_ring_dat),
@@ -91,16 +89,12 @@ void TmRingMemPort::reset() {
   pending_rd_rsp_ = 0;
   next_rsp_class_ = 0;
   next_rd_rsp_lane_ = 0;
-  clear_stats();
 }
 
 void TmRingMemPort::attach(uint32_t target_id,
                            std::shared_ptr<TmRingTopology> topology) {
   target_id_ = target_id;
   topology_ = topology;
-  for (auto& source : ha_source_stats_) {
-    source.ha_id = target_id;
-  }
 #if TM_RING_LOG_ENABLE
   PEM_LOG_INFO(log_, "[{0:d}] attach_mem_port target:{1:d}", time(),
                target_id_);
@@ -138,25 +132,6 @@ void TmRingMemPort::attach_l2_buffer(
 
 p_tm_ring_node_interface_t TmRingMemPort::node_interface() const {
   return node_interface_;
-}
-
-TmRingHomeAgentStats TmRingMemPort::home_agent_stats() const {
-  return home_agent_ == nullptr ? TmRingHomeAgentStats()
-                                : home_agent_->stats();
-}
-
-const std::vector<TmRingHaSourceStats>& TmRingMemPort::ha_source_stats() const {
-  return ha_source_stats_;
-}
-
-void TmRingMemPort::clear_stats() {
-  if (home_agent_ != nullptr) {
-    home_agent_->clear_stats();
-  }
-  for (auto& source : ha_source_stats_) {
-    source.rd_packets = 0;
-    source.wr_packets = 0;
-  }
 }
 
 p_tm_com_que_t TmRingMemPort::req_q(PldCmd cmd) const {
@@ -206,12 +181,7 @@ void TmRingMemPort::recv_ring_req() {
 
   q->push_back(pld);
   node_interface_->pop_eject(TmRingSubnet::REQ);
-  TmRingHaSourceStats& source = ha_source_stats_[pld->mst_id];
-  if (cmd == PldCmd::RD) {
-    ++source.rd_packets;
-  } else {
-    ++source.wr_packets;
-  }
+  ha_pmu_.source_request_received(pld->mst_id, cmd);
 #if TM_RING_LOG_ENABLE
   PEM_LOG_INFO(log_,
                "[{0:d}] recv_ring_cmd target:{1:d} cmd:{2:d} "

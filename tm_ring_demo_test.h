@@ -647,14 +647,16 @@ inline int print_demo_performance(
   const uint64_t endpoint_stalls =
       total_read_stalls + total_read_response_stalls + total_write_stalls +
       total_write_buffer_stalls;
+  const TmRingPmuSnapshot ring_pmu = ring->snapshot_pmu(clk->time());
   const TmRingConnStallBreakdown ring_conn_breakdown =
-      ring->ring_conn_stall_breakdown();
-  const auto csstats = ring->csstats();
-  const auto home_agent_stats = ring->home_agent_stats();
-  const auto l2_buffer_stats = ring->l2_buffer_stats();
+      ring_pmu.conn_stall_breakdown();
+  const auto& csstats = ring_pmu.cross_station.total;
+  const auto& home_agent_stats = ring_pmu.ha.total;
+  const auto& l2_buffer_stats = ring_pmu.l2.total;
   const std::vector<TmRingDomainStats> ring_domain_stats =
-      ring->ring_domain_stats();
-  const std::vector<TmRingRbrgStats> rbrg_stats = ring->rbrg_stats();
+      ring_pmu.conn.domains;
+  const auto& rbrg_stats = ring_pmu.rbrg.instances;
+  const auto& rbrg_instance_ids = ring_pmu.rbrg.instance_ids;
   const uint64_t l2_classified_transactions =
       home_agent_stats.l2_hit_transactions +
       home_agent_stats.l2_miss_transactions;
@@ -858,10 +860,11 @@ inline int print_demo_performance(
   }
   const char* rbrg_path_names[] = {"v_to_h_req", "v_to_h_dat",
                                    "h_to_v_rsp", "h_to_v_dat"};
-  for (uint32_t rbrg_id = 0; rbrg_id < rbrg_stats.size(); ++rbrg_id) {
-    std::cout << "TEST_RBRG id=" << rbrg_id;
+  for (uint32_t rbrg_index = 0; rbrg_index < rbrg_stats.size();
+       ++rbrg_index) {
+    std::cout << "TEST_RBRG id=" << rbrg_instance_ids.at(rbrg_index);
     for (uint32_t path = 0; path < 4; ++path) {
-      const TmRingRbrgPathStats& stats = rbrg_stats[rbrg_id].paths[path];
+      const TmRingRbrgPathStats& stats = rbrg_stats[rbrg_index].paths[path];
       std::cout << ' ' << rbrg_path_names[path] << "_packets=" << stats.packets
                 << ' ' << rbrg_path_names[path] << "_bytes=" << stats.bytes
                 << ' ' << rbrg_path_names[path]
@@ -1030,11 +1033,11 @@ inline int print_demo_performance(
   };
   if (detailed_output) {
     print_hot_conns(
-        "req", ring->ring_top_busy_conns(TmRingSubnet::REQ, 5));
+        "req", ring_pmu.top_busy_conns(TmRingSubnet::REQ, 5));
     print_hot_conns(
-        "rsp", ring->ring_top_busy_conns(TmRingSubnet::RSP, 5));
+        "rsp", ring_pmu.top_busy_conns(TmRingSubnet::RSP, 5));
     print_hot_conns(
-        "dat", ring->ring_top_busy_conns(TmRingSubnet::DAT, 5));
+        "dat", ring_pmu.top_busy_conns(TmRingSubnet::DAT, 5));
   }
   std::cout << "TEST_FAIRNESS jain_index=" << fairness << std::endl;
   std::cout << "TEST_FAIRNESS_CN Jain公平性指数=" << fairness << std::endl;

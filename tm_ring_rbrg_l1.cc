@@ -10,12 +10,16 @@ using namespace tm_engine;
 TmRingRbrgL1::TmRingRbrgL1(const std::string& name, p_tm_clk_t clk,
                            uint32_t v_ring_id, uint32_t queue_depth,
                            uint32_t latency, uint32_t width_bytes,
+                           const TmRingRbrgPmuPort& pmu,
                            const TmRingEndpointQueueDepths& v_queue_depths,
                            const TmRingEndpointQueueDepths& h_queue_depths,
+                           const vector<TmRingQueuePmuPort>& v_queue_pmu_ports,
+                           const vector<TmRingQueuePmuPort>& h_queue_pmu_ports,
                            std::shared_ptr<TmRingTopology> topology)
     : TmModule(name),
       v_ring_id_(v_ring_id),
       rbrg_width_bytes_(width_bytes),
+      pmu_(pmu),
       topology_(topology) {
   TmRingEndpointQueueDepths v_split_depths = v_queue_depths;
   TmRingEndpointQueueDepths h_split_depths = h_queue_depths;
@@ -25,10 +29,10 @@ TmRingRbrgL1::TmRingRbrgL1(const std::string& name, p_tm_clk_t clk,
   }
   v_niu_ = tm_make_ring_node_interface(
       clk, name + "_v_node_interface", v_split_depths,
-      TmRingNodeInterfaceMode::RBRG_DIRECTIONAL, latency);
+      v_queue_pmu_ports, TmRingNodeInterfaceMode::RBRG_DIRECTIONAL, latency);
   h_niu_ = tm_make_ring_node_interface(
       clk, name + "_h_node_interface", h_split_depths,
-      TmRingNodeInterfaceMode::RBRG_DIRECTIONAL, latency);
+      h_queue_pmu_ports, TmRingNodeInterfaceMode::RBRG_DIRECTIONAL, latency);
 
   for (uint32_t path = 0; path < paths_.size(); ++path) {
     for (uint32_t direction = 0; direction < 2; ++direction) {
@@ -150,7 +154,6 @@ void TmRingRbrgL1::reset() {
   fanout_tie_next_direction_ = TmRingPortDir::CW;
   v_niu_->reset();
   h_niu_->reset();
-  clear_stats();
 }
 
 bool TmRingRbrgL1::idle() const {
@@ -172,21 +175,12 @@ bool TmRingRbrgL1::idle() const {
   return true;
 }
 
-void TmRingRbrgL1::clear_stats() { stats_.clear(); }
-
 p_tm_ring_node_interface_t TmRingRbrgL1::v_node_interface() const {
   return v_niu_;
 }
 
 p_tm_ring_node_interface_t TmRingRbrgL1::h_node_interface() const {
   return h_niu_;
-}
-
-const TmRingRbrgStats& TmRingRbrgL1::stats() const { return stats_; }
-
-const TmRingRbrgPathStats& TmRingRbrgL1::path_stats(
-    TmRingRbrgPath path) const {
-  return stats_.paths[path_index(path)];
 }
 
 void TmRingRbrgL1::recv_v_req() {
@@ -343,6 +337,13 @@ void TmRingRbrgL1::schedule_path(TmRingRbrgPath path) {
   }
 
   if (!have_assignment || best.transfers == 0) {
+    const bool candidate_waiting = candidates[0].valid || candidates[1].valid;
+    const bool destination_full =
+        !destination->has_inject_capacity(subnet, TmRingPortDir::CW) &&
+        !destination->has_inject_capacity(subnet, TmRingPortDir::CCW);
+    if (candidate_waiting && destination_full) {
+      pmu_.destination_blocked(path);
+    }
     return;
   }
   const bool same_preferred_output = candidates[0].valid &&
@@ -389,7 +390,7 @@ void TmRingRbrgL1::start_serializer(TmRingRbrgPath path,
 
   const uint32_t serialization_cycles = tm_ring_serialization_cycles(
       tm_ring_packet_bytes(candidate.pld), rbrg_width_bytes_);
-  stats_.paths[index].busy_cycles += serialization_cycles;
+  pmu_.enqueued(path, serialization_cycles);
   state.bandwidth_available = false;
   state.bandwidth_event_pending = true;
   state.serializer_handoff_event_pending = true;
@@ -499,8 +500,7 @@ void TmRingRbrgL1::handoff_serializer(TmRingRbrgPath path,
   if (!destination->push_inject(subnet, direction, state.serializer_slot)) {
     throw std::logic_error("RBRG lost reserved Split capacity");
   }
-  stats_.paths[index].packets++;
-  stats_.paths[index].bytes += tm_ring_packet_bytes(state.serializer_slot);
+  pmu_.delivered(path, tm_ring_packet_bytes(state.serializer_slot));
   state.serializer_slot = nullptr;
   state.serializer_handoff_event_pending = false;
 }

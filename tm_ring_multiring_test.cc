@@ -152,8 +152,13 @@ TEST(TmRingRbrgL1Test, ReSerializesBeforeInjectingTheNextRingSegment) {
   TmRingEndpointQueueDepths depths;
   depths.inject = {{1, 1, 1}};
   depths.eject = {{1, 1, 1}};
+  TmRingPmu pmu;
   const p_tm_ring_rbrg_l1_t rbrg = tm_make_ring_rbrg_l1(
-      "rbrg_cut_through", clk, 0, 1, 1, 16, depths, depths, topology);
+      "rbrg_cut_through", clk, 0, 1, 1, 16, pmu.register_rbrg(0),
+      depths, depths,
+      pmu.register_endpoint_queues(TmRingNodeType::RBRG_V, 0, depths),
+      pmu.register_endpoint_queues(TmRingNodeType::RBRG_H, 0, depths),
+      topology);
 
   const p_tm_pld_t packet = tm_make_pld(PldCmd::WR_DAT, 0, 32);
   packet->slv_id = 0;
@@ -339,21 +344,24 @@ TEST_F(TmRingMultiRingFabricTest, UnicastReadWriteCrossesOneBridge) {
   EXPECT_TRUE(result.idle);
   EXPECT_TRUE(result.fabric->idle());
   EXPECT_TRUE(result.perf_result.measurement_valid);
-  EXPECT_FALSE(result.perf_result.endpoint_queue_stats.empty());
-  ASSERT_FALSE(result.perf_result.ring_domain_stats.empty());
-  EXPECT_GT(result.perf_result.ring_domain_stats[0].directed_edge_count,
+  EXPECT_FALSE(result.perf_result.ring_pmu.queue.endpoints.empty());
+  ASSERT_FALSE(result.perf_result.ring_pmu.conn.domains.empty());
+  EXPECT_GT(result.perf_result.ring_pmu.conn.domains[0].directed_edge_count,
             uint32_t(0));
 
-  ASSERT_EQ(size_t(3), result.perf_result.ha_source_stats.size());
-  EXPECT_EQ(uint32_t(0), result.perf_result.ha_source_stats[0].master_id);
-  EXPECT_EQ(uint64_t(1), result.perf_result.ha_source_stats[0].rd_packets);
-  EXPECT_EQ(uint64_t(0), result.perf_result.ha_source_stats[0].wr_packets);
-  EXPECT_EQ(uint32_t(1), result.perf_result.ha_source_stats[1].master_id);
-  EXPECT_EQ(uint64_t(0), result.perf_result.ha_source_stats[1].rd_packets);
-  EXPECT_EQ(uint64_t(1), result.perf_result.ha_source_stats[1].wr_packets);
-  EXPECT_EQ(uint32_t(3), result.perf_result.ha_source_stats[2].master_id);
-  EXPECT_EQ(uint64_t(1), result.perf_result.ha_source_stats[2].rd_packets);
-  EXPECT_EQ(uint64_t(0), result.perf_result.ha_source_stats[2].wr_packets);
+  const TmRingPmuSnapshot& rbrg_pmu = result.perf_result.ring_pmu;
+  const std::vector<TmRingHaSourceStats>& ha_sources =
+      result.perf_result.ring_pmu.ha.sources;
+  ASSERT_EQ(size_t(3), ha_sources.size());
+  EXPECT_EQ(uint32_t(0), ha_sources[0].master_id);
+  EXPECT_EQ(uint64_t(1), ha_sources[0].rd_packets);
+  EXPECT_EQ(uint64_t(0), ha_sources[0].wr_packets);
+  EXPECT_EQ(uint32_t(1), ha_sources[1].master_id);
+  EXPECT_EQ(uint64_t(0), ha_sources[1].rd_packets);
+  EXPECT_EQ(uint64_t(1), ha_sources[1].wr_packets);
+  EXPECT_EQ(uint32_t(3), ha_sources[2].master_id);
+  EXPECT_EQ(uint64_t(1), ha_sources[2].rd_packets);
+  EXPECT_EQ(uint64_t(0), ha_sources[2].wr_packets);
 
   for (uint32_t ring = 0; ring < 2; ++ring) {
     const TmRingRbrgPath paths[] = {
@@ -363,24 +371,16 @@ TEST_F(TmRingMultiRingFabricTest, UnicastReadWriteCrossesOneBridge) {
         TmRingRbrgPath::H_TO_V_DAT,
     };
     const uint64_t v_to_h_packets =
-        result.fabric
-            ->rbrg_path_stats(ring, TmRingRbrgPath::V_TO_H_REQ)
-            .packets +
-        result.fabric
-            ->rbrg_path_stats(ring, TmRingRbrgPath::V_TO_H_DAT)
-            .packets;
+        rbrg_pmu.rbrg_path_stats(ring, TmRingRbrgPath::V_TO_H_REQ).packets +
+        rbrg_pmu.rbrg_path_stats(ring, TmRingRbrgPath::V_TO_H_DAT).packets;
     const uint64_t h_to_v_packets =
-        result.fabric
-            ->rbrg_path_stats(ring, TmRingRbrgPath::H_TO_V_RSP)
-            .packets +
-        result.fabric
-            ->rbrg_path_stats(ring, TmRingRbrgPath::H_TO_V_DAT)
-            .packets;
+        rbrg_pmu.rbrg_path_stats(ring, TmRingRbrgPath::H_TO_V_RSP).packets +
+        rbrg_pmu.rbrg_path_stats(ring, TmRingRbrgPath::H_TO_V_DAT).packets;
     EXPECT_GT(v_to_h_packets, uint64_t(0));
     EXPECT_GT(h_to_v_packets, uint64_t(0));
     for (TmRingRbrgPath path : paths) {
       const TmRingRbrgPathStats& path_stats =
-          result.fabric->rbrg_path_stats(ring, path);
+          rbrg_pmu.rbrg_path_stats(ring, path);
       if (path_stats.packets != 0) {
         EXPECT_GT(path_stats.busy_cycles, uint64_t(0));
       }
@@ -399,18 +399,15 @@ TEST_F(TmRingMultiRingFabricTest,
     logical_read_responses += stats.completed_packets;
   }
 
-  const TmRingHomeAgentStats home_agent_stats =
-      result.fabric->home_agent_stats();
+  const TmRingPmuSnapshot& rbrg_pmu = result.perf_result.ring_pmu;
+  const TmRingHomeAgentStats& home_agent_stats = rbrg_pmu.ha.total;
   const uint64_t backend_or_functional_line_reads =
       home_agent_stats.rd_backend_issued + home_agent_stats.functional_reads;
-  const uint64_t l2_h_ring_carriers =
-      result.fabric->l2_buffer_stats().h_carriers;
+  const uint64_t l2_h_ring_carriers = rbrg_pmu.l2.total.h_carriers;
   uint64_t rbrg_v_ring_dat_carriers = 0;
   for (uint32_t ring = 0; ring < 2; ++ring) {
     rbrg_v_ring_dat_carriers +=
-        result.fabric
-            ->rbrg_path_stats(ring, TmRingRbrgPath::H_TO_V_DAT)
-            .packets;
+        rbrg_pmu.rbrg_path_stats(ring, TmRingRbrgPath::H_TO_V_DAT).packets;
   }
 
   EXPECT_EQ(uint64_t(8), logical_read_responses);
@@ -420,7 +417,7 @@ TEST_F(TmRingMultiRingFabricTest,
 
   uint32_t v_ring_domains = 0;
   for (const TmRingDomainStats& domain :
-       result.perf_result.ring_domain_stats) {
+       result.perf_result.ring_pmu.conn.domains) {
     if (domain.type != TmRingDomainType::V_RING) {
       continue;
     }

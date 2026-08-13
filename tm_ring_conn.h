@@ -10,6 +10,7 @@
 #include "tm_clock.h"
 #include "tm_engine.h"
 #include "tm_que.h"
+#include "tm_ring_pmu.h"
 #include "tm_ring_types.h"
 
 // One directed hop between adjacent Cross Stations.
@@ -17,13 +18,12 @@ class TmRingConn : public tm_engine::TmModule {
  public:
   TmRingConn(const std::string& name, tm_engine::p_tm_clk_t clk,
              uint32_t latency, uint32_t width_bytes,
-             uint32_t dst_station, TmRingPortDir dst_dir);
+             uint32_t dst_station, TmRingPortDir dst_dir,
+             TmRingConnPmuPort pmu);
   void reset();
-  void clear_stats();
   bool idle() const;
 
   bool accept_slot(p_tm_pld_t slot);
-  const TmRingConnStats& subnet_stats(TmRingSubnet subnet) const;
   bool has_ready_slot(TmRingSubnet subnet);
   void attach(p_tm_com_que_t dst_req_transit_reg,
               p_tm_com_que_t dst_rsp_transit_reg,
@@ -32,7 +32,10 @@ class TmRingConn : public tm_engine::TmModule {
   TmRingPortDir dst_dir() const;
 
  private:
-  bool can_accept(p_tm_pld_t slot);
+  friend class TmRingConnTestAccess;
+
+  bool can_accept(p_tm_pld_t slot,
+                  TmRingConnRejectReason* reject_reason) const;
   void reserve_slot(p_tm_pld_t slot);
   void drain_ready_slots();
   void release_serializer(TmRingSubnet subnet);
@@ -44,9 +47,6 @@ class TmRingConn : public tm_engine::TmModule {
   void move_rsp_serializer_to_pipeline();
   void move_dat_serializer_to_pipeline();
   TmRingSubnet slot_subnet(p_tm_pld_t slot) const;
-  void record_stall(uint32_t lane_idx, uint64_t TmRingConnStats::*field);
-  void record_slot(uint32_t lane_idx, uint32_t bytes,
-                   uint32_t serialization_cycles);
 
   uint32_t latency_ = 1;
   uint32_t pipeline_depth_ = 1;
@@ -64,7 +64,7 @@ class TmRingConn : public tm_engine::TmModule {
   std::vector<tm_engine::p_tm_event_t> serializer_to_pipeline_events_;
   // Fixed-latency stages, not a Cross Station transit FIFO.
   std::vector<p_tm_com_que_t> slot_pipelines_;
-  std::vector<TmRingConnStats> lane_stats_;
+  TmRingConnPmuPort pmu_;
   p_tm_com_que_t dst_req_transit_reg_ = nullptr;
   p_tm_com_que_t dst_rsp_transit_reg_ = nullptr;
   p_tm_com_que_t dst_dat_transit_reg_ = nullptr;
@@ -76,9 +76,10 @@ using p_tm_ring_conn_t =
 
 inline p_tm_ring_conn_t tm_make_ring_conn(
     const std::string& name, tm_engine::p_tm_clk_t clk, uint32_t latency,
-    uint32_t width_bytes, uint32_t dst_station, TmRingPortDir dst_dir) {
+    uint32_t width_bytes, uint32_t dst_station, TmRingPortDir dst_dir,
+    TmRingConnPmuPort pmu) {
   return std::make_shared<TmRingConn>(
-      name, clk, latency, width_bytes, dst_station, dst_dir);
+      name, clk, latency, width_bytes, dst_station, dst_dir, pmu);
 }
 
 #endif  // _TM_RING_CONN_H_

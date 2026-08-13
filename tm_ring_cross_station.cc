@@ -6,8 +6,9 @@
 
 using namespace tm_engine;
 
-TmRingCrossStation::TmRingCrossStation(const std::string& name, p_tm_clk_t clk)
-    : TmModule(name) {
+TmRingCrossStation::TmRingCrossStation(const std::string& name, p_tm_clk_t clk,
+                                       TmRingCrossStationPmuPort pmu)
+    : TmModule(name), pmu_(pmu) {
   for (uint32_t subnet = 0; subnet < tm_ring_subnet_count(); ++subnet) {
     for (uint32_t direction = 0; direction < 2; ++direction) {
       transit_regs_[subnet][direction] =
@@ -49,10 +50,7 @@ void TmRingCrossStation::reset() {
       e_tag_txn_keys_[subnet][direction] = TmPldTxnKey();
     }
   }
-  clear_stats();
 }
-
-void TmRingCrossStation::clear_stats() { stats_.clear(); }
 
 bool TmRingCrossStation::idle() const {
   for (uint32_t subnet = 0; subnet < tm_ring_subnet_count(); ++subnet) {
@@ -99,10 +97,6 @@ void TmRingCrossStation::bind_node_interface(
 p_tm_com_que_t TmRingCrossStation::transit_in_reg(TmRingPortDir in_dir,
                                                   TmRingSubnet subnet) const {
   return transit_reg(in_dir, subnet);
-}
-
-const TmRingCrossStationStats& TmRingCrossStation::stats() const {
-  return stats_;
 }
 
 void TmRingCrossStation::schedule_req() { schedule_subnet(TmRingSubnet::REQ); }
@@ -191,13 +185,13 @@ TmRingCrossStation::OutputSource TmRingCrossStation::process_transit(
         i_tag_pending_[static_cast<uint32_t>(subnet)][out_idx] = false;
         release_ring_slot(subnet, out_dir);
         reg->pop_front();
-        stats_.transit_slots++;
+        pmu_.transit_committed(subnet, TmRingSlotKind::NORMAL);
         return OutputSource::NONE;
       }
       output_used[out_idx] = true;
       if (try_slot_replacement(slot, subnet, out_dir, true)) {
         reg->pop_front();
-        stats_.transit_slots++;
+        pmu_.transit_committed(subnet, TmRingSlotKind::NORMAL);
         return OutputSource::LOCAL;
       }
       return OutputSource::NONE;
@@ -205,8 +199,7 @@ TmRingCrossStation::OutputSource TmRingCrossStation::process_transit(
     output_used[out_idx] = true;
     if (forward_slot(slot, out_dir)) {
       reg->pop_front();
-      stats_.transit_slots++;
-      stats_.tagged_empty_slots++;
+      pmu_.transit_committed(subnet, TmRingSlotKind::TAGGED_EMPTY);
       return OutputSource::TRANSIT;
     }
     return OutputSource::NONE;
@@ -228,7 +221,7 @@ TmRingCrossStation::OutputSource TmRingCrossStation::process_transit(
       release_ring_slot(subnet, out_dir);
     }
     reg->pop_front();
-    stats_.transit_slots++;
+    pmu_.transit_committed(subnet, TmRingSlotKind::NORMAL);
     if (replacement_sent) {
       output_used[out_idx] = true;
       return OutputSource::LOCAL;
@@ -257,29 +250,20 @@ TmRingCrossStation::OutputSource TmRingCrossStation::process_transit(
   }
 
   if (is_destination(slot)) {
-    stats_.eject_queue_full_stalls++;
-    TmRingDeflectionStats& stats =
-        stats_.deflection[tm_ring_subnet_index(subnet)];
-    if (!slot->ring_deflection_started) {
-      slot->ring_deflection_started = true;
-      slot->ring_first_deflection_cycle = time();
-      ++stats.unique_packets;
-    }
-    ++stats.events;
-    slot->ring_deflection_count++;
+    pmu_.packet_deflected(subnet, slot, time(), false);
     if (set_e_tag) {
       const uint32_t eject_idx = ejection_bank_index(out_dir);
       e_tag_reserved_[subnet_idx][eject_idx] = true;
       e_tag_txn_keys_[subnet_idx][eject_idx] = tm_ring_packet_txn_key(slot);
-      stats_.e_tag_sets++;
+      pmu_.e_tag_set(subnet);
     }
   }
   if (set_i_tag) {
     i_tag_pending_[subnet_idx][out_idx] = true;
-    stats_.i_tag_sets++;
+    pmu_.i_tag_set(subnet);
   }
   reg->pop_front();
-  stats_.transit_slots++;
+  pmu_.transit_committed(subnet, TmRingSlotKind::NORMAL);
   output_used[out_idx] = true;
   return OutputSource::TRANSIT;
 }
@@ -295,7 +279,7 @@ TmRingCrossStation::OutputSource TmRingCrossStation::process_fanout_transit(
   if (!fanout_recipient_for_station(envelope, &recipient_index)) {
     if (forward_slot(envelope, out_dir)) {
       reg->pop_front();
-      stats_.transit_slots++;
+      pmu_.transit_committed(subnet, TmRingSlotKind::NORMAL);
       output_used[out_idx] = true;
       return OutputSource::TRANSIT;
     } else {
@@ -313,17 +297,15 @@ TmRingCrossStation::OutputSource TmRingCrossStation::process_fanout_transit(
       return OutputSource::NONE;
     }
 
-    stats_.eject_queue_full_stalls++;
-    ++stats_.deflection[tm_ring_subnet_index(subnet)]
-          .fanout_recipient_retry_events;
+    pmu_.packet_deflected(subnet, envelope, time(), true);
     if (set_e_tag) {
       const uint32_t eject_idx = ejection_bank_index(out_dir);
       e_tag_reserved_[subnet_idx][eject_idx] = true;
       e_tag_txn_keys_[subnet_idx][eject_idx] = tm_ring_packet_txn_key(envelope);
-      stats_.e_tag_sets++;
+      pmu_.e_tag_set(subnet);
     }
     reg->pop_front();
-    stats_.transit_slots++;
+    pmu_.transit_committed(subnet, TmRingSlotKind::NORMAL);
     output_used[out_idx] = true;
     return OutputSource::TRANSIT;
   }
@@ -342,7 +324,7 @@ TmRingCrossStation::OutputSource TmRingCrossStation::process_fanout_transit(
     }
     commit_fanout_eject(envelope, response, subnet, out_dir);
     reg->pop_front();
-    stats_.transit_slots++;
+    pmu_.transit_committed(subnet, TmRingSlotKind::NORMAL);
     output_used[out_idx] = true;
     return OutputSource::TRANSIT;
   }
@@ -362,7 +344,7 @@ TmRingCrossStation::OutputSource TmRingCrossStation::process_fanout_transit(
     release_ring_slot(subnet, out_dir);
   }
   reg->pop_front();
-  stats_.transit_slots++;
+  pmu_.transit_committed(subnet, TmRingSlotKind::NORMAL);
   if (replacement_sent) {
     output_used[out_idx] = true;
     return OutputSource::LOCAL;
@@ -380,7 +362,7 @@ TmRingCrossStation::OutputSource TmRingCrossStation::try_normal_injection(
 
   auto slot = node_interface_->front_inject(subnet, out_dir);
   if (!slot_pool_->try_acquire(subnet, out_dir)) {
-    stats_.slot_pool_full_stalls++;
+    pmu_.slot_pool_blocked(subnet, out_dir);
     return OutputSource::NONE;
   }
   if (!forward_slot(slot, out_dir)) {
@@ -389,7 +371,7 @@ TmRingCrossStation::OutputSource TmRingCrossStation::try_normal_injection(
   }
   node_interface_->pop_inject(subnet, out_dir);
   output_used[out_idx] = true;
-  stats_.injected_packets++;
+  pmu_.packet_injected(subnet);
   return OutputSource::LOCAL;
 }
 
@@ -418,10 +400,10 @@ bool TmRingCrossStation::try_slot_replacement(p_tm_pld_t transit_slot,
     return false;
   }
   node_interface_->pop_inject(subnet, out_dir);
-  stats_.injected_packets++;
+  pmu_.packet_injected(subnet);
   if (claims_i_tag) {
     i_tag_pending_[subnet_idx][out_idx] = false;
-    stats_.i_tag_claims++;
+    pmu_.i_tag_claimed(subnet);
   }
   return true;
 }
@@ -500,7 +482,7 @@ void TmRingCrossStation::claim_e_tag(p_tm_pld_t slot, TmRingSubnet subnet,
     e_tag_reserved_[idx][eject_idx] = false;
     e_tag_txn_keys_[idx][eject_idx] = TmPldTxnKey();
     slot->ring_e_tag_owner = tm_ring_invalid_tag_owner();
-    stats_.e_tag_claims++;
+    pmu_.e_tag_claimed(subnet);
   }
 }
 
@@ -508,20 +490,7 @@ void TmRingCrossStation::commit_eject(p_tm_pld_t slot, TmRingSubnet subnet,
                                       TmRingPortDir arrival_direction) {
   claim_e_tag(slot, subnet, arrival_direction);
   node_interface_->push_eject(subnet, arrival_direction, slot);
-  stats_.ejected_packets++;
-
-  TmRingDeflectionStats& stats =
-      stats_.deflection[tm_ring_subnet_index(subnet)];
-  ++stats.eligible_unicast_packets;
-  if (slot->ring_deflection_started) {
-    const uint64_t rounds = slot->ring_deflection_count;
-    const uint64_t delay = time() - slot->ring_first_deflection_cycle;
-    ++stats.completed_packets;
-    stats.rounds_sum += rounds;
-    stats.rounds_max = std::max(stats.rounds_max, rounds);
-    stats.delay_cycles_sum += delay;
-    stats.delay_cycles_max = std::max(stats.delay_cycles_max, delay);
-  }
+  pmu_.packet_ejected(subnet, slot, time());
 }
 
 void TmRingCrossStation::commit_fanout_eject(p_tm_pld_t envelope,
@@ -534,7 +503,7 @@ void TmRingCrossStation::commit_fanout_eject(p_tm_pld_t envelope,
   response->ring_i_tag_owner = tm_ring_invalid_tag_owner();
   response->ring_e_tag_owner = tm_ring_invalid_tag_owner();
   node_interface_->push_eject(subnet, arrival_direction, response);
-  stats_.ejected_packets++;
+  pmu_.packet_ejected(subnet, envelope, time());
 }
 
 p_tm_com_que_t TmRingCrossStation::transit_reg(TmRingPortDir in_dir,

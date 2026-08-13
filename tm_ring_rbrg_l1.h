@@ -31,11 +31,8 @@ class TmRingRbrgL1 : public tm_engine::TmModule {
 
   void reset() override;
   bool idle() const;
-  void clear_stats();
   p_tm_ring_node_interface_t v_node_interface() const;
   p_tm_ring_node_interface_t h_node_interface() const;
-  const TmRingRbrgStats& stats() const;
-  const TmRingRbrgPathStats& path_stats(TmRingRbrgPath path) const;
 
  private:
   struct DirectionState {
@@ -116,7 +113,6 @@ class TmRingRbrgL1 : public tm_engine::TmModule {
   p_tm_ring_node_interface_t h_niu_ = nullptr;
   std::array<PathState, 4> paths_;
   TmRingPortDir fanout_tie_next_direction_ = TmRingPortDir::CW;
-  TmRingRbrgStats stats_;
 };
 
 using tm_ring_rbrg_l1_t = TmRingRbrgL1;

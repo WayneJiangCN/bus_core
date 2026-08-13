@@ -11,6 +11,7 @@
 
 #include "tm_pld.h"
 #include "tm_ring_fanout.h"
+#include "tm_ring_pmu.h"
 #include "tm_ring_types.h"
 
 struct TmRingHomeAgentConfig {
@@ -55,17 +56,14 @@ enum class TmHaTxnState {
  */
 class TmRingHomeAgent {
  public:
-  explicit TmRingHomeAgent(const TmRingHomeAgentConfig& cfg);
+  TmRingHomeAgent(const TmRingHomeAgentConfig& cfg, TmRingHaPmuPort pmu);
 
   void reset();
-  void clear_stats();
 
   bool idle() const {
     return entries_.empty() && write_lines_.empty() &&
            write_txn_lines_.empty();
   }
-
-  const TmRingHomeAgentStats& stats() const { return stats_; }
 
   // 返回 STALL 时调用者保留 payload；ACCEPTED/MERGED 后由 HA 跟踪。
   TmHaAcceptResult accept_read(p_tm_pld_t pld);
@@ -118,7 +116,6 @@ class TmRingHomeAgent {
   bool in_one_line(p_tm_pld_t pld) const;
   bool fanout_waiter_set_supported(const TmHaReadTxn& transaction) const;
   TmHaWaiter make_waiter(p_tm_pld_t pld) const;
-  void record_read(p_tm_pld_t pld);
   bool find_transaction(uint64_t req_line_base, TmHaTxnIter* transaction);
   bool find_pending_transaction(TmHaTxnIter* transaction);
   bool find_pending_functional_transaction(TmHaTxnIter* transaction);
@@ -143,7 +140,7 @@ class TmRingHomeAgent {
   std::unordered_set<uint64_t> write_lines_;
   std::unordered_map<TmPldTxnKey, uint64_t, TmPldTxnKeyHash>
       write_txn_lines_;
-  TmRingHomeAgentStats stats_;
+  TmRingHaPmuPort pmu_;
 };
 
 #endif  // _TM_RING_HOME_AGENT_H_

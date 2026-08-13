@@ -34,7 +34,12 @@ class TmRingRbrgL1DirectionalTest : public ::testing::Test {
     depths.inject = {{2, 2, 2}};
     depths.eject = {{2, 2, 2}};
     rbrg_ = tm_make_ring_rbrg_l1("rbrg_directional", clk_, 0, 2, 0, 16,
-                                  depths, depths, topology_);
+                                  pmu_.register_rbrg(0), depths, depths,
+                                  pmu_.register_endpoint_queues(
+                                      TmRingNodeType::RBRG_V, 0, depths),
+                                  pmu_.register_endpoint_queues(
+                                      TmRingNodeType::RBRG_H, 0, depths),
+                                  topology_);
   }
 
   p_tm_pld_t make_req(uint32_t target, uint64_t gid) const {
@@ -84,6 +89,7 @@ class TmRingRbrgL1DirectionalTest : public ::testing::Test {
   }
 
   p_tm_clk_t clk_ = nullptr;
+  TmRingPmu pmu_;
   std::shared_ptr<TmRingTopology> topology_ = nullptr;
   p_tm_ring_rbrg_l1_t rbrg_ = nullptr;
 };
@@ -382,7 +388,11 @@ TEST_F(TmRingRbrgL1DirectionalTest,
   depths.inject = {{2, 2, 2}};
   depths.eject = {{2, 2, 2}};
   const p_tm_ring_rbrg_l1_t limited_rbrg = tm_make_ring_rbrg_l1(
-      "rbrg_split_depth", clk_, 0, 1, 0, 16, depths, depths, topology_);
+      "rbrg_split_depth", clk_, 0, 1, 0, 16, pmu_.register_rbrg(1),
+      depths, depths,
+      pmu_.register_endpoint_queues(TmRingNodeType::RBRG_V, 1, depths),
+      pmu_.register_endpoint_queues(TmRingNodeType::RBRG_H, 1, depths),
+      topology_);
 
   EXPECT_TRUE(limited_rbrg->h_node_interface()->push_inject(
       TmRingSubnet::REQ, TmRingPortDir::CW, make_req(0, 1)));

@@ -12,6 +12,7 @@
 #include "tm_engine.h"
 #include "tm_pld.h"
 #include "tm_que.h"
+#include "tm_ring_pmu.h"
 #include "tm_ring_types.h"
 
 enum class TmRingNodeInterfaceMode : uint32_t {
@@ -24,6 +25,7 @@ class TmRingNodeInterface {
  public:
   TmRingNodeInterface(tm_engine::p_tm_clk_t clk, const std::string& name,
                       const TmRingEndpointQueueDepths& queue_depths,
+                      const std::vector<TmRingQueuePmuPort>& queue_pmu_ports,
                       TmRingNodeInterfaceMode mode =
                           TmRingNodeInterfaceMode::SHARED_EJECT,
                       uint32_t inject_latency = 0)
@@ -42,6 +44,8 @@ class TmRingNodeInterface {
                                 inject_latency);
         state.depth = queue_depths.inject[subnet];
         state.space_event = tm_engine::tm_make_event(queue_name + "_space");
+        state.pmu.reset(new TmRingQueuePmuPort(
+            queue_pmu_ports[subnet * 2 + direction]));
       }
 
       const uint32_t eject_banks = directional_eject() ? 2 : 1;
@@ -53,10 +57,18 @@ class TmRingNodeInterface {
         state.queue = tm_make_com_que(clk_, queue_name,
                                        queue_depths.eject[subnet]);
         state.depth = queue_depths.eject[subnet];
+        if (!directional_eject()) {
+          state.pmu.reset(
+              new TmRingQueuePmuPort(queue_pmu_ports[6 + subnet]));
+        }
       }
       QueueState& aggregate = aggregate_eject_states_[subnet];
       aggregate.depth = directional_eject() ? 2 * queue_depths.eject[subnet]
                                             : queue_depths.eject[subnet];
+      if (directional_eject()) {
+        aggregate.pmu.reset(
+            new TmRingQueuePmuPort(queue_pmu_ports[6 + subnet]));
+      }
     }
     reset();
   }
@@ -142,7 +154,7 @@ class TmRingNodeInterface {
                    p_tm_pld_t pld) {
     QueueState& state = inject_state(subnet, direction);
     if (state.queue->full()) {
-      ++state.counters.push_rejects;
+      state.pmu->push_rejected(clk_->time(), state.occupancy);
       return false;
     }
     // A successful injection begins a new Ring serialization segment.
@@ -173,10 +185,12 @@ class TmRingNodeInterface {
                   p_tm_pld_t pld) {
     QueueState& state = eject_state(subnet, direction);
     if (state.queue->full()) {
-      ++state.counters.push_rejects;
       if (directional_eject()) {
-        ++aggregate_eject_states_[tm_ring_subnet_index(subnet)]
-              .counters.push_rejects;
+        QueueState& aggregate =
+            aggregate_eject_states_[tm_ring_subnet_index(subnet)];
+        aggregate.pmu->push_rejected(clk_->time(), aggregate.occupancy);
+      } else {
+        state.pmu->push_rejected(clk_->time(), state.occupancy);
       }
       return false;
     }
@@ -212,53 +226,13 @@ class TmRingNodeInterface {
     }
   }
 
-  std::vector<TmRingQueueStats> queue_stats(
-      uint64_t snapshot_cycle) const {
-    std::vector<TmRingQueueStats> result;
-    result.reserve(9);
-    for (uint32_t subnet = 0; subnet < tm_ring_subnet_count(); ++subnet) {
-      const TmRingSubnet ring_subnet = static_cast<TmRingSubnet>(subnet);
-      result.push_back(snapshot_queue(inject_states_[subnet][0], ring_subnet,
-                                      TmRingQueueSide::INJECT,
-                                      TmRingPortDir::CW, snapshot_cycle));
-      result.push_back(snapshot_queue(inject_states_[subnet][1], ring_subnet,
-                                      TmRingQueueSide::INJECT,
-                                      TmRingPortDir::CCW, snapshot_cycle));
-    }
-    for (uint32_t subnet = 0; subnet < tm_ring_subnet_count(); ++subnet) {
-      result.push_back(snapshot_queue(
-          ejection_snapshot_state(static_cast<TmRingSubnet>(subnet)),
-          static_cast<TmRingSubnet>(subnet),
-          TmRingQueueSide::EJECT, TmRingPortDir::LOCAL, snapshot_cycle));
-    }
-    return result;
-  }
-
-  void clear_stats(uint64_t now) {
-    for (uint32_t subnet = 0; subnet < tm_ring_subnet_count(); ++subnet) {
-      for (uint32_t direction = 0; direction < 2; ++direction) {
-        clear_queue_stats(inject_states_[subnet][direction], now);
-      }
-      for (uint32_t direction = 0; direction < 2; ++direction) {
-        if (eject_states_[subnet][direction].queue != nullptr) {
-          clear_queue_stats(eject_states_[subnet][direction], now);
-        }
-      }
-      clear_queue_stats(aggregate_eject_states_[subnet], now);
-    }
-  }
-
  private:
   struct QueueState {
     p_tm_com_que_t queue = nullptr;
     tm_engine::p_tm_event_t space_event = nullptr;
     uint32_t depth = 0;
     uint32_t occupancy = 0;
-    uint32_t occupancy_peak = 0;
-    TmRingQueueCounters counters;
-    uint64_t last_change_cycle = 0;
-    uint64_t full_begin_cycle = 0;
-    bool full_interval_open = false;
+    std::unique_ptr<TmRingQueuePmuPort> pmu;
   };
 
   uint32_t direction_index(TmRingPortDir direction) const {
@@ -291,35 +265,15 @@ class TmRingNodeInterface {
                         [eject_direction_index(direction)];
   }
 
-  const QueueState& ejection_snapshot_state(TmRingSubnet subnet) const {
-    return directional_eject()
-               ? aggregate_eject_states_[tm_ring_subnet_index(subnet)]
-               : eject_state(subnet, TmRingPortDir::CW);
-  }
-
-  void settle_occupancy(QueueState& state, uint64_t now) {
-    state.counters.occupancy_area +=
-        static_cast<uint64_t>(state.occupancy) *
-        (now - state.last_change_cycle);
-    state.last_change_cycle = now;
-  }
-
   void record_push(QueueState& state, p_tm_pld_t pld) {
     state.queue->push_back(pld);
     record_account_push(state);
   }
 
   void record_account_push(QueueState& state) {
-    const uint64_t now = clk_->time();
-    settle_occupancy(state, now);
     ++state.occupancy;
-    if (state.occupancy > state.occupancy_peak) {
-      state.occupancy_peak = state.occupancy;
-    }
-    ++state.counters.pushes;
-    if (state.occupancy == state.depth) {
-      state.full_begin_cycle = now;
-      state.full_interval_open = true;
+    if (state.pmu != nullptr) {
+      state.pmu->push_accepted(clk_->time(), state.occupancy);
     }
   }
 
@@ -332,14 +286,10 @@ class TmRingNodeInterface {
   }
 
   void record_account_pop(QueueState& state) {
-    const uint64_t now = clk_->time();
-    settle_occupancy(state, now);
-    if (state.full_interval_open) {
-      state.counters.full_cycles += now - state.full_begin_cycle;
-      state.full_interval_open = false;
-    }
     --state.occupancy;
-    ++state.counters.pops;
+    if (state.pmu != nullptr) {
+      state.pmu->popped(clk_->time(), state.occupancy);
+    }
   }
 
   void reset_queue_state(QueueState& state, uint64_t now) {
@@ -349,41 +299,6 @@ class TmRingNodeInterface {
 
   void reset_accounting_state(QueueState& state, uint64_t now) {
     state.occupancy = 0;
-    state.occupancy_peak = 0;
-    state.counters.clear();
-    state.last_change_cycle = now;
-    state.full_begin_cycle = now;
-    state.full_interval_open = false;
-  }
-
-  void clear_queue_stats(QueueState& state, uint64_t now) {
-    state.counters.clear();
-    state.occupancy_peak = state.occupancy;
-    state.last_change_cycle = now;
-    state.full_begin_cycle = now;
-    state.full_interval_open = state.occupancy == state.depth;
-  }
-
-  TmRingQueueStats snapshot_queue(const QueueState& state,
-                                  TmRingSubnet subnet,
-                                  TmRingQueueSide side,
-                                  TmRingPortDir direction,
-                                  uint64_t snapshot_cycle) const {
-    TmRingQueueStats result;
-    result.subnet = subnet;
-    result.side = side;
-    result.direction = direction;
-    result.depth = state.depth;
-    result.occupancy = state.occupancy;
-    result.occupancy_peak = state.occupancy_peak;
-    result.counters = state.counters;
-    result.counters.occupancy_area +=
-        static_cast<uint64_t>(state.occupancy) *
-        (snapshot_cycle - state.last_change_cycle);
-    if (state.full_interval_open) {
-      result.counters.full_cycles += snapshot_cycle - state.full_begin_cycle;
-    }
-    return result;
   }
 
   tm_engine::p_tm_clk_t clk_ = nullptr;
@@ -400,11 +315,12 @@ using p_tm_ring_node_interface_t = std::shared_ptr<TmRingNodeInterface>;
 inline p_tm_ring_node_interface_t tm_make_ring_node_interface(
     tm_engine::p_tm_clk_t clk, const std::string& name,
     const TmRingEndpointQueueDepths& queue_depths,
+    const std::vector<TmRingQueuePmuPort>& queue_pmu_ports,
     TmRingNodeInterfaceMode mode =
         TmRingNodeInterfaceMode::SHARED_EJECT,
     uint32_t inject_latency = 0) {
-  return std::make_shared<TmRingNodeInterface>(clk, name, queue_depths, mode,
-                                                inject_latency);
+  return std::make_shared<TmRingNodeInterface>(
+      clk, name, queue_depths, queue_pmu_ports, mode, inject_latency);
 }
 
 #endif  // _TM_RING_NODE_INTERFACE_H_

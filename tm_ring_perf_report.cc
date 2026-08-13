@@ -230,7 +230,7 @@ std::string tm_ring_format_perf_result(const TmRingPerfResult& result) {
 
   out << "PERF_RING";
   for (uint32_t subnet = 0; subnet < 3; ++subnet) {
-    const TmRingConnStats& stats = result.conn_stats[subnet];
+    const TmRingConnStats& stats = result.ring_pmu.conn.total[subnet];
     out << ' ' << subnet_name(static_cast<TmRingSubnet>(subnet))
         << "_packets=" << stats.packets
         << ' ' << subnet_name(static_cast<TmRingSubnet>(subnet))
@@ -241,12 +241,12 @@ std::string tm_ring_format_perf_result(const TmRingPerfResult& result) {
         << "_stalls=" << tm_ring_conn_total_stalls(stats);
   }
   out << " cross_station_injected="
-      << result.cross_station_stats.injected_packets
+      << result.ring_pmu.cross_station.total.injected_packets
       << " cross_station_ejected="
-      << result.cross_station_stats.ejected_packets << '\n';
+      << result.ring_pmu.cross_station.total.ejected_packets << '\n';
 
   for (const TmRingEndpointQueueStats& endpoint :
-       result.endpoint_queue_stats) {
+       result.ring_pmu.queue.endpoints) {
     const TmRingQueueStats& queue = endpoint.queue;
     out << "PERF_RING_BUFFER node_type=" << node_type_name(endpoint.node_type)
         << " node=" << endpoint.node_id
@@ -269,7 +269,7 @@ std::string tm_ring_format_perf_result(const TmRingPerfResult& result) {
         << '\n';
   }
 
-  for (const TmRingDomainStats& domain : result.ring_domain_stats) {
+  for (const TmRingDomainStats& domain : result.ring_pmu.conn.domains) {
     for (uint32_t subnet = 0; subnet < 3; ++subnet) {
       const TmRingSubnet subnet_type = static_cast<TmRingSubnet>(subnet);
       const TmRingDeflectionStats& deflection =
@@ -364,8 +364,11 @@ std::string tm_ring_format_perf_result(const TmRingPerfResult& result) {
   }
 
   uint64_t v_ring_carriers = 0;
-  for (uint32_t rbrg_id = 0; rbrg_id < result.rbrg_stats.size(); ++rbrg_id) {
-    const TmRingRbrgStats& rbrg = result.rbrg_stats[rbrg_id];
+  for (uint32_t rbrg_index = 0;
+       rbrg_index < result.ring_pmu.rbrg.instances.size();
+       ++rbrg_index) {
+    const TmRingRbrgStats& rbrg = result.ring_pmu.rbrg.instances[rbrg_index];
+    const uint32_t rbrg_id = result.ring_pmu.rbrg.instance_ids.at(rbrg_index);
     for (uint32_t path_index = 0; path_index < rbrg.paths.size();
          ++path_index) {
       const TmRingRbrgPath path = static_cast<TmRingRbrgPath>(path_index);
@@ -395,8 +398,8 @@ std::string tm_ring_format_perf_result(const TmRingPerfResult& result) {
   }
 
   const uint64_t logical_recipients =
-      result.l2_buffer_stats.h_carrier_recipients;
-  const uint64_t h_ring_carriers = result.l2_buffer_stats.h_carriers;
+      result.ring_pmu.l2.total.h_carrier_recipients;
+  const uint64_t h_ring_carriers = result.ring_pmu.l2.total.h_carriers;
   const uint64_t h_ring_saved_packets =
       saturating_subtract(logical_recipients, h_ring_carriers);
   const uint64_t v_ring_saved_packets =
@@ -409,7 +412,7 @@ std::string tm_ring_format_perf_result(const TmRingPerfResult& result) {
       << " total_segment_packets_saved="
       << h_ring_saved_packets + v_ring_saved_packets << '\n';
 
-  for (const TmRingHaSourceStats& source : result.ha_source_stats) {
+  for (const TmRingHaSourceStats& source : result.ring_pmu.ha.sources) {
     out << "PERF_HA_SOURCE ha=" << source.ha_id
         << " master=" << source.master_id
         << " rd_packets=" << source.rd_packets
@@ -418,47 +421,47 @@ std::string tm_ring_format_perf_result(const TmRingPerfResult& result) {
   }
 
   out << "PERF_HOME_AGENT rd_requests="
-      << result.home_agent_stats.rd_requests
-      << " backend_reads=" << result.home_agent_stats.rd_backend_issued
-      << " backend_read_saved=" << result.home_agent_stats.backend_read_saved
-      << " l2_hits=" << result.home_agent_stats.l2_hit_transactions
-      << " l2_misses=" << result.home_agent_stats.l2_miss_transactions
+      << result.ring_pmu.ha.total.rd_requests
+      << " backend_reads=" << result.ring_pmu.ha.total.rd_backend_issued
+      << " backend_read_saved=" << result.ring_pmu.ha.total.backend_read_saved
+      << " l2_hits=" << result.ring_pmu.ha.total.l2_hit_transactions
+      << " l2_misses=" << result.ring_pmu.ha.total.l2_miss_transactions
       << " write_hazard_stalls="
-      << result.home_agent_stats.write_hazard_stall_cycles
-      << " rd_merged_pending=" << result.home_agent_stats.rd_merged_pending
-      << " rd_merged_inflight=" << result.home_agent_stats.rd_merged_inflight
+      << result.ring_pmu.ha.total.write_hazard_stall_cycles
+      << " rd_merged_pending=" << result.ring_pmu.ha.total.rd_merged_pending
+      << " rd_merged_inflight=" << result.ring_pmu.ha.total.rd_merged_inflight
       << " rd_merged_responding="
-      << result.home_agent_stats.rd_merged_responding
+      << result.ring_pmu.ha.total.rd_merged_responding
       << " table_full_stalls="
-      << result.home_agent_stats.table_full_stall_cycles
+      << result.ring_pmu.ha.total.table_full_stall_cycles
       << " waiter_full_stalls="
-      << result.home_agent_stats.waiter_full_stall_cycles
+      << result.ring_pmu.ha.total.waiter_full_stall_cycles
       << " aggregation_closed_stalls="
-      << result.home_agent_stats.aggregation_closed_stall_cycles << '\n';
+      << result.ring_pmu.ha.total.aggregation_closed_stall_cycles << '\n';
 
   out << "PERF_L2_BUFFER responses_accepted="
-      << result.l2_buffer_stats.responses_accepted
-      << " h_carriers=" << result.l2_buffer_stats.h_carriers
+      << result.ring_pmu.l2.total.responses_accepted
+      << " h_carriers=" << result.ring_pmu.l2.total.h_carriers
       << " h_unicast_carriers="
-      << result.l2_buffer_stats.h_unicast_carriers
+      << result.ring_pmu.l2.total.h_unicast_carriers
       << " h_multicast_carriers="
-      << result.l2_buffer_stats.h_multicast_carriers
+      << result.ring_pmu.l2.total.h_multicast_carriers
       << " h_scatter_carriers="
-      << result.l2_buffer_stats.h_scatter_carriers
+      << result.ring_pmu.l2.total.h_scatter_carriers
       << " h_carrier_recipients="
-      << result.l2_buffer_stats.h_carrier_recipients
-      << " dat_bytes=" << result.l2_buffer_stats.dat_bytes
-      << " occupancy_peak=" << result.l2_buffer_stats.buffer_occupancy_peak
+      << result.ring_pmu.l2.total.h_carrier_recipients
+      << " dat_bytes=" << result.ring_pmu.l2.total.dat_bytes
+      << " occupancy_peak=" << result.ring_pmu.l2.total.buffer_occupancy_peak
       << " buffer_full_stalls="
-      << result.l2_buffer_stats.buffer_full_stall_cycles
+      << result.ring_pmu.l2.total.buffer_full_stall_cycles
       << " issue_interval_stalls="
-      << result.l2_buffer_stats.issue_interval_stall_cycles
+      << result.ring_pmu.l2.total.issue_interval_stall_cycles
       << " dat_inject_stalls="
-      << result.l2_buffer_stats.dat_inject_full_stall_cycles
-      << " carrier_128b=" << result.l2_buffer_stats.injected_carrier_128b
-      << " carrier_256b=" << result.l2_buffer_stats.injected_carrier_256b
-      << " carrier_512b=" << result.l2_buffer_stats.injected_carrier_512b
-      << " carrier_other=" << result.l2_buffer_stats.injected_carrier_other
+      << result.ring_pmu.l2.total.dat_inject_full_stall_cycles
+      << " carrier_128b=" << result.ring_pmu.l2.total.injected_carrier_128b
+      << " carrier_256b=" << result.ring_pmu.l2.total.injected_carrier_256b
+      << " carrier_512b=" << result.ring_pmu.l2.total.injected_carrier_512b
+      << " carrier_other=" << result.ring_pmu.l2.total.injected_carrier_other
       << '\n';
 
   out << "PERF_MEMORY accepted_read_bytes="

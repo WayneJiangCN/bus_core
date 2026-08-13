@@ -1,5 +1,3 @@
-#include <algorithm>
-
 #include <stdexcept>
 
 #include "pem_biu.h"
@@ -125,6 +123,7 @@ TmRingFabric::TmRingFabric(p_tm_clk_t clk, p_tm_ring_cfg_t cfg)
 }
 
 void TmRingFabric::config() {
+  pmu_ = std::make_shared<TmRingPmu>();
   init_topology();
   clear_components();
   h_ring_ = create_domain(TmRingDomainType::H_RING, 0,
@@ -178,8 +177,11 @@ TmRingFabric::TmRingDomain TmRingFabric::create_domain(
            ? "_h_ring"
            : "_v_ring" + std::to_string(ring_id));
   for (uint32_t station_id = 0; station_id < station_count; ++station_id) {
+    const TmRingCrossStationPmuPort cross_station_pmu =
+        pmu_->register_cross_station(type, ring_id, station_id);
     domain.stations.push_back(tm_make_ring_cs(
-        domain_name + "_cs" + std::to_string(station_id), clk_));
+        domain_name + "_cs" + std::to_string(station_id), clk_,
+        cross_station_pmu));
     for (uint32_t direction_index = 0; direction_index < 2;
          ++direction_index) {
       const TmRingPortDir direction =
@@ -187,13 +189,15 @@ TmRingFabric::TmRingDomain TmRingFabric::create_domain(
       const uint32_t dst_station = topology_->neighbor_station(
           type, ring_id, station_id, direction);
       const TmRingPortDir dst_direction = tm_ring_opposite_dir(direction);
+      const TmRingConnPmuPort conn_pmu = pmu_->register_conn(
+          type, ring_id, station_id, direction, dst_station, dst_direction);
       const std::string connection_name =
           domain_name + "_conn_" + std::to_string(station_id) + "_" +
           ring_dir_name(direction) + "_" + std::to_string(dst_station) +
           "_" + ring_dir_name(dst_direction);
       domain.connections.push_back(tm_make_ring_conn(
           connection_name, clk_, cfg_->ring_link_latency,
-          cfg_->ring_link_width_bytes, dst_station, dst_direction));
+          cfg_->ring_link_width_bytes, dst_station, dst_direction, conn_pmu));
     }
   }
   return domain;
@@ -239,9 +243,12 @@ void TmRingFabric::create_master_nius() {
       cfg_->endpoint_queue_depths[static_cast<uint32_t>(
           TmRingNodeType::MASTER)];
   for (uint32_t i = 0; i < cfg_->num_masters; ++i) {
+    const std::vector<TmRingQueuePmuPort> queue_pmu_ports =
+        pmu_->register_endpoint_queues(TmRingNodeType::MASTER, i,
+                                       queue_depths);
     master_nius_.push_back(tm_make_ring_master_niu(
         this->name() + "_master_niu" + std::to_string(i), clk_, i,
-        queue_depths));
+        queue_depths, queue_pmu_ports));
   }
 }
 
@@ -250,9 +257,14 @@ void TmRingFabric::create_mem_ports() {
       cfg_->endpoint_queue_depths[static_cast<uint32_t>(
           TmRingNodeType::HOME_AGENT)];
   for (uint32_t i = 0; i < cfg_->targets.size(); ++i) {
+    const std::vector<TmRingQueuePmuPort> queue_pmu_ports =
+        pmu_->register_endpoint_queues(TmRingNodeType::HOME_AGENT, i,
+                                       queue_depths);
+    const TmRingHaPmuPort ha_pmu =
+        pmu_->register_home_agent(i, cfg_->num_masters);
     mem_ports_.push_back(tm_make_ring_mem_port(
         this->name() + "_mem_port_" + std::to_string(i), clk_,
-        *cfg_->targets[i], *cfg_, queue_depths));
+        *cfg_->targets[i], *cfg_, queue_depths, queue_pmu_ports, ha_pmu));
   }
 }
 
@@ -261,9 +273,13 @@ void TmRingFabric::create_l2_buffer_nodes() {
       cfg_->endpoint_queue_depths[static_cast<uint32_t>(
           TmRingNodeType::L2_BUFFER)];
   for (uint32_t target = 0; target < cfg_->targets.size(); ++target) {
+    const std::vector<TmRingQueuePmuPort> queue_pmu_ports =
+        pmu_->register_endpoint_queues(TmRingNodeType::L2_BUFFER, target,
+                                       queue_depths);
+    const TmRingL2PmuPort l2_pmu = pmu_->register_l2(target);
     l2_buffer_nodes_.push_back(tm_make_ring_l2_buffer_node(
         this->name() + "_l2_buffer_" + std::to_string(target), clk_,
-        cfg_->l2_traffic, queue_depths));
+        cfg_->l2_traffic, queue_depths, queue_pmu_ports, l2_pmu));
   }
 }
 
@@ -274,11 +290,27 @@ void TmRingFabric::create_rbrgs() {
   const TmRingEndpointQueueDepths& h_queue_depths =
       cfg_->endpoint_queue_depths[static_cast<uint32_t>(
           TmRingNodeType::RBRG_H)];
+  TmRingEndpointQueueDepths v_pmu_depths = v_queue_depths;
+  TmRingEndpointQueueDepths h_pmu_depths = h_queue_depths;
+  for (uint32_t subnet = 0; subnet < tm_ring_subnet_count(); ++subnet) {
+    v_pmu_depths.inject[subnet] = cfg_->rbrg_queue_depth;
+    h_pmu_depths.inject[subnet] = cfg_->rbrg_queue_depth;
+    v_pmu_depths.eject[subnet] *= 2;
+    h_pmu_depths.eject[subnet] *= 2;
+  }
   for (uint32_t ring = 0; ring < topology_->v_ring_count(); ++ring) {
+    const std::vector<TmRingQueuePmuPort> v_queue_pmu_ports =
+        pmu_->register_endpoint_queues(TmRingNodeType::RBRG_V, ring,
+                                       v_pmu_depths);
+    const std::vector<TmRingQueuePmuPort> h_queue_pmu_ports =
+        pmu_->register_endpoint_queues(TmRingNodeType::RBRG_H, ring,
+                                       h_pmu_depths);
+    const TmRingRbrgPmuPort rbrg_pmu_port = pmu_->register_rbrg(ring);
     rbrgs_.push_back(tm_make_ring_rbrg_l1(
         this->name() + "_rbrg_" + std::to_string(ring), clk_, ring,
         cfg_->rbrg_queue_depth, cfg_->rbrg_latency, cfg_->rbrg_width_bytes,
-        v_queue_depths, h_queue_depths, topology_));
+        rbrg_pmu_port, v_queue_depths, h_queue_depths, v_queue_pmu_ports,
+        h_queue_pmu_ports, topology_));
   }
 }
 
@@ -363,40 +395,7 @@ void TmRingFabric::reset() {
   for (auto& l2_buffer : l2_buffer_nodes_) {
     l2_buffer->reset();
   }
-}
-
-void TmRingFabric::clear_stats() {
-  const uint64_t now = clk_->time();
-  for (const p_tm_ring_cs_t& ring_station : h_ring_.stations) {
-    ring_station->clear_stats();
-  }
-  for (const p_tm_ring_conn_t& connection : h_ring_.connections) {
-    connection->clear_stats();
-  }
-  for (const TmRingDomain& domain : v_rings_) {
-    for (const p_tm_ring_cs_t& ring_station : domain.stations) {
-      ring_station->clear_stats();
-    }
-    for (const p_tm_ring_conn_t& connection : domain.connections) {
-      connection->clear_stats();
-    }
-  }
-  for (const p_tm_ring_rbrg_l1_t& rbrg : rbrgs_) {
-    rbrg->clear_stats();
-    rbrg->v_node_interface()->clear_stats(now);
-    rbrg->h_node_interface()->clear_stats(now);
-  }
-  for (const auto& master_niu : master_nius_) {
-    master_niu->node_interface()->clear_stats(now);
-  }
-  for (const auto& mem_port : mem_ports_) {
-    mem_port->clear_stats();
-    mem_port->node_interface()->clear_stats(now);
-  }
-  for (const auto& l2_buffer : l2_buffer_nodes_) {
-    l2_buffer->clear_stats();
-    l2_buffer->node_interface()->clear_stats(now);
-  }
+  pmu_->reset_model(clk_->time());
 }
 
 bool TmRingFabric::idle() {
@@ -448,140 +447,8 @@ bool TmRingFabric::idle() {
   return true;
 }
 
-TmRingConnStallBreakdown
-TmRingFabric::ring_conn_stall_breakdown() const {
-  TmRingConnStats total;
-  total.merge_from(conn_stats(TmRingSubnet::REQ));
-  total.merge_from(conn_stats(TmRingSubnet::RSP));
-  total.merge_from(conn_stats(TmRingSubnet::DAT));
-
-  TmRingConnStallBreakdown stalls;
-  stalls.serialization_busy = total.serialization_busy_stall;
-  stalls.pipeline_full = total.pipeline_full_stall;
-  stalls.downstream_register_full = total.downstream_register_full_stall;
-  return stalls;
-}
-
-std::vector<TmRingEndpointQueueStats> TmRingFabric::ring_queue_stats(
-    uint64_t snapshot_cycle) const {
-  std::vector<TmRingEndpointQueueStats> result;
-  result.reserve((master_nius_.size() + mem_ports_.size() +
-                  l2_buffer_nodes_.size() + 2 * rbrgs_.size()) *
-                 9);
-
-  const auto append_endpoint = [&result, snapshot_cycle](
-                                   TmRingNodeType node_type, uint32_t node_id,
-                                   const p_tm_ring_node_interface_t& niu) {
-    const std::vector<TmRingQueueStats> queue_stats =
-        niu->queue_stats(snapshot_cycle);
-    for (const TmRingQueueStats& queue : queue_stats) {
-      TmRingEndpointQueueStats endpoint_stats;
-      endpoint_stats.node_type = node_type;
-      endpoint_stats.node_id = node_id;
-      endpoint_stats.queue = queue;
-      result.push_back(endpoint_stats);
-    }
-  };
-
-  for (uint32_t i = 0; i < master_nius_.size(); ++i) {
-    append_endpoint(TmRingNodeType::MASTER, i,
-                    master_nius_[i]->node_interface());
-  }
-  for (uint32_t i = 0; i < mem_ports_.size(); ++i) {
-    append_endpoint(TmRingNodeType::HOME_AGENT, i,
-                    mem_ports_[i]->node_interface());
-  }
-  for (uint32_t i = 0; i < l2_buffer_nodes_.size(); ++i) {
-    append_endpoint(TmRingNodeType::L2_BUFFER, i,
-                    l2_buffer_nodes_[i]->node_interface());
-  }
-  for (uint32_t i = 0; i < rbrgs_.size(); ++i) {
-    append_endpoint(TmRingNodeType::RBRG_V, i,
-                    rbrgs_[i]->v_node_interface());
-    append_endpoint(TmRingNodeType::RBRG_H, i,
-                    rbrgs_[i]->h_node_interface());
-  }
-  return result;
-}
-
-std::vector<TmRingDomainStats> TmRingFabric::ring_domain_stats() const {
-  std::vector<TmRingDomainStats> result;
-  result.reserve(1 + v_rings_.size());
-
-  const auto append_domain = [&result](const TmRingDomain& domain) {
-    TmRingDomainStats domain_stats;
-    domain_stats.type = domain.type;
-    domain_stats.ring_id = domain.ring_id;
-    domain_stats.directed_edge_count =
-        static_cast<uint32_t>(domain.connections.size() / 2);
-    for (const p_tm_ring_cs_t& station : domain.stations) {
-      domain_stats.cross_station.merge_from(station->stats());
-    }
-    bool has_hottest = false;
-
-    for (uint32_t index = 0; index < domain.connections.size(); ++index) {
-      const p_tm_ring_conn_t& connection = domain.connections[index];
-      const TmRingPortDir direction =
-          index % 2 == 0 ? TmRingPortDir::CW : TmRingPortDir::CCW;
-      for (uint32_t subnet_index = 0; subnet_index < 3; ++subnet_index) {
-        const TmRingSubnet subnet =
-            static_cast<TmRingSubnet>(subnet_index);
-        const TmRingConnStats& stats = connection->subnet_stats(subnet);
-        std::array<TmRingConnStats, 3>& direction_stats =
-            direction == TmRingPortDir::CW ? domain_stats.cw
-                                           : domain_stats.ccw;
-        direction_stats[subnet_index].merge_from(stats);
-
-        TmRingConnHotspot candidate;
-        candidate.src_station = index / 2;
-        candidate.src_dir = direction;
-        candidate.dst_station = connection->dst_station();
-        candidate.dst_dir = connection->dst_dir();
-        candidate.subnet = subnet;
-        candidate.packets = stats.packets;
-        candidate.bytes = stats.bytes;
-        candidate.busy_cycles = stats.busy_cycles;
-        candidate.serialization_busy_stall =
-            stats.serialization_busy_stall;
-        candidate.total_stalls = tm_ring_conn_total_stalls(stats);
-        candidate.inflight_peak = stats.inflight_peak;
-        domain_stats.edges.push_back(candidate);
-
-        const TmRingConnHotspot& hottest = domain_stats.hottest;
-        const bool is_hotter =
-            !has_hottest ||
-            candidate.serialization_busy_stall >
-                hottest.serialization_busy_stall ||
-            (candidate.serialization_busy_stall ==
-                 hottest.serialization_busy_stall &&
-             candidate.busy_cycles > hottest.busy_cycles) ||
-            (candidate.serialization_busy_stall ==
-                 hottest.serialization_busy_stall &&
-             candidate.busy_cycles == hottest.busy_cycles &&
-             candidate.bytes > hottest.bytes);
-        if (is_hotter) {
-          domain_stats.hottest = candidate;
-          has_hottest = true;
-        }
-      }
-    }
-    result.push_back(domain_stats);
-  };
-
-  append_domain(h_ring_);
-  for (const TmRingDomain& domain : v_rings_) {
-    append_domain(domain);
-  }
-  return result;
-}
-
-std::vector<TmRingRbrgStats> TmRingFabric::rbrg_stats() const {
-  std::vector<TmRingRbrgStats> result;
-  result.reserve(rbrgs_.size());
-  for (const p_tm_ring_rbrg_l1_t& rbrg : rbrgs_) {
-    result.push_back(rbrg->stats());
-  }
-  return result;
+TmRingPmuSnapshot TmRingFabric::snapshot_pmu(uint64_t cycle) const {
+  return pmu_->snapshot(cycle);
 }
 
 uint32_t TmRingFabric::ring_link_width_bytes() const {
@@ -590,124 +457,6 @@ uint32_t TmRingFabric::ring_link_width_bytes() const {
 
 uint32_t TmRingFabric::rbrg_width_bytes() const {
   return cfg_->rbrg_width_bytes;
-}
-
-TmRingConnStats TmRingFabric::conn_stats(TmRingSubnet subnet) const {
-  TmRingConnStats total;
-  const uint32_t subnet_index = static_cast<uint32_t>(subnet);
-  const std::vector<TmRingDomainStats> domains = ring_domain_stats();
-  for (const TmRingDomainStats& domain : domains) {
-    total.merge_from(domain.cw[subnet_index]);
-    total.merge_from(domain.ccw[subnet_index]);
-  }
-  return total;
-}
-
-std::vector<TmRingConnHotspot>
-TmRingFabric::ring_top_busy_conns(TmRingSubnet subnet,
-                                  uint32_t limit) const {
-  std::vector<TmRingConnHotspot> hot_conns;
-  const auto append_domain = [&hot_conns, subnet](const TmRingDomain& domain) {
-    for (uint32_t index = 0; index < domain.connections.size(); ++index) {
-      const p_tm_ring_conn_t& connection = domain.connections[index];
-      const TmRingConnStats& stats = connection->subnet_stats(subnet);
-
-      TmRingConnHotspot hot;
-      hot.src_station = index / 2;
-      hot.src_dir = index % 2 == 0 ? TmRingPortDir::CW : TmRingPortDir::CCW;
-      hot.dst_station = connection->dst_station();
-      hot.dst_dir = connection->dst_dir();
-      hot.subnet = subnet;
-      hot.packets = stats.packets;
-      hot.bytes = stats.bytes;
-      hot.busy_cycles = stats.busy_cycles;
-      hot.serialization_busy_stall = stats.serialization_busy_stall;
-      hot.total_stalls = tm_ring_conn_total_stalls(stats);
-      hot.inflight_peak = stats.inflight_peak;
-      hot_conns.push_back(hot);
-    }
-  };
-  append_domain(h_ring_);
-  for (const TmRingDomain& domain : v_rings_) {
-    append_domain(domain);
-  }
-
-  std::sort(
-      hot_conns.begin(), hot_conns.end(),
-      [](const TmRingConnHotspot& lhs,
-         const TmRingConnHotspot& rhs) {
-        if (lhs.serialization_busy_stall != rhs.serialization_busy_stall) {
-          return lhs.serialization_busy_stall >
-                 rhs.serialization_busy_stall;
-        }
-        if (lhs.busy_cycles != rhs.busy_cycles) {
-          return lhs.busy_cycles > rhs.busy_cycles;
-        }
-        if (lhs.bytes != rhs.bytes) {
-          return lhs.bytes > rhs.bytes;
-        }
-        if (lhs.src_station != rhs.src_station) {
-          return lhs.src_station < rhs.src_station;
-        }
-        return static_cast<uint32_t>(lhs.src_dir) <
-               static_cast<uint32_t>(rhs.src_dir);
-      });
-
-  if (hot_conns.size() > limit) {
-    hot_conns.resize(limit);
-  }
-  return hot_conns;
-}
-
-uint64_t TmRingFabric::ring_conn_stalls() const {
-  return ring_conn_stall_breakdown().total();
-}
-
-TmRingL2BufferStats TmRingFabric::l2_buffer_stats() const {
-  TmRingL2BufferStats total;
-  for (const auto& l2_buffer : l2_buffer_nodes_) {
-    total.merge_from(l2_buffer->stats());
-  }
-  return total;
-}
-
-TmRingCrossStationStats TmRingFabric::csstats() const {
-  TmRingCrossStationStats total;
-  for (const p_tm_ring_cs_t& ring_station : h_ring_.stations) {
-    total.merge_from(ring_station->stats());
-  }
-  for (const TmRingDomain& domain : v_rings_) {
-    for (const p_tm_ring_cs_t& ring_station : domain.stations) {
-      total.merge_from(ring_station->stats());
-    }
-  }
-  return total;
-}
-
-TmRingHomeAgentStats TmRingFabric::home_agent_stats() const {
-  TmRingHomeAgentStats total;
-  for (const auto& mem_port : mem_ports_) {
-    const auto stats = mem_port->home_agent_stats();
-    total.merge_from(stats);
-  }
-  return total;
-}
-
-std::vector<TmRingHaSourceStats> TmRingFabric::ha_source_stats() const {
-  std::vector<TmRingHaSourceStats> result;
-  for (const auto& mem_port : mem_ports_) {
-    for (const TmRingHaSourceStats& source : mem_port->ha_source_stats()) {
-      if (source.rd_packets != 0 || source.wr_packets != 0) {
-        result.push_back(source);
-      }
-    }
-  }
-  return result;
-}
-
-const TmRingRbrgPathStats& TmRingFabric::rbrg_path_stats(
-    uint32_t v_ring_id, TmRingRbrgPath path) const {
-  return rbrgs_.at(v_ring_id)->path_stats(path);
 }
 
 void TmRingFabric::attach_master(uint32_t idx, p_tm_ring_biu_t biu) {

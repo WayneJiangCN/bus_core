@@ -13,16 +13,16 @@
 #include "tm_que.h"
 #include "tm_ring_conn.h"
 #include "tm_ring_node_interface.h"
+#include "tm_ring_pmu.h"
 #include "tm_ring_slot_pool.h"
-#include "tm_ring_types.h"
 
 // Ring stop slot scheduler. It does not decode BIU or memory commands.
 class TmRingCrossStation : public tm_engine::TmModule {
  public:
-  TmRingCrossStation(const std::string& name, tm_engine::p_tm_clk_t clk);
+  TmRingCrossStation(const std::string& name, tm_engine::p_tm_clk_t clk,
+                     TmRingCrossStationPmuPort pmu);
 
   void reset();
-  void clear_stats();
   bool idle() const;
 
   void attach(uint32_t station_id, p_tm_ring_conn_t cw_out_conn,
@@ -32,7 +32,6 @@ class TmRingCrossStation : public tm_engine::TmModule {
 
   p_tm_com_que_t transit_in_reg(TmRingPortDir in_dir,
                                 TmRingSubnet subnet) const;
-  const TmRingCrossStationStats& stats() const;
 
  private:
   using OutputUsed = std::array<bool, 2>;
@@ -116,15 +115,16 @@ class TmRingCrossStation : public tm_engine::TmModule {
   p_tm_ring_conn_t cw_out_conn_ = nullptr;
   p_tm_ring_conn_t ccw_out_conn_ = nullptr;
   p_tm_ring_slot_pool_t slot_pool_ = nullptr;
-  TmRingCrossStationStats stats_;
+  TmRingCrossStationPmuPort pmu_;
 };
 
 using tm_ring_cs_t = TmRingCrossStation;
 using p_tm_ring_cs_t = std::shared_ptr<tm_ring_cs_t>;
 
 inline p_tm_ring_cs_t tm_make_ring_cs(const std::string& name,
-                                      tm_engine::p_tm_clk_t clk) {
-  return std::make_shared<TmRingCrossStation>(name, clk);
+                                      tm_engine::p_tm_clk_t clk,
+                                      TmRingCrossStationPmuPort pmu) {
+  return std::make_shared<TmRingCrossStation>(name, clk, pmu);
 }
 
 #endif  // _TM_RING_CROSS_STATION_H_

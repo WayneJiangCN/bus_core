@@ -15,6 +15,7 @@
 #include "tm_inf.h"
 #include "tm_que.h"
 #include "tm_ring_l2_buffer_node.h"
+#include "tm_ring_pmu.h"
 #include "tm_ring_rbrg_l1.h"
 #include "tm_ring_topology.h"
 #include "tm_ring_types.h"
@@ -43,42 +44,6 @@ class TmRingSlotPool;
 using tm_ring_slot_pool_t = TmRingSlotPool;
 using p_tm_ring_slot_pool_t = std::shared_ptr<tm_ring_slot_pool_t>;
 
-struct TmRingConnStallBreakdown {
-  uint64_t serialization_busy = 0;
-  uint64_t pipeline_full = 0;
-  uint64_t downstream_register_full = 0;
-
-  uint64_t total() const {
-    return serialization_busy + pipeline_full + downstream_register_full;
-  }
-};
-
-struct TmRingConnHotspot {
-  uint32_t src_station = 0;
-  TmRingPortDir src_dir = TmRingPortDir::LOCAL;
-  uint32_t dst_station = 0;
-  TmRingPortDir dst_dir = TmRingPortDir::LOCAL;
-  TmRingSubnet subnet = TmRingSubnet::REQ;
-
-  uint64_t packets = 0;
-  uint64_t bytes = 0;
-  uint64_t busy_cycles = 0;
-  uint64_t serialization_busy_stall = 0;
-  uint64_t total_stalls = 0;
-  uint32_t inflight_peak = 0;
-};
-
-struct TmRingDomainStats {
-  TmRingDomainType type = TmRingDomainType::V_RING;
-  uint32_t ring_id = 0;
-  std::array<TmRingConnStats, 3> cw;
-  std::array<TmRingConnStats, 3> ccw;
-  TmRingConnHotspot hottest;
-  uint32_t directed_edge_count = 0;
-  std::vector<TmRingConnHotspot> edges;
-  TmRingCrossStationStats cross_station;
-};
-
 /*
  * Top-level ring interconnect model.
  *
@@ -98,25 +63,9 @@ class TmRingFabric : public tm_engine::TmModule {
   void attach_target(uint32_t idx, p_tm_com_inf_t inf);
   void attach_target(uint32_t idx, p_tm_mem_t mem);
 
-  void clear_stats();
-  std::vector<TmRingEndpointQueueStats> ring_queue_stats(
-      uint64_t snapshot_cycle) const;
-  TmRingConnStallBreakdown ring_conn_stall_breakdown() const;
-  std::vector<TmRingDomainStats> ring_domain_stats() const;
-  std::vector<TmRingRbrgStats> rbrg_stats() const;
+  TmRingPmuSnapshot snapshot_pmu(uint64_t cycle) const;
   uint32_t ring_link_width_bytes() const;
   uint32_t rbrg_width_bytes() const;
-  TmRingConnStats conn_stats(TmRingSubnet subnet) const;
-  std::vector<TmRingConnHotspot> ring_top_busy_conns(
-      TmRingSubnet subnet, uint32_t limit) const;
-  uint64_t ring_conn_stalls() const;
-  TmRingCrossStationStats csstats() const;
-  TmRingHomeAgentStats home_agent_stats() const;
-  std::vector<TmRingHaSourceStats> ha_source_stats() const;
-  const TmRingRbrgPathStats& rbrg_path_stats(
-      uint32_t v_ring_id, TmRingRbrgPath path) const;
-
-  TmRingL2BufferStats l2_buffer_stats() const;
 
  private:
   struct TmRingDomain {
@@ -131,6 +80,7 @@ class TmRingFabric : public tm_engine::TmModule {
 
   tm_engine::p_tm_clk_t clk_ = nullptr;
   p_tm_ring_cfg_t cfg_ = nullptr;
+  std::shared_ptr<TmRingPmu> pmu_ = nullptr;
 
   std::vector<p_tm_ring_m_niu_t> master_nius_;
   std::vector<p_tm_ring_mem_port_t> mem_ports_;
