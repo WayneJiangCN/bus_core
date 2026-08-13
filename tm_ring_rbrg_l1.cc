@@ -13,8 +13,10 @@ TmRingRbrgL1::TmRingRbrgL1(const std::string& name, p_tm_clk_t clk,
                            const TmRingRbrgPmuPort& pmu,
                            const TmRingEndpointQueueDepths& v_queue_depths,
                            const TmRingEndpointQueueDepths& h_queue_depths,
-                           const vector<TmRingQueuePmuPort>& v_queue_pmu_ports,
-                           const vector<TmRingQueuePmuPort>& h_queue_pmu_ports,
+                           const std::vector<TmRingQueuePmuPort>&
+                               v_queue_pmu_ports,
+                           const std::vector<TmRingQueuePmuPort>&
+                               h_queue_pmu_ports,
                            std::shared_ptr<TmRingTopology> topology)
     : TmModule(name),
       v_ring_id_(v_ring_id),
