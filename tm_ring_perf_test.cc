@@ -1,5 +1,6 @@
 #include <gtest/gtest.h>
 
+#include <algorithm>
 #include <fstream>
 #include <iostream>
 #include <memory>
@@ -409,6 +410,8 @@ TEST(TmRingPerfEstimatorTest, SharedSectorReadsAlternateEqualFanoutSpans) {
     EXPECT_EQ(packet_cycles, estimate.edge_cycles.at(ccw_edge));
     EXPECT_EQ(uint64_t(2) * packet_cycles,
               estimate.rbrg_path_cycles.at(dat_path));
+    EXPECT_EQ(std::max(uint64_t(3), packet_cycles),
+              estimate.hottest_rbrg_path_cycles);
   }
 }
 

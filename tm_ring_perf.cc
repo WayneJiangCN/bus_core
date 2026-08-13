@@ -140,9 +140,13 @@ void add_routed_path(TmRingPerfEstimate* estimate, PldCmd cmd, uint32_t size,
 
 void add_rbrg_path_cycles(TmRingPerfEstimate* estimate, uint32_t rbrg_id,
                           TmRingRbrgPath path, PldCmd cmd, uint32_t size,
-                          uint32_t rbrg_width) {
+                          uint32_t rbrg_width,
+                          std::map<TmRingPerfRbrgKey, uint64_t>*
+                              max_packet_cycles) {
   const TmRingPerfRbrgKey key(rbrg_id, path);
-  estimate->rbrg_path_cycles[key] += packet_cycles(cmd, size, rbrg_width);
+  const uint64_t cycles = packet_cycles(cmd, size, rbrg_width);
+  estimate->rbrg_path_cycles[key] += cycles;
+  (*max_packet_cycles)[key] = std::max((*max_packet_cycles)[key], cycles);
 }
 
 void add_fanout_path(TmRingPerfEstimate* estimate, PldCmd cmd,
@@ -172,14 +176,16 @@ void add_v_to_h_packet(TmRingPerfEstimate* estimate, PldCmd cmd,
                        const TmRingLocation& ha,
                        TmRingRbrgPath rbrg_path,
                        const TmRingTopology& topology,
-                       const TmRingCfg& ring_cfg) {
+                       const TmRingCfg& ring_cfg,
+                       std::map<TmRingPerfRbrgKey, uint64_t>*
+                           max_rbrg_packet_cycles) {
   const uint32_t rbrg_id = master.ring_id;
   ++estimate->physical_packets;
   add_routed_path(estimate, cmd, size, master,
                   topology.rbrg_v_location(rbrg_id), topology,
                   ring_cfg.ring_link_width_bytes);
   add_rbrg_path_cycles(estimate, rbrg_id, rbrg_path, cmd, size,
-                       ring_cfg.rbrg_width_bytes);
+                       ring_cfg.rbrg_width_bytes, max_rbrg_packet_cycles);
   add_routed_path(estimate, cmd, size, topology.rbrg_h_location(rbrg_id), ha,
                   topology, ring_cfg.ring_link_width_bytes);
 }
@@ -189,14 +195,16 @@ void add_h_to_v_packet(TmRingPerfEstimate* estimate, PldCmd cmd,
                        const TmRingLocation& master,
                        TmRingRbrgPath rbrg_path,
                        const TmRingTopology& topology,
-                       const TmRingCfg& ring_cfg) {
+                       const TmRingCfg& ring_cfg,
+                       std::map<TmRingPerfRbrgKey, uint64_t>*
+                           max_rbrg_packet_cycles) {
   const uint32_t rbrg_id = master.ring_id;
   ++estimate->physical_packets;
   add_routed_path(estimate, cmd, size, source,
                   topology.rbrg_h_location(rbrg_id), topology,
                   ring_cfg.ring_link_width_bytes);
   add_rbrg_path_cycles(estimate, rbrg_id, rbrg_path, cmd, size,
-                       ring_cfg.rbrg_width_bytes);
+                       ring_cfg.rbrg_width_bytes, max_rbrg_packet_cycles);
   add_routed_path(estimate, cmd, size, topology.rbrg_v_location(rbrg_id),
                   master, topology, ring_cfg.ring_link_width_bytes);
 }
@@ -205,10 +213,13 @@ void add_unicast_read_response(TmRingPerfEstimate* estimate,
                                const TmRingPerfTxn& request,
                                const TmRingLocation& source,
                                const TmRingTopology& topology,
-                               const TmRingCfg& ring_cfg) {
+                               const TmRingCfg& ring_cfg,
+                               std::map<TmRingPerfRbrgKey, uint64_t>*
+                                   max_rbrg_packet_cycles) {
   add_h_to_v_packet(estimate, PldCmd::RD_RSP, request.size, source,
                     topology.master_location(request.master_port),
-                    TmRingRbrgPath::H_TO_V_DAT, topology, ring_cfg);
+                    TmRingRbrgPath::H_TO_V_DAT, topology, ring_cfg,
+                    max_rbrg_packet_cycles);
   ++estimate->h_carriers;
   ++estimate->h_unicast_carriers;
   ++estimate->h_carrier_recipients;
@@ -426,6 +437,7 @@ TmRingPerfEstimate tm_ring_estimate_fabric(
     TmRingPerfAggregationModel aggregation_model) {
   TmRingPerfEstimate estimate;
   std::map<ReadGroupKey, std::vector<const TmRingPerfTxn*> > read_groups;
+  std::map<TmRingPerfRbrgKey, uint64_t> max_rbrg_packet_cycles;
   std::vector<TmRingPortDir> fanout_tie_next_direction(
       topology.v_ring_count(), TmRingPortDir::CW);
 
@@ -439,7 +451,8 @@ TmRingPerfEstimate tm_ring_estimate_fabric(
     if (txn.cmd == PldCmd::RD) {
       ++estimate.logical_read_requests;
       add_v_to_h_packet(&estimate, PldCmd::RD, txn.size, master, ha,
-                        TmRingRbrgPath::V_TO_H_REQ, topology, ring_cfg);
+                        TmRingRbrgPath::V_TO_H_REQ, topology, ring_cfg,
+                        &max_rbrg_packet_cycles);
       const uint64_t line_size = ring_cfg.l2_traffic.line_size;
       ReadGroupKey key;
       key.target_id = target_id;
@@ -451,7 +464,7 @@ TmRingPerfEstimate tm_ring_estimate_fabric(
         }
         add_unicast_read_response(&estimate, txn,
                                   topology.l2_location(target_id), topology,
-                                  ring_cfg);
+                                  ring_cfg, &max_rbrg_packet_cycles);
         continue;
       }
       read_groups[key].push_back(&txn);
@@ -462,13 +475,17 @@ TmRingPerfEstimate tm_ring_estimate_fabric(
       throw std::invalid_argument("Perf estimator accepts RD and WR only");
     }
     add_v_to_h_packet(&estimate, PldCmd::WR, txn.size, master, ha,
-                      TmRingRbrgPath::V_TO_H_REQ, topology, ring_cfg);
+                      TmRingRbrgPath::V_TO_H_REQ, topology, ring_cfg,
+                      &max_rbrg_packet_cycles);
     add_h_to_v_packet(&estimate, PldCmd::WR_RSP, 0, ha, master,
-                      TmRingRbrgPath::H_TO_V_RSP, topology, ring_cfg);
+                      TmRingRbrgPath::H_TO_V_RSP, topology, ring_cfg,
+                      &max_rbrg_packet_cycles);
     add_v_to_h_packet(&estimate, PldCmd::WR_DAT, txn.size, master, ha,
-                      TmRingRbrgPath::V_TO_H_DAT, topology, ring_cfg);
+                      TmRingRbrgPath::V_TO_H_DAT, topology, ring_cfg,
+                      &max_rbrg_packet_cycles);
     add_h_to_v_packet(&estimate, PldCmd::RSP, 0, ha, master,
-                      TmRingRbrgPath::H_TO_V_RSP, topology, ring_cfg);
+                      TmRingRbrgPath::H_TO_V_RSP, topology, ring_cfg,
+                      &max_rbrg_packet_cycles);
   }
 
   for (const auto& group : read_groups) {
@@ -492,13 +509,13 @@ TmRingPerfEstimate tm_ring_estimate_fabric(
           fanout_requests.push_back(request);
         } else {
           add_unicast_read_response(&estimate, *request, source, topology,
-                                    ring_cfg);
+                                    ring_cfg, &max_rbrg_packet_cycles);
         }
       }
     } else {
       for (const TmRingPerfTxn* request : requests) {
         add_unicast_read_response(&estimate, *request, source, topology,
-                                  ring_cfg);
+                                  ring_cfg, &max_rbrg_packet_cycles);
       }
       continue;
     }
@@ -516,7 +533,7 @@ TmRingPerfEstimate tm_ring_estimate_fabric(
       if (carrier_size == 0) {
         for (const TmRingPerfTxn* request : v_ring_group.second) {
           add_unicast_read_response(&estimate, *request, source, topology,
-                                    ring_cfg);
+                                    ring_cfg, &max_rbrg_packet_cycles);
         }
         continue;
       }
@@ -546,7 +563,8 @@ TmRingPerfEstimate tm_ring_estimate_fabric(
                       ring_cfg.ring_link_width_bytes);
       add_rbrg_path_cycles(&estimate, rbrg_id, TmRingRbrgPath::H_TO_V_DAT,
                            PldCmd::RD_RSP, carrier_size,
-                           ring_cfg.rbrg_width_bytes);
+                           ring_cfg.rbrg_width_bytes,
+                           &max_rbrg_packet_cycles);
       std::vector<TmRingLocation> recipients;
       for (const TmRingPerfTxn* request : v_ring_group.second) {
         recipients.push_back(topology.master_location(request->master_port));
@@ -582,8 +600,13 @@ TmRingPerfEstimate tm_ring_estimate_fabric(
   }
   estimate.hottest_ring_edge_cycles = hottest_edge_cycles;
   for (const auto& rbrg_path : estimate.rbrg_path_cycles) {
+    // Each path owns independent CW and CCW serializers. A packet cannot be
+    // split across them, but different packets can occupy both concurrently.
+    const uint64_t two_split_min_cycles = (rbrg_path.second + 1) / 2;
+    const uint64_t path_min_cycles = std::max(
+        two_split_min_cycles, max_rbrg_packet_cycles.at(rbrg_path.first));
     estimate.hottest_rbrg_path_cycles = std::max(
-        estimate.hottest_rbrg_path_cycles, rbrg_path.second);
+        estimate.hottest_rbrg_path_cycles, path_min_cycles);
   }
   estimate.fabric_min_cycles = std::max(estimate.hottest_ring_edge_cycles,
                                         estimate.hottest_rbrg_path_cycles);
