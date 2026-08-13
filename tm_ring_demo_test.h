@@ -442,6 +442,7 @@ inline int print_demo_performance(
             << " link_latency=" << ring_cfg->ring_link_latency
             << " slot_pipeline_depth=" << (ring_cfg->ring_link_latency + 1)
             << " link_width=" << ring_cfg->ring_link_width_bytes
+            << " transfer_model=packet_cut_through_approx"
             << " v_ring_count="
             << (ring_cfg->num_masters + ring_cfg->max_aicore_per_vring - 1) /
                    ring_cfg->max_aicore_per_vring
@@ -473,6 +474,7 @@ inline int print_demo_performance(
             << " 链路延迟周期=" << ring_cfg->ring_link_latency
             << " slot流水深度=" << (ring_cfg->ring_link_latency + 1)
             << " 链路宽度字节=" << ring_cfg->ring_link_width_bytes
+            << " 传输模型=包级cut-through近似"
             << " 物理subnet=req,rsp,dat"
             << " 每个subnet物理lane数=1"
             << " 逻辑RD_RSP通道数=" << ring_cfg->rd_rsp_port_num

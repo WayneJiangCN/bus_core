@@ -161,6 +161,27 @@ TEST(TmRingConnTest, ReadySlotWaitsForDownstreamSpace) {
   EXPECT_EQ(packet, fixture.dat->front());
 }
 
+TEST(TmRingConnTest, ResetRetiresOldSerializationEvents) {
+  TmRingConnFixture fixture;
+  const auto old_packet = fixture.make_dat();
+  const uint32_t serialization_cycles =
+      fixture.serialization_cycles(old_packet);
+  ASSERT_TRUE(fixture.conn->accept_slot(old_packet));
+
+  tm_start(1);
+  fixture.conn->reset();
+  EXPECT_FALSE(fixture.conn->accept_slot(fixture.make_dat()));
+
+  tm_start(serialization_cycles - 1);
+  EXPECT_TRUE(fixture.dat->empty());
+
+  const auto current_packet = fixture.make_dat();
+  ASSERT_TRUE(fixture.conn->accept_slot(current_packet));
+  tm_start(fixture.arrival_cycles(current_packet));
+  ASSERT_FALSE(fixture.dat->empty());
+  EXPECT_EQ(current_packet, fixture.dat->front());
+}
+
 TEST(TmRingConnTest, SameLanePacketsReachDestinationInFifoOrder) {
   const uint32_t packet_count = 3;
   TmRingConnFixture fixture(64, 16, packet_count);

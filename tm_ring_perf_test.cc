@@ -675,6 +675,8 @@ TEST(TmRingPerfReportTest, EmitsStableSectionsAndKeys) {
             report.find("hottest_rbrg_path_cycles=4"));
   EXPECT_NE(std::string::npos, report.find("run_mode=free_running"));
   EXPECT_NE(std::string::npos,
+            report.find("transfer_model=packet_cut_through_approx"));
+  EXPECT_NE(std::string::npos,
             report.find("scaling_efficiency_available=0"));
   EXPECT_NE(std::string::npos, report.find("rd_merged_pending=0"));
   EXPECT_NE(std::string::npos, report.find("waiter_full_stalls=0"));
