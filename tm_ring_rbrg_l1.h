@@ -6,27 +6,25 @@
 #include <array>
 #include <memory>
 #include <string>
+#include <vector>
 
 #include "tm_clock.h"
 #include "tm_engine.h"
 #include "tm_ring_node_interface.h"
+#include "tm_ring_pmu.h"
 #include "tm_ring_topology.h"
 #include "tm_ring_types.h"
-
-enum class TmRingRbrgPath : uint32_t {
-  V_TO_H_REQ = 0,
-  V_TO_H_DAT = 1,
-  H_TO_V_RSP = 2,
-  H_TO_V_DAT = 3,
-};
 
 class TmRingRbrgL1 : public tm_engine::TmModule {
  public:
   TmRingRbrgL1(const std::string& name, tm_engine::p_tm_clk_t clk,
                uint32_t v_ring_id, uint32_t queue_depth,
                uint32_t latency, uint32_t width_bytes,
+               const TmRingRbrgPmuPort& pmu,
                const TmRingEndpointQueueDepths& v_queue_depths,
                const TmRingEndpointQueueDepths& h_queue_depths,
+               const std::vector<TmRingQueuePmuPort>& v_queue_pmu_ports,
+               const std::vector<TmRingQueuePmuPort>& h_queue_pmu_ports,
                std::shared_ptr<TmRingTopology> topology);
 
   void reset() override;
@@ -108,6 +106,7 @@ class TmRingRbrgL1 : public tm_engine::TmModule {
 
   uint32_t v_ring_id_ = 0;
   uint32_t rbrg_width_bytes_ = 1;
+  TmRingRbrgPmuPort pmu_;
   std::shared_ptr<TmRingTopology> topology_ = nullptr;
   p_tm_ring_node_interface_t v_niu_ = nullptr;
   p_tm_ring_node_interface_t h_niu_ = nullptr;
@@ -121,13 +120,16 @@ using p_tm_ring_rbrg_l1_t = std::shared_ptr<tm_ring_rbrg_l1_t>;
 inline p_tm_ring_rbrg_l1_t tm_make_ring_rbrg_l1(
     const std::string& name, tm_engine::p_tm_clk_t clk, uint32_t v_ring_id,
     uint32_t queue_depth, uint32_t latency, uint32_t width_bytes,
+    const TmRingRbrgPmuPort& pmu,
     const TmRingEndpointQueueDepths& v_queue_depths,
     const TmRingEndpointQueueDepths& h_queue_depths,
+    const std::vector<TmRingQueuePmuPort>& v_queue_pmu_ports,
+    const std::vector<TmRingQueuePmuPort>& h_queue_pmu_ports,
     std::shared_ptr<TmRingTopology> topology) {
   return std::shared_ptr<TmRingRbrgL1>(
       new TmRingRbrgL1(name, clk, v_ring_id, queue_depth, latency,
-                       width_bytes, v_queue_depths, h_queue_depths,
-                       topology));
+                       width_bytes, pmu, v_queue_depths, h_queue_depths,
+                       v_queue_pmu_ports, h_queue_pmu_ports, topology));
 }
 
 #endif  // _TM_RING_RBRG_L1_H_

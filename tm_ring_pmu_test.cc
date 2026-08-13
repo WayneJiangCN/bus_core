@@ -43,6 +43,30 @@ TEST(TmRingPmuTest, QueueSnapshotSettlesWithoutMutation) {
             second.queue.endpoints[8].queue.counters.occupancy_area);
 }
 
+TEST(TmRingPmuTest, QueueCanOwnAggregateOccupancyFromSemanticEvents) {
+  TmRingPmu pmu;
+  TmRingEndpointQueueDepths depths;
+  depths.inject = {{2, 2, 2}};
+  const TmRingQueuePmuPort queue =
+      pmu.register_endpoint_queues(TmRingNodeType::RBRG_V, 0, depths)[0];
+  pmu.reset_model(0);
+
+  queue.push_accepted(1);
+  queue.push_accepted(2);
+  queue.push_rejected(4);
+  queue.popped(5);
+
+  const TmRingPmuSnapshot snapshot = pmu.snapshot(5);
+  const TmRingQueueStats& stats = snapshot.queue.endpoints[0].queue;
+  EXPECT_EQ(uint32_t(1), stats.occupancy);
+  EXPECT_EQ(uint32_t(2), stats.occupancy_peak);
+  EXPECT_EQ(uint64_t(2), stats.counters.pushes);
+  EXPECT_EQ(uint64_t(1), stats.counters.pops);
+  EXPECT_EQ(uint64_t(1), stats.counters.push_rejects);
+  EXPECT_EQ(uint64_t(7), stats.counters.occupancy_area);
+  EXPECT_EQ(uint64_t(3), stats.counters.full_cycles);
+}
+
 TEST(TmRingPmuTest, ConnRejectMapsOneAttemptToOneTotalReject) {
   TmRingPmu pmu;
   TmRingConnPmuPort conn = pmu.register_conn(
@@ -132,12 +156,28 @@ TEST(TmRingPmuTest, SnapshotSortsHaSourcesByHaThenMaster) {
 
 TEST(TmRingPmuTest, ResetClearsCountersButKeepsRegisteredPorts) {
   TmRingPmu pmu;
+  TmRingEndpointQueueDepths depths;
+  TmRingQueuePmuPort queue =
+      pmu.register_endpoint_queues(TmRingNodeType::MASTER, 0, depths)[0];
   TmRingRbrgPmuPort rbrg = pmu.register_rbrg(0);
+  queue.push_accepted(4);
   rbrg.enqueued(TmRingRbrgPath::V_TO_H_REQ, 4);
   pmu.reset_model(9);
+
+  const TmRingPmuSnapshot cleared_snapshot = pmu.snapshot(9);
+  const TmRingQueueStats& cleared =
+      cleared_snapshot.queue.endpoints[0].queue;
+  EXPECT_EQ(uint32_t(0), cleared.occupancy);
+  EXPECT_EQ(uint32_t(0), cleared.occupancy_peak);
+  EXPECT_EQ(uint64_t(0), cleared.counters.pushes);
+  EXPECT_EQ(uint64_t(0), cleared.counters.occupancy_area);
+
+  queue.push_accepted(9);
   rbrg.enqueued(TmRingRbrgPath::V_TO_H_REQ, 2);
   rbrg.delivered(TmRingRbrgPath::V_TO_H_REQ, 16);
   const TmRingPmuSnapshot snapshot = pmu.snapshot(9);
+  EXPECT_EQ(uint32_t(1), snapshot.queue.endpoints[0].queue.occupancy);
+  EXPECT_EQ(uint64_t(1), snapshot.queue.endpoints[0].queue.counters.pushes);
   EXPECT_EQ(uint64_t(1), snapshot.rbrg.instances[0].paths[0].packets);
   EXPECT_EQ(uint64_t(2), snapshot.rbrg.instances[0].paths[0].busy_cycles);
   EXPECT_EQ(uint64_t(1),

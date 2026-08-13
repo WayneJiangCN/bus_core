@@ -162,8 +162,11 @@ enum class TmRingHaReadOutcome : uint32_t {
 
 class TmRingQueuePmuPort {
  public:
+  void push_accepted(uint64_t cycle) const;
   void push_accepted(uint64_t cycle, uint32_t occupancy_after) const;
+  void push_rejected(uint64_t cycle) const;
   void push_rejected(uint64_t cycle, uint32_t occupancy_current) const;
+  void popped(uint64_t cycle) const;
   void popped(uint64_t cycle, uint32_t occupancy_after) const;
 
  private:
@@ -365,10 +368,13 @@ class TmRingPmu {
   friend class TmRingRbrgPmuPort;
   friend class TmRingHaPmuPort;
   friend class TmRingL2PmuPort;
+  void queue_push_accepted(uint32_t id, uint64_t cycle);
   void queue_push_accepted(uint32_t id, uint64_t cycle,
                            uint32_t occupancy_after);
+  void queue_push_rejected(uint32_t id, uint64_t cycle);
   void queue_push_rejected(uint32_t id, uint64_t cycle,
                            uint32_t occupancy_current);
+  void queue_popped(uint32_t id, uint64_t cycle);
   void queue_popped(uint32_t id, uint64_t cycle, uint32_t occupancy_after);
   void conn_accepted(uint32_t id, TmRingSubnet subnet, uint32_t bytes,
                      uint32_t serialization_cycles, uint32_t inflight_after);

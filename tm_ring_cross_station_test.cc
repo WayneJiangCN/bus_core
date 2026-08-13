@@ -28,6 +28,8 @@ class TmRingCrossStationFixture {
     TmRingEndpointQueueDepths queue_depths;
     queue_depths.inject = {{1, 1, 1}};
     queue_depths.eject = {{1, 1, 1}};
+    TmRingEndpointQueueDepths directional_pmu_depths = queue_depths;
+    directional_pmu_depths.eject = {{2, 2, 2}};
     source_node = tm_make_ring_node_interface(
         clk, "deflection_source", queue_depths,
         pmu.register_endpoint_queues(TmRingNodeType::MASTER, 0,
@@ -36,7 +38,8 @@ class TmRingCrossStationFixture {
                            ? tm_make_ring_node_interface(
                                  clk, "deflection_destination", queue_depths,
                                  pmu.register_endpoint_queues(
-                                     TmRingNodeType::MASTER, 1, queue_depths),
+                                     TmRingNodeType::RBRG_V, 1,
+                                     directional_pmu_depths),
                                  TmRingNodeInterfaceMode::RBRG_DIRECTIONAL)
                            : tm_make_ring_node_interface(
                                  clk, "deflection_destination", queue_depths,

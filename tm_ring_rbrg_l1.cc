@@ -341,8 +341,12 @@ void TmRingRbrgL1::schedule_path(TmRingRbrgPath path) {
     const bool destination_full =
         !destination->has_inject_capacity(subnet, TmRingPortDir::CW) &&
         !destination->has_inject_capacity(subnet, TmRingPortDir::CCW);
-    if (candidate_waiting && destination_full) {
-      pmu_.destination_blocked(path);
+    if (candidate_waiting) {
+      if (destination_full) {
+        pmu_.destination_blocked(path);
+      } else {
+        pmu_.queue_blocked(path);
+      }
     }
     return;
   }

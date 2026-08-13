@@ -114,7 +114,7 @@ class TmRingPmu::Impl {
   struct RbrgEntry {
     uint32_t rbrg_id = 0;
     TmRingRbrgStats stats;
-    std::array<uint32_t, 4> occupancy;
+    std::array<uint32_t, 4> occupancy = {};
   };
   struct HaEntry {
     uint32_t ha_id = 0;
@@ -188,13 +188,22 @@ bool conn_hotspot_hotter(const TmRingConnHotspot& left,
 
 TmRingQueuePmuPort::TmRingQueuePmuPort(TmRingPmu* pmu, uint32_t id)
     : pmu_(pmu), id_(id) {}
+void TmRingQueuePmuPort::push_accepted(uint64_t cycle) const {
+  pmu_->queue_push_accepted(id_, cycle);
+}
 void TmRingQueuePmuPort::push_accepted(uint64_t cycle,
                                        uint32_t occupancy_after) const {
   pmu_->queue_push_accepted(id_, cycle, occupancy_after);
 }
+void TmRingQueuePmuPort::push_rejected(uint64_t cycle) const {
+  pmu_->queue_push_rejected(id_, cycle);
+}
 void TmRingQueuePmuPort::push_rejected(uint64_t cycle,
                                        uint32_t occupancy_current) const {
   pmu_->queue_push_rejected(id_, cycle, occupancy_current);
+}
+void TmRingQueuePmuPort::popped(uint64_t cycle) const {
+  pmu_->queue_popped(id_, cycle);
 }
 void TmRingQueuePmuPort::popped(uint64_t cycle, uint32_t occupancy_after) const {
   pmu_->queue_popped(id_, cycle, occupancy_after);
@@ -421,6 +430,14 @@ void TmRingPmu::reset_model(uint64_t cycle) {
   for (Impl::L2Entry& entry : impl_->l2s) entry.stats = {};
 }
 
+void TmRingPmu::queue_push_accepted(uint32_t id, uint64_t cycle) {
+  const TmRingQueueStats& queue = impl_->queues[id].endpoint.queue;
+  const uint32_t occupancy = queue.occupancy;
+  if (occupancy >= queue.depth) {
+    throw std::logic_error("Ring Queue PMU observed push beyond queue depth");
+  }
+  queue_push_accepted(id, cycle, occupancy + 1);
+}
 void TmRingPmu::queue_push_accepted(uint32_t id, uint64_t cycle,
                                     uint32_t occupancy_after) {
   Impl::QueueEntry& entry = impl_->queues[id];
@@ -430,6 +447,10 @@ void TmRingPmu::queue_push_accepted(uint32_t id, uint64_t cycle,
   queue.occupancy = occupancy_after;
   queue.occupancy_peak = std::max(queue.occupancy_peak, occupancy_after);
 }
+void TmRingPmu::queue_push_rejected(uint32_t id, uint64_t cycle) {
+  queue_push_rejected(id, cycle,
+                      impl_->queues[id].endpoint.queue.occupancy);
+}
 void TmRingPmu::queue_push_rejected(uint32_t id, uint64_t cycle,
                                     uint32_t occupancy_current) {
   Impl::QueueEntry& entry = impl_->queues[id];
@@ -438,6 +459,13 @@ void TmRingPmu::queue_push_rejected(uint32_t id, uint64_t cycle,
   ++queue.counters.push_rejects;
   queue.occupancy = occupancy_current;
   queue.occupancy_peak = std::max(queue.occupancy_peak, occupancy_current);
+}
+void TmRingPmu::queue_popped(uint32_t id, uint64_t cycle) {
+  const uint32_t occupancy = impl_->queues[id].endpoint.queue.occupancy;
+  if (occupancy == 0) {
+    throw std::logic_error("Ring Queue PMU observed pop from empty queue");
+  }
+  queue_popped(id, cycle, occupancy - 1);
 }
 void TmRingPmu::queue_popped(uint32_t id, uint64_t cycle,
                              uint32_t occupancy_after) {

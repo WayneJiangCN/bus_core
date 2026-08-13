@@ -62,11 +62,8 @@ class TmRingNodeInterface {
               new TmRingQueuePmuPort(queue_pmu_ports[6 + subnet]));
         }
       }
-      QueueState& aggregate = aggregate_eject_states_[subnet];
-      aggregate.depth = directional_eject() ? 2 * queue_depths.eject[subnet]
-                                            : queue_depths.eject[subnet];
       if (directional_eject()) {
-        aggregate.pmu.reset(
+        aggregate_eject_pmu_[subnet].reset(
             new TmRingQueuePmuPort(queue_pmu_ports[6 + subnet]));
       }
     }
@@ -74,17 +71,15 @@ class TmRingNodeInterface {
   }
 
   void reset() {
-    const uint64_t now = clk_->time();
     for (uint32_t subnet = 0; subnet < tm_ring_subnet_count(); ++subnet) {
       for (uint32_t direction = 0; direction < 2; ++direction) {
-        reset_queue_state(inject_states_[subnet][direction], now);
+        reset_queue_state(inject_states_[subnet][direction]);
       }
       for (uint32_t direction = 0; direction < 2; ++direction) {
         if (eject_states_[subnet][direction].queue != nullptr) {
-          reset_queue_state(eject_states_[subnet][direction], now);
+          reset_queue_state(eject_states_[subnet][direction]);
         }
       }
-      reset_accounting_state(aggregate_eject_states_[subnet], now);
     }
   }
 
@@ -186,9 +181,8 @@ class TmRingNodeInterface {
     QueueState& state = eject_state(subnet, direction);
     if (state.queue->full()) {
       if (directional_eject()) {
-        QueueState& aggregate =
-            aggregate_eject_states_[tm_ring_subnet_index(subnet)];
-        aggregate.pmu->push_rejected(clk_->time(), aggregate.occupancy);
+        aggregate_eject_pmu_[tm_ring_subnet_index(subnet)]->push_rejected(
+            clk_->time());
       } else {
         state.pmu->push_rejected(clk_->time(), state.occupancy);
       }
@@ -196,7 +190,8 @@ class TmRingNodeInterface {
     }
     record_push(state, pld);
     if (directional_eject()) {
-      record_account_push(aggregate_eject_states_[tm_ring_subnet_index(subnet)]);
+      aggregate_eject_pmu_[tm_ring_subnet_index(subnet)]->push_accepted(
+          clk_->time());
     }
     return true;
   }
@@ -222,7 +217,7 @@ class TmRingNodeInterface {
     }
     record_pop(state);
     if (directional_eject()) {
-      record_account_pop(aggregate_eject_states_[tm_ring_subnet_index(subnet)]);
+      aggregate_eject_pmu_[tm_ring_subnet_index(subnet)]->popped(clk_->time());
     }
   }
 
@@ -292,12 +287,8 @@ class TmRingNodeInterface {
     }
   }
 
-  void reset_queue_state(QueueState& state, uint64_t now) {
+  void reset_queue_state(QueueState& state) {
     state.queue->clear();
-    reset_accounting_state(state, now);
-  }
-
-  void reset_accounting_state(QueueState& state, uint64_t now) {
     state.occupancy = 0;
   }
 
@@ -307,7 +298,7 @@ class TmRingNodeInterface {
       TmRingNodeInterfaceMode::SHARED_EJECT;
   std::array<std::array<QueueState, 2>, 3> inject_states_;
   std::array<std::array<QueueState, 2>, 3> eject_states_;
-  std::array<QueueState, 3> aggregate_eject_states_;
+  std::array<std::unique_ptr<TmRingQueuePmuPort>, 3> aggregate_eject_pmu_;
 };
 
 using p_tm_ring_node_interface_t = std::shared_ptr<TmRingNodeInterface>;

@@ -145,8 +145,10 @@ TEST(TmRingNodeInterfaceTest, KeepsRbrgDirectionalEjectHeadsIndependent) {
   depths.inject = {{2, 2, 2}};
   depths.eject = {{1, 1, 1}};
   TmRingPmu pmu;
+  TmRingEndpointQueueDepths pmu_depths = depths;
+  pmu_depths.eject = {{2, 2, 2}};
   const std::vector<TmRingQueuePmuPort> ports =
-      pmu.register_endpoint_queues(TmRingNodeType::RBRG_V, 0, depths);
+      pmu.register_endpoint_queues(TmRingNodeType::RBRG_V, 0, pmu_depths);
   const p_tm_ring_node_interface_t node_interface =
       tm_make_ring_node_interface(
           clk, "rbrg_directional_eject", depths, ports,
@@ -166,6 +168,16 @@ TEST(TmRingNodeInterfaceTest, KeepsRbrgDirectionalEjectHeadsIndependent) {
                                                    TmRingPortDir::CW));
   EXPECT_FALSE(node_interface->has_eject_capacity(TmRingSubnet::REQ,
                                                    TmRingPortDir::CCW));
+  EXPECT_FALSE(node_interface->push_eject(TmRingSubnet::REQ,
+                                           TmRingPortDir::CW,
+                                           make_packet(PldCmd::RD)));
+  const TmRingPmuSnapshot full_snapshot = pmu.snapshot(clk->time());
+  const TmRingQueueStats& full_stats =
+      full_snapshot.queue.endpoints[6].queue;
+  EXPECT_EQ(uint32_t(2), full_stats.occupancy);
+  EXPECT_EQ(uint32_t(2), full_stats.occupancy_peak);
+  EXPECT_EQ(uint64_t(2), full_stats.counters.pushes);
+  EXPECT_EQ(uint64_t(1), full_stats.counters.push_rejects);
 
   node_interface->pop_eject(TmRingSubnet::REQ, TmRingPortDir::CW);
   EXPECT_EQ(nullptr, node_interface->front_eject(TmRingSubnet::REQ,
@@ -176,6 +188,11 @@ TEST(TmRingNodeInterfaceTest, KeepsRbrgDirectionalEjectHeadsIndependent) {
                                                   TmRingPortDir::CW));
   EXPECT_FALSE(node_interface->has_eject_capacity(TmRingSubnet::REQ,
                                                    TmRingPortDir::CCW));
+  const TmRingPmuSnapshot popped_snapshot = pmu.snapshot(clk->time());
+  const TmRingQueueStats& popped_stats =
+      popped_snapshot.queue.endpoints[6].queue;
+  EXPECT_EQ(uint32_t(1), popped_stats.occupancy);
+  EXPECT_EQ(uint64_t(1), popped_stats.counters.pops);
 }
 
 TEST(TmRingNodeInterfaceTest,

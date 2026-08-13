@@ -152,12 +152,14 @@ TEST(TmRingRbrgL1Test, ReSerializesBeforeInjectingTheNextRingSegment) {
   TmRingEndpointQueueDepths depths;
   depths.inject = {{1, 1, 1}};
   depths.eject = {{1, 1, 1}};
+  TmRingEndpointQueueDepths pmu_depths = depths;
+  pmu_depths.eject = {{2, 2, 2}};
   TmRingPmu pmu;
   const p_tm_ring_rbrg_l1_t rbrg = tm_make_ring_rbrg_l1(
       "rbrg_cut_through", clk, 0, 1, 1, 16, pmu.register_rbrg(0),
       depths, depths,
-      pmu.register_endpoint_queues(TmRingNodeType::RBRG_V, 0, depths),
-      pmu.register_endpoint_queues(TmRingNodeType::RBRG_H, 0, depths),
+      pmu.register_endpoint_queues(TmRingNodeType::RBRG_V, 0, pmu_depths),
+      pmu.register_endpoint_queues(TmRingNodeType::RBRG_H, 0, pmu_depths),
       topology);
 
   const p_tm_pld_t packet = tm_make_pld(PldCmd::WR_DAT, 0, 32);

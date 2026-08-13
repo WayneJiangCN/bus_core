@@ -33,12 +33,14 @@ class TmRingRbrgL1DirectionalTest : public ::testing::Test {
     TmRingEndpointQueueDepths depths;
     depths.inject = {{2, 2, 2}};
     depths.eject = {{2, 2, 2}};
+    TmRingEndpointQueueDepths pmu_depths = depths;
+    pmu_depths.eject = {{4, 4, 4}};
     rbrg_ = tm_make_ring_rbrg_l1("rbrg_directional", clk_, 0, 2, 0, 16,
                                   pmu_.register_rbrg(0), depths, depths,
                                   pmu_.register_endpoint_queues(
-                                      TmRingNodeType::RBRG_V, 0, depths),
+                                      TmRingNodeType::RBRG_V, 0, pmu_depths),
                                   pmu_.register_endpoint_queues(
-                                      TmRingNodeType::RBRG_H, 0, depths),
+                                      TmRingNodeType::RBRG_H, 0, pmu_depths),
                                   topology_);
   }
 
@@ -187,6 +189,10 @@ TEST_F(TmRingRbrgL1DirectionalTest, BothFullKeepsHeadsAndPayloadUnchanged) {
                            TmRingSubnet::REQ, TmRingPortDir::CW));
   EXPECT_EQ(ccw_filler, rbrg_->h_node_interface()->front_inject(
                             TmRingSubnet::REQ, TmRingPortDir::CCW));
+  const TmRingPmuSnapshot snapshot = pmu_.snapshot(clk_->time());
+  EXPECT_GT(snapshot.rbrg_path_stats(0, TmRingRbrgPath::V_TO_H_REQ)
+                .destination_inject_stalls,
+            uint64_t(0));
 }
 
 TEST_F(TmRingRbrgL1DirectionalTest, SplitPopWakesBlockedPath) {
@@ -387,11 +393,14 @@ TEST_F(TmRingRbrgL1DirectionalTest,
   TmRingEndpointQueueDepths depths;
   depths.inject = {{2, 2, 2}};
   depths.eject = {{2, 2, 2}};
+  TmRingEndpointQueueDepths pmu_depths = depths;
+  pmu_depths.inject = {{1, 1, 1}};
+  pmu_depths.eject = {{4, 4, 4}};
   const p_tm_ring_rbrg_l1_t limited_rbrg = tm_make_ring_rbrg_l1(
       "rbrg_split_depth", clk_, 0, 1, 0, 16, pmu_.register_rbrg(1),
       depths, depths,
-      pmu_.register_endpoint_queues(TmRingNodeType::RBRG_V, 1, depths),
-      pmu_.register_endpoint_queues(TmRingNodeType::RBRG_H, 1, depths),
+      pmu_.register_endpoint_queues(TmRingNodeType::RBRG_V, 1, pmu_depths),
+      pmu_.register_endpoint_queues(TmRingNodeType::RBRG_H, 1, pmu_depths),
       topology_);
 
   EXPECT_TRUE(limited_rbrg->h_node_interface()->push_inject(
