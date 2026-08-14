@@ -26,9 +26,9 @@ def has_external_script(document):
     return _EXTERNAL_SCRIPT_RE.search(document) is not None
 
 
-def perf_block(case_name, burst_bytes, end_to_end_bpc, ceiling_bpc=16.0):
+def perf_block(case_name, burst_len, end_to_end_bpc, ceiling_bpc=16.0):
     return """\
-PERF_CONFIG case={case_name} op=read pattern=sequential_shared active_masters=8 bytes_per_master=131072 burst_bytes={burst_bytes}
+PERF_CONFIG case={case_name} op=read pattern=sequential_shared active_masters=8 bytes_per_master=131072 burst_len={burst_len}
 PERF_COUNTS completed_packets=64 completed_bytes=1048576 protocol_errors=0 drained=1
 PERF_BANDWIDTH first_request=10 first_response=20 last_response=100 transfer_cycles=91 end_to_end_bpc={end_to_end_bpc} steady_response_bpc=9.000000 scaling_efficiency=0.900000 jain_fairness=1.000000
 PERF_LATENCY p50=20 p95=30 p99=40 max=50
@@ -40,7 +40,7 @@ PERF_THEORY total_useful_bytes=1048576 physical_packets=8 fabric_min_cycles=6553
 PERF_RESULT status=PASS protocol_errors=0
 """.format(
         case_name=case_name,
-        burst_bytes=burst_bytes,
+        burst_len=burst_len,
         end_to_end_bpc=end_to_end_bpc,
         ceiling_bpc=ceiling_bpc,
     )
@@ -58,7 +58,7 @@ PERF_FANOUT_CROSS_RING logical_recipients=10 h_ring_carriers=4 v_ring_carriers=3
 
 
 def multi_ring_perf_block():
-    return perf_block("multi_ring", 128, 8.0).replace(
+    return perf_block("multi_ring", 1, 8.0).replace(
         "PERF_HOME_AGENT",
         multi_ring_records() + "PERF_HOME_AGENT",
     )
@@ -66,10 +66,10 @@ def multi_ring_perf_block():
 
 def aggregation_wave_perf_block():
     return (
-        perf_block("wave_shared_128b", 128, 1.0)
+        perf_block("wave_shared_128b", 1, 1.0)
         .replace(
-            "burst_bytes=128",
-            "burst_bytes=128 run_mode=aggregation_wave "
+            "burst_len=1",
+            "burst_len=1 run_mode=aggregation_wave "
             "max_aicore_per_vring=8 home_agent_waiters_per_entry=18 "
             "l2_response_latency=256",
         )
@@ -126,7 +126,7 @@ PERF_RBRG_CHANNEL id=1 path=v_to_h_req cycle_util_pct=10 payload_util_pct=8 queu
 
 
 def single_scenario_metric_perf_block():
-    return perf_block("single_metric", 128, 8.0).replace(
+    return perf_block("single_metric", 1, 8.0).replace(
         "PERF_HOME_AGENT",
         single_scenario_metric_records() + "PERF_HOME_AGENT",
     )
@@ -134,7 +134,7 @@ def single_scenario_metric_perf_block():
 
 def current_ring_perf_block():
     return (
-        perf_block("current_ring", 128, 8.0)
+        perf_block("current_ring", 1, 8.0)
         .replace(
             " hottest_subnet=dat hottest_src_station=1 hottest_direction=cw "
             "hottest_cycles=8192",
@@ -228,10 +228,10 @@ def fixed_topology_perf_block():
         + ha_source_records
     )
     return (
-        perf_block("fixed_topology", 128, 160.0, ceiling_bpc=256.0)
+        perf_block("fixed_topology", 1, 160.0, ceiling_bpc=256.0)
         .replace(
-            "burst_bytes=128",
-            "burst_bytes=128 run_mode=free_running max_aicore_per_vring=4 "
+            "burst_len=1",
+            "burst_len=1 run_mode=free_running max_aicore_per_vring=4 "
             "home_agent_waiters_per_entry=8 l2_response_latency=64",
         )
         .replace("PERF_HOME_AGENT", records + "\nPERF_HOME_AGENT")
@@ -240,9 +240,9 @@ def fixed_topology_perf_block():
 
 SAMPLE_RESULTS = (
     "[==========] Running 2 tests from 1 test suite.\n"
-    + perf_block("shared_16b", 16, 4.25)
-    + "[       OK ] RingPerfBenchmark.Shared16B\n"
-    + perf_block("shared_128b", 128, 8.5)
+    + perf_block("shared_burst1", 1, 4.25)
+    + "[       OK ] RingPerfBenchmark.SharedBurst1\n"
+    + perf_block("shared_burst4", 4, 8.5)
 )
 
 
@@ -252,9 +252,9 @@ class RingPerfParserTest(unittest.TestCase):
 
         self.assertEqual(
             [scenario.case_name for scenario in scenarios],
-            ["shared_16b", "shared_128b"],
+            ["shared_burst1", "shared_burst4"],
         )
-        self.assertEqual(scenarios[0].number("CONFIG", "burst_bytes"), 16)
+        self.assertEqual(scenarios[0].number("CONFIG", "burst_len"), 1)
         self.assertEqual(
             scenarios[1].number("BANDWIDTH", "end_to_end_bpc"), 8.5
         )
@@ -342,7 +342,7 @@ class RingPerfParserTest(unittest.TestCase):
         )
 
     def test_rejects_missing_required_section(self):
-        text = perf_block("missing_latency", 128, 8.5).replace(
+        text = perf_block("missing_latency", 1, 8.5).replace(
             "PERF_LATENCY p50=20 p95=30 p99=40 max=50\n", ""
         )
 
@@ -350,15 +350,15 @@ class RingPerfParserTest(unittest.TestCase):
             parse_perf_results(text)
 
     def test_rejects_duplicate_case_name(self):
-        text = perf_block("duplicate", 16, 4.0) + perf_block(
-            "duplicate", 128, 8.0
+        text = perf_block("duplicate", 1, 4.0) + perf_block(
+            "duplicate", 4, 8.0
         )
 
         with self.assertRaisesRegex(PerfReportError, "duplicate case"):
             parse_perf_results(text)
 
     def test_rejects_duplicate_section(self):
-        text = perf_block("duplicate_section", 128, 8.0).replace(
+        text = perf_block("duplicate_section", 1, 8.0).replace(
             "PERF_LATENCY p50=20 p95=30 p99=40 max=50\n",
             "PERF_LATENCY p50=20 p95=30 p99=40 max=50\n"
             "PERF_LATENCY p50=21 p95=31 p99=41 max=51\n",
@@ -368,7 +368,7 @@ class RingPerfParserTest(unittest.TestCase):
             parse_perf_results(text)
 
     def test_rejects_unclosed_scenario(self):
-        text = perf_block("unclosed", 128, 8.0).replace(
+        text = perf_block("unclosed", 1, 8.0).replace(
             "PERF_RESULT status=PASS protocol_errors=0\n", ""
         )
 
@@ -376,12 +376,12 @@ class RingPerfParserTest(unittest.TestCase):
             parse_perf_results(text)
 
     def test_rejects_invalid_required_number_during_parse(self):
-        text = perf_block("invalid_number", 128, 8.0).replace(
-            "burst_bytes=128", "burst_bytes=invalid"
+        text = perf_block("invalid_number", 1, 8.0).replace(
+            "burst_len=1", "burst_len=invalid"
         )
 
         with self.assertRaisesRegex(
-            PerfReportError, "invalid_number.*CONFIG.burst_bytes"
+            PerfReportError, "invalid_number.*CONFIG.burst_len"
         ):
             parse_perf_results(text)
 
@@ -503,8 +503,9 @@ class RingPerfHtmlTest(unittest.TestCase):
         self.assertIn("H-Ring 多播载体", document)
         self.assertIn("H-Ring 载体接收者", document)
         self.assertIn("完整数据", document)
-        self.assertIn("shared_16b", document)
-        self.assertIn("shared_128b", document)
+        self.assertIn("shared_burst1", document)
+        self.assertIn("shared_burst4", document)
+        self.assertIn("Burst length", document)
         self.assertIn("4.250", document)
         self.assertIn("8.500", document)
         self.assertNotIn("http://", document)
@@ -530,7 +531,7 @@ class RingPerfHtmlTest(unittest.TestCase):
 
     def test_separates_aggregation_validation_from_throughput_comparison(self):
         scenarios = parse_perf_results(
-            perf_block("free_running_read", 128, 8.0)
+            perf_block("free_running_read", 1, 8.0)
             + aggregation_wave_perf_block()
         )
         document = render_html(scenarios, "mixed.txt")
@@ -568,7 +569,7 @@ class RingPerfHtmlTest(unittest.TestCase):
 
     def test_escapes_source_and_case_names(self):
         scenarios = parse_perf_results(
-            perf_block("<case&name>", 128, 8.0)
+            perf_block("<case&name>", 1, 8.0)
         )
 
         document = render_html(scenarios, "<source&name>.txt")
@@ -579,7 +580,7 @@ class RingPerfHtmlTest(unittest.TestCase):
 
     def test_zero_fabric_ceiling_does_not_render_non_finite_values(self):
         scenarios = parse_perf_results(
-            perf_block("zero_ceiling", 128, 0.0, ceiling_bpc=0.0)
+            perf_block("zero_ceiling", 1, 0.0, ceiling_bpc=0.0)
         )
 
         document = render_html(scenarios, "zero.txt")
@@ -650,7 +651,7 @@ class RingPerfHtmlTest(unittest.TestCase):
         self.assertEqual(rbrg_row.count("<th>") + rbrg_row.count("<td>"), 7)
 
     def test_renders_no_activity_when_optional_metric_families_are_missing(self):
-        sparse = perf_block("sparse_metric", 128, 8.0).replace(
+        sparse = perf_block("sparse_metric", 1, 8.0).replace(
             "PERF_HOME_AGENT",
             "PERF_MEASUREMENT start_cycle=10 end_cycle=109 "
             "window_cycles=100 measurement_valid=1\n"

@@ -16,8 +16,6 @@ TEST(TmRingPacketCostTest, ControlPacketsUseHeaderBytes) {
   EXPECT_EQ(uint32_t(16), tm_ring_packet_bytes(make_packet(PldCmd::RD, 128)));
   EXPECT_EQ(uint32_t(16), tm_ring_packet_bytes(make_packet(PldCmd::WR, 128)));
   EXPECT_EQ(uint32_t(16), tm_ring_packet_bytes(make_packet(PldCmd::RSP, 128)));
-  EXPECT_EQ(uint32_t(16),
-            tm_ring_packet_bytes(make_packet(PldCmd::WR_RSP, 128)));
 }
 
 TEST(TmRingPacketCostTest, DataPacketsUsePayloadSize) {

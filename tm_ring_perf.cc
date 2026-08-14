@@ -17,55 +17,57 @@ uint64_t align_up(uint64_t value, uint64_t alignment) {
   return ((value + alignment - 1) / alignment) * alignment;
 }
 
-uint64_t private_span(const TmRingPerfCase& perf_case) {
-  const uint64_t count = perf_case.bytes_per_master /
-                         perf_case.burst_bytes;
+uint64_t private_span(const TmRingPerfCase& perf_case,
+                      uint32_t request_bytes) {
+  const uint64_t count = perf_case.bytes_per_master / request_bytes;
   if (perf_case.pattern == TmRingPerfPattern::STRIDED_PRIVATE) {
-    return align_up((count - 1) * perf_case.stride_bytes +
-                        perf_case.burst_bytes,
+    return align_up((count - 1) * perf_case.stride_bytes + request_bytes,
                     512);
   }
   return align_up(perf_case.bytes_per_master, 512);
 }
 
 uint64_t base_address(const TmRingPerfCase& perf_case, uint32_t master,
-                      bool write) {
+                      bool write, uint32_t request_bytes) {
   const uint64_t base = write ? perf_case.write_base : perf_case.read_base;
   if (perf_case.pattern == TmRingPerfPattern::SEQUENTIAL_SHARED ||
       perf_case.pattern == TmRingPerfPattern::SAME_LINE_SCATTER) {
     return base;
   }
-  return base + static_cast<uint64_t>(master) * private_span(perf_case);
+  return base + static_cast<uint64_t>(master) *
+                    private_span(perf_case, request_bytes);
 }
 
 uint64_t address_for(const TmRingPerfCase& perf_case, uint32_t master,
-                     uint64_t ordinal, bool write) {
-  const uint64_t base = base_address(perf_case, master, write);
+                     uint64_t ordinal, bool write,
+                     uint32_t request_bytes) {
+  const uint64_t base =
+      base_address(perf_case, master, write, request_bytes);
   if (perf_case.pattern == TmRingPerfPattern::STRIDED_PRIVATE ||
       perf_case.pattern == TmRingPerfPattern::SEQUENTIAL_SHARED) {
     return base + ordinal * perf_case.stride_bytes;
   }
   if (perf_case.pattern == TmRingPerfPattern::SAME_LINE_SCATTER) {
-    const uint32_t requests_per_line = 512 / perf_case.burst_bytes;
+    const uint32_t requests_per_line = 512 / request_bytes;
     const uint32_t lines_per_wave =
         (perf_case.active_masters + requests_per_line - 1) /
         requests_per_line;
     const uint32_t line_group = master / requests_per_line;
     const uint32_t slot = master % requests_per_line;
     return base + (ordinal * lines_per_wave + line_group) * 512 +
-           slot * perf_case.burst_bytes;
+           slot * request_bytes;
   }
-  return base + ordinal * perf_case.burst_bytes;
+  return base + ordinal * request_bytes;
 }
 
 void append_transaction(std::vector<TmRingPerfTxn>* trace,
-                        const TmRingPerfCase& perf_case, uint32_t master,
-                        uint64_t ordinal, PldCmd cmd, uint64_t addr) {
+                        uint32_t master, uint64_t ordinal, PldCmd cmd,
+                        uint64_t addr, uint32_t request_bytes) {
   TmRingPerfTxn txn;
   txn.master_port = master;
   txn.cmd = cmd;
   txn.addr = addr;
-  txn.size = perf_case.burst_bytes;
+  txn.size = request_bytes;
   txn.ordinal = ordinal;
   trace->push_back(txn);
 }
@@ -318,6 +320,22 @@ uint64_t nearest_rank(const std::vector<uint64_t>& values, double percentile) {
 
 }  // namespace
 
+uint32_t tm_ring_perf_request_bytes(const TmRingPerfCase& perf_case,
+                                    uint32_t beat_bytes) {
+  if (perf_case.burst_len == 0) {
+    throw std::invalid_argument("burst_len must be positive");
+  }
+  if (beat_bytes == 0) {
+    throw std::invalid_argument("beat_bytes must be positive");
+  }
+  const uint64_t request_bytes =
+      static_cast<uint64_t>(perf_case.burst_len) * beat_bytes;
+  if (request_bytes > std::numeric_limits<uint32_t>::max()) {
+    throw std::invalid_argument("burst transfer size exceeds uint32_t");
+  }
+  return static_cast<uint32_t>(request_bytes);
+}
+
 bool TmRingPerfEdgeKey::operator==(const TmRingPerfEdgeKey& other) const {
   return ring_type == other.ring_type && ring_id == other.ring_id &&
          subnet == other.subnet && src_station == other.src_station &&
@@ -356,13 +374,15 @@ bool TmRingPerfRbrgKey::operator<(const TmRingPerfRbrgKey& other) const {
 
 std::vector<TmRingPerfTxn> tm_ring_build_perf_trace(
     const TmRingPerfCase& perf_case, uint32_t configured_masters,
-    const TmRingTopology& topology) {
+    const TmRingTopology& topology, uint32_t beat_bytes) {
   if (perf_case.active_masters == 0 ||
       perf_case.active_masters > configured_masters) {
     throw std::invalid_argument("invalid active master count");
   }
-  if (perf_case.burst_bytes == 0 || perf_case.bytes_per_master == 0 ||
-      perf_case.bytes_per_master % perf_case.burst_bytes != 0) {
+  const uint32_t request_bytes =
+      tm_ring_perf_request_bytes(perf_case, beat_bytes);
+  if (perf_case.bytes_per_master == 0 ||
+      perf_case.bytes_per_master % request_bytes != 0) {
     throw std::invalid_argument("bytes_per_master must be burst aligned");
   }
   if ((perf_case.pattern == TmRingPerfPattern::SEQUENTIAL_SHARED ||
@@ -381,13 +401,13 @@ std::vector<TmRingPerfTxn> tm_ring_build_perf_trace(
     throw std::invalid_argument("shared read stride must be nonzero");
   }
   if (perf_case.pattern == TmRingPerfPattern::SAME_LINE_SCATTER &&
-      perf_case.burst_bytes != 128 && perf_case.burst_bytes != 256) {
+      request_bytes != 128 && request_bytes != 256) {
     throw std::invalid_argument(
         "same-line scatter supports 128B or 256B reads");
   }
 
   const uint64_t transaction_count =
-      perf_case.bytes_per_master / perf_case.burst_bytes;
+      perf_case.bytes_per_master / request_bytes;
   std::vector<TmRingPerfTxn> trace;
   trace.reserve(static_cast<size_t>(perf_case.active_masters) *
                 static_cast<size_t>(transaction_count));
@@ -404,26 +424,30 @@ std::vector<TmRingPerfTxn> tm_ring_build_perf_trace(
 
       if (emit_read) {
         uint64_t candidate = ordinal;
-        uint64_t addr = address_for(perf_case, master, candidate, false);
+        uint64_t addr = address_for(perf_case, master, candidate, false,
+                                    request_bytes);
         while (perf_case.pattern == TmRingPerfPattern::SINGLE_TARGET &&
                topology.decode_target(addr) != perf_case.target_id) {
           ++candidate;
-          addr = address_for(perf_case, master, candidate, false);
+          addr = address_for(perf_case, master, candidate, false,
+                             request_bytes);
         }
-        append_transaction(&trace, perf_case, master, read_ordinal,
-                           PldCmd::RD, addr);
+        append_transaction(&trace, master, read_ordinal, PldCmd::RD, addr,
+                           request_bytes);
       }
 
       if (emit_write) {
         uint64_t candidate = ordinal;
-        uint64_t addr = address_for(perf_case, master, candidate, true);
+        uint64_t addr = address_for(perf_case, master, candidate, true,
+                                    request_bytes);
         while (perf_case.pattern == TmRingPerfPattern::SINGLE_TARGET &&
                topology.decode_target(addr) != perf_case.target_id) {
           ++candidate;
-          addr = address_for(perf_case, master, candidate, true);
+          addr = address_for(perf_case, master, candidate, true,
+                             request_bytes);
         }
-        append_transaction(&trace, perf_case, master, write_ordinal,
-                           PldCmd::WR, addr);
+        append_transaction(&trace, master, write_ordinal, PldCmd::WR, addr,
+                           request_bytes);
       }
     }
   }
@@ -476,9 +500,6 @@ TmRingPerfEstimate tm_ring_estimate_fabric(
     }
     add_v_to_h_packet(&estimate, PldCmd::WR, txn.size, master, ha,
                       TmRingRbrgPath::V_TO_H_REQ, topology, ring_cfg,
-                      &max_rbrg_packet_cycles);
-    add_h_to_v_packet(&estimate, PldCmd::WR_RSP, 0, ha, master,
-                      TmRingRbrgPath::H_TO_V_RSP, topology, ring_cfg,
                       &max_rbrg_packet_cycles);
     add_v_to_h_packet(&estimate, PldCmd::WR_DAT, txn.size, master, ha,
                       TmRingRbrgPath::V_TO_H_DAT, topology, ring_cfg,

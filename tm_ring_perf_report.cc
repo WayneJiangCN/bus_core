@@ -192,7 +192,7 @@ std::string tm_ring_format_perf_result(const TmRingPerfResult& result) {
       << " pattern=" << perf_pattern_name(result.perf_case.pattern)
       << " active_masters=" << result.perf_case.active_masters
       << " bytes_per_master=" << result.perf_case.bytes_per_master
-      << " burst_bytes=" << result.perf_case.burst_bytes
+      << " burst_len=" << result.perf_case.burst_len
       << " run_mode=" << perf_run_mode_name(result.perf_case.run_mode)
       << " transfer_model=packet_cut_through_approx"
       << " max_aicore_per_vring="

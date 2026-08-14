@@ -90,10 +90,8 @@ void TmRingMasterNiu::recv_rsp() {
   }
 
   auto rsp = q->front();
-  const PldCmd cmd = static_cast<PldCmd>(rsp->ring_traffic_class);
-  const uint32_t biu_channel = cmd == PldCmd::WR_RSP
-                                   ? tm_ring_cmd_bus_channel(PldCmd::WR)
-                                   : tm_ring_cmd_bus_channel(PldCmd::WR_DAT);
+  // AXI-style writes return only the final completion on the WR_DAT channel.
+  const uint32_t biu_channel = tm_ring_cmd_bus_channel(PldCmd::WR_DAT);
   if (!biu_inf_->send(biu_channel, rsp)) {
     return;
   }

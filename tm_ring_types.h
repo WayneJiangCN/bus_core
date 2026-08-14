@@ -48,7 +48,7 @@ struct TmRingLocation {
 enum class TmRingSubnet : uint32_t {
   // Request commands: RD and WR.
   REQ = 0,
-  // Control responses: RSP and WR_RSP.
+  // Control response: final write completion RSP.
   RSP = 1,
   // Data transfers: WR_DAT and RD_RSP.
   DAT = 2,
@@ -145,8 +145,7 @@ inline uint32_t tm_ring_packet_bytes(const p_tm_pld_t& pld) {
     return 0;
   }
   const PldCmd cmd = static_cast<PldCmd>(pld->ring_traffic_class);
-  if (cmd == PldCmd::RD || cmd == PldCmd::WR || cmd == PldCmd::RSP ||
-      cmd == PldCmd::WR_RSP) {
+  if (cmd == PldCmd::RD || cmd == PldCmd::WR || cmd == PldCmd::RSP) {
     return 16;
   }
   return pld->size;

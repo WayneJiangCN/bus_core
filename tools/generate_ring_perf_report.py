@@ -27,7 +27,7 @@ _REQUIRED_STRING_FIELDS = {
     "RESULT": ("status",),
 }
 _REQUIRED_NUMERIC_FIELDS = {
-    "CONFIG": ("active_masters", "bytes_per_master", "burst_bytes"),
+    "CONFIG": ("active_masters", "bytes_per_master", "burst_len"),
     "COUNTS": (
         "completed_packets",
         "completed_bytes",
@@ -1482,9 +1482,9 @@ def _shared_section(scenarios):
         scenario
         for scenario in scenarios
         if scenario.value("CONFIG", "pattern") == "sequential_shared"
-        and scenario.number("CONFIG", "burst_bytes") in (16, 128, 256, 512)
+        and scenario.number("CONFIG", "burst_len") > 0
     ]
-    shared.sort(key=lambda scenario: scenario.number("CONFIG", "burst_bytes"))
+    shared.sort(key=lambda scenario: scenario.number("CONFIG", "burst_len"))
     if not shared:
         body = '<div class="empty">输入中没有 shared read 粒度场景。</div>'
     else:
@@ -1494,20 +1494,20 @@ def _shared_section(scenarios):
         )
         rows = []
         for scenario in shared:
-            burst = scenario.number("CONFIG", "burst_bytes")
+            burst_len = scenario.number("CONFIG", "burst_len")
             carrier = "{}/{}/{}".format(
                 scenario.number("L2_BUFFER", "carrier_128b"),
                 scenario.number("L2_BUFFER", "carrier_256b"),
                 scenario.number("L2_BUFFER", "carrier_512b"),
             )
-            role = "未优化对照" if burst == 16 else "优化粒度"
+            role = "单 beat" if burst_len == 1 else "多 beat"
             rows.append(
                 (
-                    '<tr><th>{}B <span class="subtle">{}</span></th>'
+                    '<tr><th>{} beats <span class="subtle">{}</span></th>'
                     '<td>{}</td><td>{}</td><td>{}</td><td>{}</td>'
                     '<td>{}</td><td>{}</td></tr>'
                 ).format(
-                    burst,
+                    burst_len,
                     role,
                     _bar(
                         "",
@@ -1528,7 +1528,7 @@ def _shared_section(scenarios):
             )
         body = (
             '<div class="table-wrap"><table><thead><tr>'
-            '<th>Burst</th><th>端到端 B/cycle</th><th>物理包</th>'
+            '<th>Burst length</th><th>端到端 B/cycle</th><th>物理包</th>'
             '<th>后端读节省</th><th>H-Ring 多播载体</th>'
             '<th>H-Ring 载体接收者</th>'
             '<th>Carrier 128/256/512B</th>'
@@ -1537,7 +1537,7 @@ def _shared_section(scenarios):
     return (
         '<section id="shared"><div class="section-heading">'
         '<h2>Shared read 粒度收益</h2>'
-        '<p>16B 作为未优化对照，128B 为主优化粒度，256B/512B 用于观察宽 carrier。</p>'
+        '<p>Burst length 表示每笔请求包含的完整 beat 数。</p>'
         '</div>{}</section>'
     ).format(body)
 
@@ -1751,7 +1751,7 @@ def _details_section(scenarios):
                 html_lib.escape(scenario.value("CONFIG", "pattern")),
                 _format_number(scenario.number("CONFIG", "active_masters")),
                 _format_number(scenario.number("CONFIG", "bytes_per_master")),
-                _format_number(scenario.number("CONFIG", "burst_bytes")),
+                _format_number(scenario.number("CONFIG", "burst_len")),
                 _format_number(scenario.number("COUNTS", "completed_bytes")),
                 _format_number(scenario.number("BANDWIDTH", "transfer_cycles")),
                 "{}/{}".format(
@@ -1782,7 +1782,7 @@ def _details_section(scenarios):
         '<section id="details"><div class="section-heading"><h2>完整数据</h2>'
         '<p>带宽列为端到端/稳态，延迟列为 P50/P95/P99/max。</p></div>'
         '<div class="table-wrap"><table><thead><tr><th>Case</th><th>Op</th>'
-        '<th>Pattern</th><th>Master</th><th>每 Master 字节</th><th>Burst</th>'
+        '<th>Pattern</th><th>Master</th><th>每 Master 字节</th><th>Burst length</th>'
         '<th>完成字节</th><th>周期</th><th>带宽</th><th colspan="4">延迟</th>'
         '<th>Jain</th><th>上限/效率</th><th>扩展效率</th><th>状态</th></tr></thead>'
         '<tbody>{}</tbody></table></div><div class="raw-data">{}</div></section>'

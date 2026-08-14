@@ -164,7 +164,7 @@ private:
     uint8_t write_buf_pool_[WRITE_BUF_POOL_SIZE][4];
     std::queue<uint32_t> free_write_buf_ids_;
     std::unordered_map<uint64_t, uint64_t> read_issue_cycles_;
-    // Target grant may replace tnx_id with a DBID; gid survives end to end.
+    // gid survives the independent write address/data phases end to end.
     std::unordered_map<uint64_t, uint32_t> write_buffer_ids_;
     std::unordered_map<uint64_t, uint64_t> write_issue_cycles_;
     PemTrDemoStats stats_;

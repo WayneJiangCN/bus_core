@@ -13,7 +13,7 @@ TmRingMemPort::TmRingMemPort(const std::string& name, p_tm_clk_t clk,
                               const vector<TmRingQueuePmuPort>& queue_pmu_ports,
                               TmRingHaPmuPort ha_pmu)
     : TmModule(name), rd_rsp_port_num_(ring_cfg.rd_rsp_port_num),
-      ha_pmu_(ha_pmu) {
+      write_tracker_(target_cfg.wr_req_fifo_depth), ha_pmu_(ha_pmu) {
 
 #if TM_RING_LOG_ENABLE
   log_para_t log_para(name + ".log");
@@ -45,6 +45,8 @@ TmRingMemPort::TmRingMemPort(const std::string& name, p_tm_clk_t clk,
                  clk->pos_edge);
   }
   tm_sensitive(TM_MAKE_CPROC(&TmRingMemPort::recv_mem_rsp), inf_->vld);
+  tm_sensitive(TM_MAKE_CPROC(&TmRingMemPort::service_write),
+               clk->pos_edge);
 
   node_interface_ = tm_make_ring_node_interface(
       clk, name + "_node_interface", queue_depths, queue_pmu_ports);
@@ -61,8 +63,6 @@ TmRingMemPort::TmRingMemPort(const std::string& name, p_tm_clk_t clk,
       tm_make_com_que(clk, name + "_wr_dat_q", target_cfg.wr_dat_fifo_depth);
 
   tm_sensitive(TM_MAKE_CPROC(&TmRingMemPort::send_rd_cmd), rd_req_q_->vld);
-  tm_sensitive(TM_MAKE_CPROC(&TmRingMemPort::send_wr_cmd), wr_req_q_->vld);
-  tm_sensitive(TM_MAKE_CPROC(&TmRingMemPort::send_wr_dat), wr_dat_q_->vld);
 
   reset();
 }
@@ -83,6 +83,7 @@ void TmRingMemPort::reset() {
   if (wr_dat_q_ != nullptr) {
     wr_dat_q_->clear();
   }
+  write_tracker_.reset();
   if (home_agent_ != nullptr) {
     home_agent_->reset();
   }
@@ -107,6 +108,7 @@ bool TmRingMemPort::idle() const {
          (rd_req_q_ == nullptr || rd_req_q_->empty()) &&
          (wr_req_q_ == nullptr || wr_req_q_->empty()) &&
          (wr_dat_q_ == nullptr || wr_dat_q_->empty()) &&
+         write_tracker_.empty() &&
          pending_rd_rsp_ == 0 &&
          (home_agent_ == nullptr || home_agent_->idle());
 }
@@ -214,18 +216,14 @@ void TmRingMemPort::recv_ring_dat() {
 
 void TmRingMemPort::send_rd_cmd() { send_cmd(PldCmd::RD); }
 
-void TmRingMemPort::send_wr_cmd() { send_cmd(PldCmd::WR); }
-
-void TmRingMemPort::send_wr_dat() { send_cmd(PldCmd::WR_DAT); }
-
-/*
- * 做什么：执行一类普通请求的“队首 -> TmMem”发送。
- * 输入/前提：cmd 为 RD、WR 或 WR_DAT；HA 启用时 RD 不在此路径发送，写先经过 hazard 检查。
- * 核心流程：先预留 HA 写保护，再调用 inf_->send()；成功后才弹出 FIFO。
- * 结果/重试：send 失败时 FIFO 和写预留保持不变，下一拍重试相同队首。
- */
+/* TmMem consumes RD and WR_DAT; a WR address is tracked locally until data
+ * arrives and therefore never creates an artificial backend response. */
 void TmRingMemPort::send_cmd(PldCmd cmd) {
   if (cmd == PldCmd::RD && home_agent_ != nullptr) {
+    return;
+  }
+
+  if (cmd != PldCmd::RD) {
     return;
   }
 
@@ -235,11 +233,6 @@ void TmRingMemPort::send_cmd(PldCmd cmd) {
   }
 
   auto pld = q->front();
-  if (home_agent_ != nullptr &&
-      (cmd == PldCmd::WR || cmd == PldCmd::WR_DAT) &&
-      !home_agent_->reserve_write(pld)) {
-    return;
-  }
 
   const bool accepted = inf_->send(tm_ring_cmd_bus_channel(cmd), pld);
   if (accepted) {
@@ -255,6 +248,61 @@ void TmRingMemPort::send_cmd(PldCmd cmd) {
                  pld->addr);
 #endif
   }
+}
+
+void TmRingMemPort::service_write() {
+  accept_write_address();
+  send_write_data();
+}
+
+bool TmRingMemPort::accept_write_address() {
+  if (wr_req_q_->empty()) {
+    return false;
+  }
+
+  auto address = wr_req_q_->front();
+  if (!write_tracker_.can_accept_address(address)) {
+    return false;
+  }
+  if (home_agent_ != nullptr && !home_agent_->reserve_write(address)) {
+    return false;
+  }
+  if (!write_tracker_.accept_address(address)) {
+    return false;
+  }
+
+  wr_req_q_->pop_front();
+#if TM_RING_LOG_ENABLE
+  PEM_LOG_INFO(log_,
+               "[{0:d}] accept_write_address target:{1:d} gid:{2:d} "
+               "addr:0x{3:x} size:{4:d}",
+               time(), target_id_, address->gid, address->addr, address->size);
+#endif
+  return true;
+}
+
+bool TmRingMemPort::send_write_data() {
+  if (wr_dat_q_->empty()) {
+    return false;
+  }
+
+  auto data = wr_dat_q_->front();
+  if (!write_tracker_.has_matching_address(data)) {
+    return false;
+  }
+  if (!inf_->send(tm_ring_cmd_bus_channel(PldCmd::WR_DAT), data)) {
+    return false;
+  }
+
+  wr_dat_q_->pop_front();
+  write_tracker_.commit_data(data);
+#if TM_RING_LOG_ENABLE
+  PEM_LOG_INFO(log_,
+               "[{0:d}] send_write_data target:{1:d} gid:{2:d} "
+               "addr:0x{3:x} size:{4:d}",
+               time(), target_id_, data->gid, data->addr, data->size);
+#endif
+  return true;
 }
 
 /*
@@ -287,8 +335,6 @@ void TmRingMemPort::service_home_agent() {
   if (!send_home_agent_l2_rsp()) {
     recv_rd_cmd_rsp();
   }
-  send_wr_cmd();
-  send_wr_dat();
 }
 
 bool TmRingMemPort::service_home_agent_hit() {
@@ -452,7 +498,7 @@ bool TmRingMemPort::send_home_agent_l2_rsp() {
 /*
  * 做什么：处理未被 HA 消费的 TmMem 响应，并按命令类型返回 Ring。
  * 输入/前提：HA 模式下，读响应优先由 service_home_agent() 捕获以完成 fanout。
- * 核心流程：跳过 RD 类的重复处理，轮询普通 RD/WR/WR_DAT 响应路径。
+ * 核心流程：跳过 RD 类的重复处理，轮询普通 RD/WR_DAT 响应路径。
  * 结果/重试：任一路径的 Ring send 失败时不 pop 后端响应，保持原响应至下一拍。
  */
 void TmRingMemPort::recv_mem_rsp() {
@@ -460,22 +506,18 @@ void TmRingMemPort::recv_mem_rsp() {
   // responses first and then uses recv_rd_cmd_rsp() for direct fallback. Keep
   // the RD class out of this vld-triggered process so the ownership does not
   // depend on sensitive-process registration order.
-  for (uint32_t offset = 0; offset < 3; ++offset) {
-    const uint32_t rsp_class = (next_rsp_class_ + offset) % 3;
-    if (rsp_class == 0 && home_agent_ != nullptr) {
+  const PldCmd response_classes[] = {PldCmd::RD, PldCmd::WR_DAT};
+  for (uint32_t offset = 0; offset < 2; ++offset) {
+    const uint32_t rsp_class = (next_rsp_class_ + offset) % 2;
+    const PldCmd cmd = response_classes[rsp_class];
+    if (cmd == PldCmd::RD && home_agent_ != nullptr) {
       continue;
     }
 
-    bool sent = false;
-    if (rsp_class == 0) {
-      sent = recv_rd_cmd_rsp();
-    } else if (rsp_class == 1) {
-      sent = recv_wr_cmd_rsp();
-    } else {
-      sent = recv_wr_dat_rsp();
-    }
+    const bool sent = cmd == PldCmd::RD ? recv_rd_cmd_rsp()
+                                        : recv_wr_dat_rsp();
     if (sent) {
-      next_rsp_class_ = (rsp_class + 1) % 3;
+      next_rsp_class_ = (rsp_class + 1) % 2;
       return;
     }
   }
@@ -536,31 +578,6 @@ bool TmRingMemPort::recv_rd_cmd_rsp() {
     return true;
   }
   return false;
-}
-
-/*
- * 做什么：将写命令阶段的后端响应返回给 Ring。
- * 输入/前提：TmMem 的 WR 响应通道有数据。
- * 核心流程：取得队首响应并发送至 Ring RSP。
- * 结果/重试：只有 Ring 接收后才 pop 后端响应；否则下一拍继续尝试。
- */
-bool TmRingMemPort::recv_wr_cmd_rsp() {
-  if (!has_response(PldCmd::WR)) {
-    return false;
-  }
-
-  auto rsp = front_response(PldCmd::WR);
-  prepare_ring_response(rsp, PldCmd::WR_RSP);
-  if (!node_interface_->push_inject(TmRingSubnet::RSP, rsp)) {
-    return false;
-  }
-  pop_response(PldCmd::WR);
-#if TM_RING_LOG_ENABLE
-  PEM_LOG_INFO(log_, "[{0:d}] send_wr_rsp target:{1:d} gid:{2:d} addr:0x{3:x}",
-               time(), target_id_, rsp->gid, rsp->addr);
-#endif
-
-  return true;
 }
 
 /*

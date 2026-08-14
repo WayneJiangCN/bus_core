@@ -19,6 +19,7 @@
 #include "tm_ring_pmu.h"
 #include "tm_ring_topology.h"
 #include "tm_ring_types.h"
+#include "tm_ring_write_tracker.h"
 
 // Memory-side access adapter. Owns request queues and home-agent state.
 // TmMem owns backend service limits; the L2 Buffer owns read-response cadence.
@@ -42,15 +43,18 @@ class TmRingMemPort : public tm_engine::TmModule {
   p_tm_ring_node_interface_t node_interface() const;
 
   void send_rd_cmd();
-  void send_wr_cmd();
-  void send_wr_dat();
 
   void recv_ring_req();
   void recv_ring_dat();
 
  private:
-  // Unified request send path. TmMem handles backend credit and bandwidth.
+  // TmMem handles backend credit and bandwidth for the RD/WR_DAT requests.
   void send_cmd(PldCmd cmd);
+  // Address and data are independently accepted but always matched at the
+  // FIFO heads; the tracker holds an address until its data packet is ready.
+  void service_write();
+  bool accept_write_address();
+  bool send_write_data();
   // 每拍至多执行一次各阶段：接收读 -> 发射后端读 -> 捕获后端响应 -> 注入一笔 Ring
   // 响应。HA helper 只维护扁平 transaction 状态；MemPort 仍拥有队列、接口和
   // 所有“send 成功后”的 commit。
@@ -62,7 +66,6 @@ class TmRingMemPort : public tm_engine::TmModule {
   bool send_home_agent_l2_rsp();
   void recv_mem_rsp();
   bool recv_rd_cmd_rsp();
-  bool recv_wr_cmd_rsp();
   bool recv_wr_dat_rsp();
   void prepare_ring_response(p_tm_pld_t pld, PldCmd cmd);
   p_tm_com_que_t req_q(PldCmd cmd) const;
@@ -83,6 +86,7 @@ class TmRingMemPort : public tm_engine::TmModule {
   p_tm_com_que_t rd_req_q_ = nullptr;
   p_tm_com_que_t wr_req_q_ = nullptr;
   p_tm_com_que_t wr_dat_q_ = nullptr;
+  TmRingWriteTracker write_tracker_;
   std::shared_ptr<TmRingHomeAgent> home_agent_ = nullptr;
   TmRingHaPmuPort ha_pmu_;
   p_tm_ring_l2_buffer_node_t l2_buffer_ = nullptr;

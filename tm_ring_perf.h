@@ -39,7 +39,7 @@ struct TmRingPerfCase {
   TmRingPerfPattern pattern = TmRingPerfPattern::SEQUENTIAL_PRIVATE;
   uint32_t active_masters = 1;
   uint64_t bytes_per_master = 128 * 1024;
-  uint32_t burst_bytes = 128;
+  uint32_t burst_len = 1;
   uint64_t read_base = 0;
   uint64_t write_base = 0x40000000ull;
   uint64_t stride_bytes = 128;
@@ -50,6 +50,9 @@ struct TmRingPerfCase {
   uint32_t home_agent_waiters_per_entry = 0;
   uint32_t l2_response_latency = 0;
 };
+
+uint32_t tm_ring_perf_request_bytes(const TmRingPerfCase& perf_case,
+                                    uint32_t beat_bytes);
 
 struct TmRingPerfTxn {
   uint32_t master_port = 0;
@@ -164,7 +167,8 @@ struct TmRingPerfResult {
 std::vector<TmRingPerfTxn> tm_ring_build_perf_trace(
     const TmRingPerfCase& perf_case,
     uint32_t configured_masters,
-    const TmRingTopology& topology);
+    const TmRingTopology& topology,
+    uint32_t beat_bytes);
 
 TmRingPerfEstimate tm_ring_estimate_fabric(
     const std::vector<TmRingPerfTxn>& trace,

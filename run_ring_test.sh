@@ -18,7 +18,7 @@ echo "过滤日志: ${filtered_log}"
 
 stdbuf -oL -eL ./test_prj "$@" 2>&1 |
   tee "$full_log" |
-  awk '!/^[[:space:]]*PERF_RING_BUFFER[[:space:]]+node_type=/ {
+  awk '!/^[[:space:]]*(PERF_RING_BUFFER[[:space:]]+node_type=|PERF_RING_EDGE([[:space:]]|$)|PERF_HA_SOURCE([[:space:]]|$))/ {
     print
     fflush()
   }' |
