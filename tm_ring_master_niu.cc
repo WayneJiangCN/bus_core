@@ -49,10 +49,6 @@ bool TmRingMasterNiu::idle() const {
   return biu_inf_->idle() && node_interface_->idle();
 }
 
-bool TmRingMasterNiu::write_data_pending() const {
-  return biu_inf_->valid(tm_ring_cmd_bus_channel(PldCmd::WR_DAT));
-}
-
 void TmRingMasterNiu::attach(p_tm_com_inf_t biu_inf) {
   biu_inf_->connect(biu_inf);
 }
