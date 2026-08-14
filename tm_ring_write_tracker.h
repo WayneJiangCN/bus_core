@@ -1,33 +1,25 @@
 #ifndef _TM_RING_WRITE_TRACKER_H_
 #define _TM_RING_WRITE_TRACKER_H_
 
-#include <stdint.h>
-
 #include <stdexcept>
 #include <unordered_map>
 
 #include "tm_pld.h"
 
-// Tracks Ring write addresses until the matching data packet arrives.  The
-// tracker is deliberately keyed by the protocol transaction identity rather
-// than by FIFO position so data may arrive before its address without allowing
-// a later transaction to bypass the data FIFO head.
+// Tracks Ring write addresses until the matching data packet arrives. The
+// tracker is keyed by protocol transaction identity rather than FIFO position.
+// Its live entries are bounded by requester outstanding writes; mirroring a
+// target FIFO depth here would couple the independent REQ and DAT subnets and
+// can deadlock an unmatched DAT FIFO head behind a full address tracker.
 class TmRingWriteTracker {
  public:
-  explicit TmRingWriteTracker(uint32_t capacity) : capacity_(capacity) {
-    if (capacity_ == 0) {
-      throw std::invalid_argument("write tracker capacity must be non-zero");
-    }
-  }
-
   void reset() { addresses_.clear(); }
 
   bool empty() const { return addresses_.empty(); }
 
   bool can_accept_address(p_tm_pld_t address) const {
     validate_address(address);
-    return addresses_.size() < capacity_ &&
-           addresses_.find(tm_pld_txn_key(address)) == addresses_.end();
+    return addresses_.find(tm_pld_txn_key(address)) == addresses_.end();
   }
 
   bool accept_address(p_tm_pld_t address) {
@@ -77,7 +69,6 @@ class TmRingWriteTracker {
     }
   }
 
-  uint32_t capacity_ = 0;
   std::unordered_map<TmPldTxnKey, p_tm_pld_t, TmPldTxnKeyHash> addresses_;
 };
 

@@ -54,7 +54,7 @@ p_tm_ring_cfg_t make_perf_cfg(uint32_t masters, uint32_t targets) {
 
 TEST(TmRingWriteTrackerTest, HoldsDataUntilMatchingAddressArrives) {
   tm_init();
-  TmRingWriteTracker tracker(2);
+  TmRingWriteTracker tracker;
 
   p_tm_pld_t address = tm_make_pld(PldCmd::WR, 0x1000, 512);
   address->mst_id = 3;
@@ -71,9 +71,9 @@ TEST(TmRingWriteTrackerTest, HoldsDataUntilMatchingAddressArrives) {
   EXPECT_TRUE(tracker.empty());
 }
 
-TEST(TmRingWriteTrackerTest, EnforcesCapacityAndMasterScopedKeys) {
+TEST(TmRingWriteTrackerTest, UsesMasterScopedKeys) {
   tm_init();
-  TmRingWriteTracker tracker(2);
+  TmRingWriteTracker tracker;
 
   p_tm_pld_t first = tm_make_pld(PldCmd::WR, 0x2000, 128);
   first->mst_id = 0;
@@ -86,12 +86,31 @@ TEST(TmRingWriteTrackerTest, EnforcesCapacityAndMasterScopedKeys) {
   ASSERT_TRUE(tracker.accept_address(first));
   EXPECT_TRUE(tracker.can_accept_address(different_master));
   ASSERT_TRUE(tracker.accept_address(different_master));
-  p_tm_pld_t third = tm_make_pld(PldCmd::WR, 0x3000, 128);
-  third->mst_id = 2;
-  third->gid = 18;
-  EXPECT_FALSE(tracker.can_accept_address(third));
-  EXPECT_FALSE(tracker.accept_address(third));
-  EXPECT_TRUE(tracker.has_matching_address(first));
+  p_tm_pld_t first_data = tm_make_pld(first);
+  first_data->cmd = PldCmd::WR_DAT;
+  EXPECT_TRUE(tracker.has_matching_address(first_data));
+}
+
+TEST(TmRingWriteTrackerTest, AdmitsAddressNeededByDataFifoHead) {
+  tm_init();
+  TmRingWriteTracker tracker;
+
+  for (uint32_t gid = 0; gid < 2; ++gid) {
+    p_tm_pld_t address = tm_make_pld(PldCmd::WR, 0x2000 + gid * 128, 128);
+    address->mst_id = 0;
+    address->gid = gid;
+    ASSERT_TRUE(tracker.accept_address(address));
+  }
+
+  p_tm_pld_t blocked_address = tm_make_pld(PldCmd::WR, 0x3000, 128);
+  blocked_address->mst_id = 1;
+  blocked_address->gid = 2;
+  p_tm_pld_t data_head = tm_make_pld(blocked_address);
+  data_head->cmd = PldCmd::WR_DAT;
+
+  ASSERT_FALSE(tracker.has_matching_address(data_head));
+  EXPECT_TRUE(tracker.accept_address(blocked_address));
+  EXPECT_TRUE(tracker.has_matching_address(data_head));
 }
 
 TEST(TmRingHomeAgentTest, SingleWaiterGroupAcceptsLaterSameLineWaiter) {
@@ -1576,12 +1595,12 @@ TEST(RingPerfBenchmark, MultiVringPrivateRead128B) {
       kMultiVringBenchmarkMaxAicorePerVring, 1);
 }
 
-// TEST(RingPerfBenchmark, MultiVringPrivateWrite128B) {
-//   run_multi_vring_128kb_benchmark(
-//       "multi_vring_private_write_128b", TmRingPerfOp::WRITE,
-//       TmRingPerfPattern::SEQUENTIAL_PRIVATE, kMultiVringBenchmarkMasters,
-//       kMultiVringBenchmarkMaxAicorePerVring, 1);
-// }
+TEST(RingPerfBenchmark, MultiVringPrivateWrite128B) {
+  run_multi_vring_128kb_benchmark(
+      "multi_vring_private_write_128b", TmRingPerfOp::WRITE,
+      TmRingPerfPattern::SEQUENTIAL_PRIVATE, kMultiVringBenchmarkMasters,
+      kMultiVringBenchmarkMaxAicorePerVring, 1);
+}
 
 // TEST(RingPerfBenchmark, MultiVringIndependentReadWrite128B) {
 //   run_multi_vring_128kb_benchmark(

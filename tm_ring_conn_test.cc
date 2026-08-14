@@ -7,7 +7,7 @@
 using namespace tm_engine;
 class TmRingConnTestAccess {
  public:
-  static bool can_accept(const TmRingConn& conn, tm_engine::p_tm_pld_t slot) {
+  static bool can_accept(const TmRingConn& conn, p_tm_pld_t slot) {
     TmRingConnRejectReason reason;
     return conn.can_accept(slot, &reason);
   }
@@ -15,7 +15,6 @@ class TmRingConnTestAccess {
 
 namespace {
 
-using namespace tm_engine;
 
 class TmRingConnFixture {
  public:

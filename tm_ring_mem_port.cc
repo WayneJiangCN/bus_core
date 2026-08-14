@@ -13,7 +13,7 @@ TmRingMemPort::TmRingMemPort(const std::string& name, p_tm_clk_t clk,
                               const vector<TmRingQueuePmuPort>& queue_pmu_ports,
                               TmRingHaPmuPort ha_pmu)
     : TmModule(name), rd_rsp_port_num_(ring_cfg.rd_rsp_port_num),
-      write_tracker_(target_cfg.wr_req_fifo_depth), ha_pmu_(ha_pmu) {
+      ha_pmu_(ha_pmu) {
 
 #if TM_RING_LOG_ENABLE
   log_para_t log_para(name + ".log");
