@@ -1124,10 +1124,18 @@ PerfSmokeResult run_perf_smoke(const TmRingPerfCase& perf_case,
     uint64_t biu_outstanding = 0;
     uint32_t biu_cmd_pending = 0;
     uint32_t biu_data_pending = 0;
+    uint64_t biu_data_generated = 0;
+    uint64_t biu_data_enqueue_full = 0;
+    uint64_t biu_data_send_attempts = 0;
+    uint64_t biu_data_sent = 0;
     for (const auto& biu : bius) {
       biu_outstanding += biu->wr_otsd_;
       biu_cmd_pending += biu->wr_cmds_->empty() ? 0 : 1;
       biu_data_pending += biu->wr_data_->empty() ? 0 : 1;
+      biu_data_generated += biu->wr_data_generated_;
+      biu_data_enqueue_full += biu->wr_data_enqueue_full_;
+      biu_data_send_attempts += biu->wr_data_send_attempts_;
+      biu_data_sent += biu->wr_data_sent_;
     }
     uint64_t master_dat_inject_pushes = 0;
     uint64_t master_dat_inject_pops = 0;
@@ -1163,6 +1171,10 @@ PerfSmokeResult run_perf_smoke(const TmRingPerfCase& perf_case,
               << " biu_outstanding=" << biu_outstanding
               << " biu_cmd_pending=" << biu_cmd_pending
               << " biu_data_pending=" << biu_data_pending
+              << " biu_data_generated=" << biu_data_generated
+              << " biu_data_enqueue_full=" << biu_data_enqueue_full
+              << " biu_data_send_attempts=" << biu_data_send_attempts
+              << " biu_data_sent=" << biu_data_sent
               << " master_dat_inject_pushes=" << master_dat_inject_pushes
               << " master_dat_inject_pops=" << master_dat_inject_pops
               << " master_dat_inject_rejects="
