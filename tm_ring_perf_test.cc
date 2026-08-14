@@ -1106,6 +1106,49 @@ PerfSmokeResult run_perf_smoke(const TmRingPerfCase& perf_case,
   }
 
   const uint64_t limit = perf_case.drain_cycle_limit;
+  const bool diagnose_write_stall =
+      perf_case.name == "multi_vring_private_write_128b";
+  uint64_t last_completed = 0;
+  uint64_t last_completion_cycle = 0;
+  const uint64_t no_completion_limit = 10000;
+  auto emit_write_progress = [&](const char* state, uint64_t cycle) {
+    uint64_t accepted = 0;
+    uint64_t completed = 0;
+    uint64_t send_stalls = 0;
+    for (const auto& master : masters) {
+      const TmRingPerfMasterStats& stats = master->stats();
+      accepted += stats.accepted_packets;
+      completed += stats.completed_packets;
+      send_stalls += stats.send_stall_cycles;
+    }
+    uint64_t biu_outstanding = 0;
+    uint32_t biu_cmd_pending = 0;
+    uint32_t biu_data_pending = 0;
+    for (const auto& biu : bius) {
+      biu_outstanding += biu->wr_otsd_;
+      biu_cmd_pending += biu->wr_cmds_->empty() ? 0 : 1;
+      biu_data_pending += biu->wr_data_->empty() ? 0 : 1;
+    }
+    uint64_t memory_accepted_bytes = 0;
+    uint64_t memory_queue_full_stalls = 0;
+    uint32_t memory_busy = 0;
+    for (const auto& memory : memories) {
+      const TmMemStats& stats = memory->stats();
+      memory_accepted_bytes += stats.accepted_write_bytes;
+      memory_queue_full_stalls += stats.queue_full_stall_cycles;
+      memory_busy += memory->idle() ? 0 : 1;
+    }
+    std::cout << "WRITE_LIVENESS state=" << state << " cycle=" << cycle
+              << " accepted=" << accepted << " completed=" << completed
+              << " send_stalls=" << send_stalls
+              << " biu_outstanding=" << biu_outstanding
+              << " biu_cmd_pending=" << biu_cmd_pending
+              << " biu_data_pending=" << biu_data_pending
+              << " memory_accepted_bytes=" << memory_accepted_bytes
+              << " memory_queue_full_stalls=" << memory_queue_full_stalls
+              << " memory_busy=" << memory_busy
+              << " ring_idle=" << ring->idle() << std::endl;
+  };
   uint64_t cycle = 0;
   for (; cycle < limit; ++cycle) {
     bool done = ring->idle();
@@ -1120,6 +1163,23 @@ PerfSmokeResult run_perf_smoke(const TmRingPerfCase& perf_case,
     }
     if (done && cycle > 0) {
       break;
+    }
+    if (diagnose_write_stall) {
+      uint64_t completed = 0;
+      for (const auto& master : masters) {
+        completed += master->stats().completed_packets;
+      }
+      if (completed != last_completed) {
+        last_completed = completed;
+        last_completion_cycle = cycle;
+      }
+      if (cycle != 0 && cycle % no_completion_limit == 0) {
+        emit_write_progress("progress", cycle);
+      }
+      if (cycle - last_completion_cycle >= no_completion_limit) {
+        emit_write_progress("stalled", cycle);
+        break;
+      }
     }
     tm_start(1);
   }
@@ -1383,6 +1443,9 @@ void run_multi_vring_128kb_benchmark(
   PerfOverrides overrides;
   overrides.max_aicore_per_vring = max_aicore_per_vring;
   const PerfSmokeResult result = run_perf_smoke(perf_case, overrides);
+  if (!result.idle) {
+    std::cout << tm_ring_format_perf_result(result.perf_result);
+  }
 
   ASSERT_EQ(static_cast<size_t>(expected_vrings + 1),
             result.perf_result.ring_pmu.conn.domains.size());
