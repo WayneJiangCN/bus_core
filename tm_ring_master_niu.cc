@@ -28,7 +28,7 @@ void TmRingMasterNiu::config(
 
   tm_sensitive(TM_MAKE_CPROC(&TmRingMasterNiu::recv_biu_request),
                biu_inf_->vld);
-  tm_sensitive(TM_MAKE_CPROC(&TmRingMasterNiu::recv_biu_data), biu_inf_->vld);
+  tm_sensitive(TM_MAKE_CPROC(&TmRingMasterNiu::recv_biu_data), clk->pos_edge);
   tm_sensitive(TM_MAKE_CPROC(&TmRingMasterNiu::recv_rsp),
                node_interface_->eject_q(TmRingSubnet::RSP)->vld);
   tm_sensitive(TM_MAKE_CPROC(&TmRingMasterNiu::recv_dat),
