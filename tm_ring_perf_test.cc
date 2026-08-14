@@ -1129,6 +1129,25 @@ PerfSmokeResult run_perf_smoke(const TmRingPerfCase& perf_case,
       biu_cmd_pending += biu->wr_cmds_->empty() ? 0 : 1;
       biu_data_pending += biu->wr_data_->empty() ? 0 : 1;
     }
+    uint64_t master_dat_inject_pushes = 0;
+    uint64_t master_dat_inject_pops = 0;
+    uint64_t master_dat_inject_rejects = 0;
+    uint32_t master_dat_inject_occupancy = 0;
+    const TmRingPmuSnapshot ring_snapshot =
+        ring->snapshot_pmu(static_cast<uint64_t>(clk->time()));
+    for (const TmRingEndpointQueueStats& endpoint :
+         ring_snapshot.queue.endpoints) {
+      const TmRingQueueStats& queue = endpoint.queue;
+      if (endpoint.node_type != TmRingNodeType::MASTER ||
+          queue.subnet != TmRingSubnet::DAT ||
+          queue.side != TmRingQueueSide::INJECT) {
+        continue;
+      }
+      master_dat_inject_pushes += queue.counters.pushes;
+      master_dat_inject_pops += queue.counters.pops;
+      master_dat_inject_rejects += queue.counters.push_rejects;
+      master_dat_inject_occupancy += queue.occupancy;
+    }
     uint64_t memory_accepted_bytes = 0;
     uint64_t memory_queue_full_stalls = 0;
     uint32_t memory_busy = 0;
@@ -1144,6 +1163,14 @@ PerfSmokeResult run_perf_smoke(const TmRingPerfCase& perf_case,
               << " biu_outstanding=" << biu_outstanding
               << " biu_cmd_pending=" << biu_cmd_pending
               << " biu_data_pending=" << biu_data_pending
+              << " master_dat_inject_pushes=" << master_dat_inject_pushes
+              << " master_dat_inject_pops=" << master_dat_inject_pops
+              << " master_dat_inject_rejects="
+              << master_dat_inject_rejects
+              << " master_dat_inject_occupancy="
+              << master_dat_inject_occupancy
+              << " master_biu_data_pending="
+              << ring->pending_master_write_data()
               << " memory_accepted_bytes=" << memory_accepted_bytes
               << " memory_queue_full_stalls=" << memory_queue_full_stalls
               << " memory_busy=" << memory_busy

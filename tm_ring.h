@@ -64,6 +64,7 @@ class TmRingFabric : public tm_engine::TmModule {
   void attach_target(uint32_t idx, p_tm_mem_t mem);
 
   TmRingPmuSnapshot snapshot_pmu(uint64_t cycle) const;
+  uint32_t pending_master_write_data() const;
   uint32_t ring_link_width_bytes() const;
   uint32_t rbrg_width_bytes() const;
 

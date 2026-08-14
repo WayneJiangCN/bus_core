@@ -451,6 +451,14 @@ TmRingPmuSnapshot TmRingFabric::snapshot_pmu(uint64_t cycle) const {
   return pmu_->snapshot(cycle);
 }
 
+uint32_t TmRingFabric::pending_master_write_data() const {
+  uint32_t pending = 0;
+  for (const p_tm_ring_m_niu_t& niu : master_nius_) {
+    pending += niu->write_data_pending() ? 1 : 0;
+  }
+  return pending;
+}
+
 uint32_t TmRingFabric::ring_link_width_bytes() const {
   return cfg_->ring_link_width_bytes;
 }

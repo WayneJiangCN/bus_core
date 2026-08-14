@@ -28,6 +28,7 @@ class TmRingMasterNiu : public tm_engine::TmModule {
                   const std::vector<TmRingQueuePmuPort>& queue_pmu_ports);
   void reset();
   bool idle() const;
+  bool write_data_pending() const;
 
   void attach(p_tm_com_inf_t biu_inf);
   void attach(p_tm_ring_topology_t topology);

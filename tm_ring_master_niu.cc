@@ -28,7 +28,7 @@ void TmRingMasterNiu::config(
 
   tm_sensitive(TM_MAKE_CPROC(&TmRingMasterNiu::recv_biu_request),
                biu_inf_->vld);
-  tm_sensitive(TM_MAKE_CPROC(&TmRingMasterNiu::recv_biu_data), clk->pos_edge);
+  tm_sensitive(TM_MAKE_CPROC(&TmRingMasterNiu::recv_biu_data), biu_inf_->vld);
   tm_sensitive(TM_MAKE_CPROC(&TmRingMasterNiu::recv_rsp),
                node_interface_->eject_q(TmRingSubnet::RSP)->vld);
   tm_sensitive(TM_MAKE_CPROC(&TmRingMasterNiu::recv_dat),
@@ -47,6 +47,10 @@ void TmRingMasterNiu::reset() {
 
 bool TmRingMasterNiu::idle() const {
   return biu_inf_->idle() && node_interface_->idle();
+}
+
+bool TmRingMasterNiu::write_data_pending() const {
+  return biu_inf_->valid(tm_ring_cmd_bus_channel(PldCmd::WR_DAT));
 }
 
 void TmRingMasterNiu::attach(p_tm_com_inf_t biu_inf) {
