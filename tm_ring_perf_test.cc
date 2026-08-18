@@ -18,6 +18,7 @@ namespace {
 using namespace tm_engine;
 
 constexpr uint32_t kMultiVringBenchmarkMasters = 8;
+constexpr uint32_t kMultiVringBenchmarkTargets = 4;
 constexpr uint32_t kMultiVringBenchmarkMaxAicorePerVring = 4;
 constexpr uint32_t kMultiVringBenchmarkLineBytes = 512;
 constexpr uint32_t kMultiVringBenchmarkBeatBytes = 128;
@@ -41,12 +42,13 @@ struct PerfOverrides {
   uint32_t l2_buffer_depth = 0;
   uint32_t l2_response_latency = 0;
   uint32_t ddr_bandwidth_limit = 0;
+  uint32_t ring_link_width_bytes = 0;
 };
 
 std::string perf_config_path() {
   const std::string paths[] = {
       "../etc/pem_config_cloud.toml",
-      "../etc/pem_config_cloud.toml"};
+      "../config/pem_config_cloud.toml"};
   for (const auto& path : paths) {
     std::ifstream file(path.c_str());
     if (file.good()) {
@@ -72,6 +74,9 @@ PerfSmokeResult run_perf_smoke(const TmRingPerfCase& perf_case,
   cfg::p_cfg_t cfg = scenario_cfg;
   auto ring_cfg = tm_make_ring_cfg("perf_smoke_ring", cfg);
   ring_cfg->num_masters = perf_case.active_masters;
+  if (overrides.ring_link_width_bytes != 0) {
+    ring_cfg->ring_link_width_bytes = overrides.ring_link_width_bytes;
+  }
   if (overrides.max_aicore_per_vring != 0) {
     ring_cfg->max_aicore_per_vring = overrides.max_aicore_per_vring;
   }
@@ -159,6 +164,10 @@ PerfSmokeResult run_perf_smoke(const TmRingPerfCase& perf_case,
     auto biu = std::make_shared<pem_biu_t>(
         "perf_biu" + std::to_string(master_id), clk, biu_cfg);
     biu->core_id_ = master_id;
+    if (effective_case.max_outstanding_per_master != 0) {
+      biu->max_rd_otsd_ = effective_case.max_outstanding_per_master;
+      biu->max_wr_otsd_ = effective_case.max_outstanding_per_master;
+    }
     biu->build();
     biu->reset();
     ring->attach_master(master_id, biu);
@@ -166,7 +175,8 @@ PerfSmokeResult run_perf_smoke(const TmRingPerfCase& perf_case,
 
     auto master = std::make_shared<TmRingPerfMaster>();
     master->config("perf_master" + std::to_string(master_id), clk,
-                   master_id, master_traces[master_id], wave_coordinator);
+                   master_id, master_traces[master_id], wave_coordinator,
+                   effective_case.max_outstanding_per_master);
     master->attach(biu);
     master->build();
     masters.push_back(master);
@@ -253,7 +263,8 @@ void expect_l2_single_physical_carrier_size(
 
 std::string format_l2_sweep_summary(
     const PerfSmokeResult& result, const std::string& pattern_label,
-    uint32_t request_bytes, uint32_t hit_rate_pct) {
+    uint32_t request_bytes, uint32_t ha_entries, uint32_t l2_latency,
+    uint32_t hit_rate_pct) {
   const TmRingPerfResult& perf = result.perf_result;
   const TmRingHomeAgentStats& ha = perf.ring_pmu.ha.total;
   const TmRingL2BufferStats& l2 = perf.ring_pmu.l2.total;
@@ -278,14 +289,75 @@ std::string format_l2_sweep_summary(
   std::ostringstream out;
   out << std::fixed << std::setprecision(6) << "L2_SWEEP case="
       << perf.perf_case.name << " pattern=" << pattern_label
-      << " request_bytes=" << request_bytes << " hit_cfg_pct="
-      << hit_rate_pct << " hit_obs_pct=" << hit_observed_pct
+      << " request_bytes=" << request_bytes << " ha_entries=" << ha_entries
+      << " l2_latency=" << l2_latency << " hit_cfg_pct=" << hit_rate_pct
+      << " hit_obs_pct=" << hit_observed_pct
       << " e2e_bpc=" << perf.end_to_end_bandwidth_bpc
       << " peak_pct=" << peak_pct << " dat_bpc="
       << bytes_per_cycle(l2.dat_bytes) << " hbm_bpc="
       << bytes_per_cycle(perf.memory_stats.accepted_read_bytes) << " p99="
       << perf.latency_p99 << " status=" << (pass ? "PASS" : "INCOMPLETE")
       << "\n";
+  return out.str();
+}
+
+std::string format_perf_sweep_summary(
+    const PerfSmokeResult& result, const std::string& kind,
+    uint32_t configured_outstanding) {
+  const TmRingPerfResult& perf = result.perf_result;
+  const TmRingConnStats& req = perf.ring_pmu.conn.total[
+      static_cast<uint32_t>(TmRingSubnet::REQ)];
+  const TmRingConnStats& dat = perf.ring_pmu.conn.total[
+      static_cast<uint32_t>(TmRingSubnet::DAT)];
+  const uint32_t request_bytes = tm_ring_perf_request_bytes(
+      perf.perf_case, perf.ring_link_width_bytes);
+  uint64_t outstanding_peak_min = 0;
+  uint64_t outstanding_peak_max = 0;
+  if (!result.master_stats.empty()) {
+    outstanding_peak_min = result.master_stats.front().outstanding_peak;
+    outstanding_peak_max = result.master_stats.front().outstanding_peak;
+    for (const TmRingPerfMasterStats& stats : result.master_stats) {
+      if (stats.outstanding_peak < outstanding_peak_min) {
+        outstanding_peak_min = stats.outstanding_peak;
+      }
+      if (stats.outstanding_peak > outstanding_peak_max) {
+        outstanding_peak_max = stats.outstanding_peak;
+      }
+    }
+  }
+  const auto bytes_per_cycle = [&](uint64_t bytes) {
+    return perf.transfer_cycles == 0
+               ? 0.0
+               : static_cast<double>(bytes) /
+                     static_cast<double>(perf.transfer_cycles);
+  };
+  const double dat_serialization_efficiency_pct =
+      dat.busy_cycles == 0 || perf.ring_link_width_bytes == 0
+          ? 0.0
+          : 100.0 * static_cast<double>(dat.bytes) /
+                static_cast<double>(dat.busy_cycles) /
+                static_cast<double>(perf.ring_link_width_bytes);
+  const bool pass = result.idle && perf.drained && perf.protocol_errors == 0;
+
+  std::ostringstream out;
+  out << std::fixed << std::setprecision(6) << "PERF_SWEEP kind=" << kind
+      << " case=" << perf.perf_case.name
+      << " osd_cfg=" << configured_outstanding
+      << " osd_peak_min=" << outstanding_peak_min
+      << " osd_peak_max=" << outstanding_peak_max
+      << " burst_len=" << perf.perf_case.burst_len
+      << " request_bytes=" << request_bytes
+      << " e2e_bpc=" << perf.end_to_end_bandwidth_bpc
+      << " dat_bpc=" << bytes_per_cycle(perf.ring_pmu.l2.total.dat_bytes)
+      << " hbm_bpc="
+      << bytes_per_cycle(perf.memory_stats.accepted_read_bytes)
+      << " req_packets=" << req.packets << " dat_packets=" << dat.packets
+      << " dat_ser_eff_pct=" << dat_serialization_efficiency_pct
+      << " credit_stalls=" << perf.memory_stats.credit_stall_cycles
+      << " queue_full_stalls=" << perf.memory_stats.queue_full_stall_cycles
+      << " hbm_osd_peak=" << perf.memory_stats.outstanding_peak
+      << " p99=" << perf.latency_p99
+      << " status=" << (pass ? "PASS" : "INCOMPLETE") << "\n";
   return out.str();
 }
 
@@ -718,12 +790,12 @@ void run_l2_hit_rate_sweep_case(const std::string& pattern_label,
 
     PerfOverrides overrides;
     overrides.max_aicore_per_vring = 4;
-    overrides.home_agent_transaction_entries = 64;
+    overrides.home_agent_transaction_entries =256;
     overrides.home_agent_waiters_per_entry = 8;
     overrides.has_l2_hit_rate_pct = true;
     overrides.l2_hit_rate_pct = hit_rate_pct;
     overrides.l2_buffer_depth = 64;
-    overrides.l2_response_latency = 64;
+    overrides.l2_response_latency = 256;
     overrides.ddr_bandwidth_limit = 256;
 
     const PerfSmokeResult result = run_perf_smoke(perf_case, overrides);
@@ -769,8 +841,119 @@ void run_l2_hit_rate_sweep_case(const std::string& pattern_label,
       }
     }
 
-    std::cout << format_l2_sweep_summary(result, pattern_label, 256,
-                                         hit_rate_pct);
+    std::cout << format_l2_sweep_summary(
+        result, pattern_label, 256,
+        overrides.home_agent_transaction_entries,
+        overrides.l2_response_latency, hit_rate_pct);
+  }
+}
+
+void run_outstanding_sweep_case() {
+  const uint32_t outstanding_limits[] = {16, 32, 64, 128, 256};
+  for (const uint32_t outstanding_limit : outstanding_limits) {
+    SCOPED_TRACE("outstanding=" + std::to_string(outstanding_limit));
+    TmRingPerfCase perf_case = make_128kb_case(
+        "outstanding_nomerge_256b_osd" +
+            std::to_string(outstanding_limit),
+        TmRingPerfOp::READ, TmRingPerfPattern::STRIDED_PRIVATE,
+        kMultiVringBenchmarkMasters, 2);
+    perf_case.stride_bytes = kMultiVringBenchmarkLineBytes;
+    perf_case.max_outstanding_per_master = outstanding_limit;
+
+    PerfOverrides overrides;
+    overrides.max_aicore_per_vring = kMultiVringBenchmarkMaxAicorePerVring;
+    overrides.home_agent_transaction_entries = 512;
+    overrides.home_agent_waiters_per_entry = 8;
+    overrides.has_l2_hit_rate_pct = true;
+    overrides.l2_hit_rate_pct = 0;
+    overrides.l2_buffer_depth = 512;
+    overrides.l2_response_latency = 256;
+    overrides.ddr_bandwidth_limit = 256;
+    overrides.ring_link_width_bytes = kMultiVringBenchmarkBeatBytes;
+
+    const PerfSmokeResult result = run_perf_smoke(perf_case, overrides);
+    expect_perf_block_complete(result, perf_case, false);
+    ASSERT_EQ(uint32_t(128), result.perf_result.ring_link_width_bytes);
+    ASSERT_EQ(uint32_t(256), tm_ring_perf_request_bytes(
+                                  perf_case,
+                                  result.perf_result.ring_link_width_bytes));
+    ASSERT_EQ(static_cast<size_t>(kMultiVringBenchmarkMasters),
+              result.master_stats.size());
+    ASSERT_EQ(static_cast<size_t>(kMultiVringBenchmarkTargets),
+              result.memory_stats.size());
+    for (const TmRingPerfMasterStats& stats : result.master_stats) {
+      EXPECT_EQ(static_cast<uint64_t>(outstanding_limit),
+                stats.outstanding_peak);
+    }
+    const TmRingHomeAgentStats& ha =
+        result.perf_result.ring_pmu.ha.total;
+    EXPECT_EQ(uint64_t(0), ha.l2_hit_transactions);
+    EXPECT_EQ(uint64_t(0), ha.backend_read_saved);
+    EXPECT_EQ(ha.backend_read_bytes,
+              result.perf_result.memory_stats.accepted_read_bytes);
+    std::cout << format_perf_sweep_summary(
+        result, "outstanding", outstanding_limit);
+  }
+}
+
+void run_burst_sweep_case() {
+  const uint32_t burst_lengths[] = {1, 2, 4};
+  const uint32_t expected_request_bytes[] = {128, 256, 512};
+  const uint32_t outstanding_limit = 64;
+  for (size_t index = 0; index < 3; ++index) {
+    const uint32_t burst_len = burst_lengths[index];
+    const uint32_t request_bytes = expected_request_bytes[index];
+    SCOPED_TRACE("burst_len=" + std::to_string(burst_len));
+    TmRingPerfCase perf_case = make_128kb_case(
+        "burst_private_l2hit_" + std::to_string(request_bytes) + "b",
+        TmRingPerfOp::READ, TmRingPerfPattern::STRIDED_PRIVATE,
+        kMultiVringBenchmarkMasters, burst_len);
+    perf_case.stride_bytes = kMultiVringBenchmarkLineBytes;
+    perf_case.max_outstanding_per_master = outstanding_limit;
+
+    PerfOverrides overrides;
+    overrides.max_aicore_per_vring = kMultiVringBenchmarkMaxAicorePerVring;
+    overrides.home_agent_transaction_entries = 512;
+    overrides.home_agent_waiters_per_entry = 8;
+    overrides.has_l2_hit_rate_pct = true;
+    overrides.l2_hit_rate_pct = 100;
+    overrides.l2_buffer_depth = 512;
+    overrides.l2_response_latency = 256;
+    overrides.ddr_bandwidth_limit = 256;
+    overrides.ring_link_width_bytes = kMultiVringBenchmarkBeatBytes;
+
+    const PerfSmokeResult result = run_perf_smoke(perf_case, overrides);
+    expect_perf_block_complete(result, perf_case, false);
+    ASSERT_EQ(uint32_t(128), result.perf_result.ring_link_width_bytes);
+    ASSERT_EQ(request_bytes, tm_ring_perf_request_bytes(
+                                 perf_case,
+                                 result.perf_result.ring_link_width_bytes));
+    ASSERT_EQ(static_cast<size_t>(kMultiVringBenchmarkMasters),
+              result.master_stats.size());
+    ASSERT_EQ(static_cast<size_t>(kMultiVringBenchmarkTargets),
+              result.memory_stats.size());
+    for (const TmRingPerfMasterStats& stats : result.master_stats) {
+      EXPECT_GT(stats.outstanding_peak, uint64_t(0));
+      EXPECT_LE(stats.outstanding_peak,
+                static_cast<uint64_t>(outstanding_limit));
+    }
+    const TmRingHomeAgentStats& ha =
+        result.perf_result.ring_pmu.ha.total;
+    const TmRingL2BufferStats& l2 =
+        result.perf_result.ring_pmu.l2.total;
+    const uint64_t expected_responses =
+        static_cast<uint64_t>(kMultiVringBenchmarkMasters) *
+        perf_case.bytes_per_master / request_bytes;
+    EXPECT_EQ(uint64_t(0), ha.l2_miss_transactions);
+    EXPECT_EQ(uint64_t(0),
+              result.perf_result.memory_stats.accepted_read_bytes);
+    EXPECT_EQ(expected_responses, l2.responses_accepted);
+    EXPECT_EQ(expected_responses, l2.h_unicast_carriers);
+    EXPECT_EQ(uint64_t(0), l2.h_multicast_carriers);
+    EXPECT_EQ(uint64_t(0), l2.h_scatter_carriers);
+    expect_l2_carrier_size_bucket(l2, request_bytes, expected_responses);
+    std::cout << format_perf_sweep_summary(
+        result, "burst", outstanding_limit);
   }
 }
 
@@ -906,6 +1089,14 @@ TEST(RingL2HitRateSweep, SameLineScatterRead256B) {
 TEST(RingL2HitRateSweep, SharedRead256B) {
   run_l2_hit_rate_sweep_case("shared", TmRingPerfPattern::SEQUENTIAL_SHARED,
                              512);
+}
+
+TEST(RingOutstandingSweep, PrivateNoMergeRead256B) {
+  run_outstanding_sweep_case();
+}
+
+TEST(RingBurstSweep, PrivateL2HitRead) {
+  run_burst_sweep_case();
 }
 
 TEST(RingAggregationWaveTest, SameLineScatterRead128B) {

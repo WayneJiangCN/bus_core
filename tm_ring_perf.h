@@ -40,6 +40,7 @@ struct TmRingPerfCase {
   uint32_t active_masters = 1;
   uint64_t bytes_per_master = 128 * 1024;
   uint32_t burst_len = 1;
+  uint32_t max_outstanding_per_master = 0;
   uint64_t read_base = 0;
   uint64_t write_base = 0x40000000ull;
   uint64_t stride_bytes = 128;

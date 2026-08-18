@@ -9,11 +9,18 @@ sys.path.insert(0, str(Path(__file__).parent))
 from plot_l2_sweep import generate_artifacts, parse_l2_sweep_lines
 
 
-def sweep_line(pattern, hit_rate, e2e, hbm, p99):
+def sweep_line(pattern, hit_rate, e2e, hbm, p99,
+               ha_entries=None, l2_latency=None):
+    config = ""
+    if ha_entries is not None and l2_latency is not None:
+        config = (
+            f"ha_entries={ha_entries} l2_latency={l2_latency} "
+        )
     return (
         "L2_SWEEP "
         f"case=l2_{pattern}_256b_hit{hit_rate} "
-        f"pattern={pattern} request_bytes=256 hit_cfg_pct={hit_rate} "
+        f"pattern={pattern} request_bytes=256 {config}"
+        f"hit_cfg_pct={hit_rate} "
         f"hit_obs_pct={float(hit_rate):.6f} e2e_bpc={e2e:.6f} "
         f"peak_pct={e2e / 512.0 * 100.0:.6f} dat_bpc={e2e:.6f} "
         f"hbm_bpc={hbm:.6f} p99={p99} status=PASS\n"
@@ -21,6 +28,23 @@ def sweep_line(pattern, hit_rate, e2e, hbm, p99):
 
 
 class L2SweepPlotTest(unittest.TestCase):
+    def test_parser_preserves_l2_config_fields(self):
+        records = parse_l2_sweep_lines([
+            sweep_line("shared", 50, 502.7, 311.0, 12293,
+                       ha_entries=256, l2_latency=256),
+        ])
+
+        self.assertEqual(256, records[0]["ha_entries"])
+        self.assertEqual(256, records[0]["l2_latency"])
+
+    def test_parser_keeps_legacy_lines_without_l2_config(self):
+        records = parse_l2_sweep_lines([
+            sweep_line("shared", 50, 374.6, 250.8, 17325),
+        ])
+
+        self.assertIsNone(records[0]["ha_entries"])
+        self.assertIsNone(records[0]["l2_latency"])
+
     def test_parser_ignores_noise_and_returns_typed_sorted_rows(self):
         lines = [
             "[ RUN      ] RingL2HitRateSweep.PrivateSequentialRead256B\n",

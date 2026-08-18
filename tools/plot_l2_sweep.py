@@ -14,6 +14,8 @@ FIELDS = (
     "case",
     "pattern",
     "request_bytes",
+    "ha_entries",
+    "l2_latency",
     "hit_cfg_pct",
     "hit_obs_pct",
     "e2e_bpc",
@@ -23,7 +25,10 @@ FIELDS = (
     "p99",
     "status",
 )
-INTEGER_FIELDS = {"request_bytes", "hit_cfg_pct", "p99"}
+OPTIONAL_FIELDS = {"ha_entries", "l2_latency"}
+INTEGER_FIELDS = {
+    "request_bytes", "ha_entries", "l2_latency", "hit_cfg_pct", "p99"
+}
 FLOAT_FIELDS = {"hit_obs_pct", "e2e_bpc", "peak_pct", "dat_bpc", "hbm_bpc"}
 PATTERN_ORDER = ("nomerge", "private", "scatter", "shared")
 PATTERN_STYLES = {
@@ -50,16 +55,18 @@ def parse_l2_sweep_lines(lines):
             key, value = token.split("=", 1)
             values[key] = value
 
-        missing = [field for field in FIELDS if field not in values]
+        missing = [field for field in FIELDS
+                   if field not in OPTIONAL_FIELDS and field not in values]
         if missing:
             raise ValueError(
                 "line {} is missing fields: {}".format(
                     line_number, ", ".join(missing)))
 
-        record = {field: values[field] for field in FIELDS}
+        record = {field: values.get(field) for field in FIELDS}
         try:
             for field in INTEGER_FIELDS:
-                record[field] = int(record[field])
+                if record[field] is not None:
+                    record[field] = int(record[field])
             for field in FLOAT_FIELDS:
                 record[field] = float(record[field])
         except ValueError as error:
@@ -120,6 +127,7 @@ def ordered_patterns(records):
 
 def plot_metric(records, metric, ylabel, title, output_path):
     figure, axis = plt.subplots(figsize=(8.5, 5.2), dpi=150)
+    metric_values = [record[metric] for record in records]
     for pattern in ordered_patterns(records):
         points = [record for record in records
                   if record["pattern"] == pattern]
@@ -142,7 +150,11 @@ def plot_metric(records, metric, ylabel, title, output_path):
     axis.set_ylabel(ylabel)
     axis.set_title(title)
     axis.set_xticks(sorted({record["hit_cfg_pct"] for record in records}))
-    axis.set_ylim(bottom=0)
+    if min(metric_values) == 0 and max(metric_values) > 0:
+        axis.set_ylim(bottom=-max(metric_values) * 0.03)
+        axis.set_yticks([tick for tick in axis.get_yticks() if tick >= 0])
+    else:
+        axis.set_ylim(bottom=0)
     axis.grid(True, linestyle="--", alpha=0.35)
     axis.legend()
     figure.tight_layout()

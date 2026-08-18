@@ -36,7 +36,8 @@ class TmRingPerfMaster : public tm_engine::TmModule {
               const std::vector<TmRingPerfTxn>& transactions,
               const std::shared_ptr<TmRingPerfWaveCoordinator>&
                   wave_coordinator =
-                      std::shared_ptr<TmRingPerfWaveCoordinator>());
+                      std::shared_ptr<TmRingPerfWaveCoordinator>(),
+              uint32_t max_outstanding = 0);
   void attach(p_pem_biu_t biu);
   void build();
   void reset();
@@ -68,6 +69,7 @@ class TmRingPerfMaster : public tm_engine::TmModule {
   p_tm_pld_t pending_read_candidate_ = nullptr;
   p_tm_pld_t pending_write_candidate_ = nullptr;
   uint32_t master_port_ = 0;
+  uint32_t max_outstanding_ = 0;
   std::unordered_map<uint64_t, uint64_t> issue_cycles_;
   std::unordered_map<uint64_t, uint32_t> outstanding_sizes_;
   std::unordered_map<uint64_t, uint64_t> outstanding_waves_;

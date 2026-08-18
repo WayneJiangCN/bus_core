@@ -51,11 +51,13 @@ TmRingPerfMaster::~TmRingPerfMaster() {}
 void TmRingPerfMaster::config(
     const std::string& name, p_tm_clk_t clk, uint32_t master_port,
     const std::vector<TmRingPerfTxn>& transactions,
-    const std::shared_ptr<TmRingPerfWaveCoordinator>& wave_coordinator) {
+    const std::shared_ptr<TmRingPerfWaveCoordinator>& wave_coordinator,
+    uint32_t max_outstanding) {
   this->name(name);
   clk_ = clk;
   master_port_ = master_port;
   wave_coordinator_ = wave_coordinator;
+  max_outstanding_ = max_outstanding;
   transactions_ = transactions;
   read_transactions_.clear();
   write_transactions_.clear();
@@ -131,6 +133,10 @@ void TmRingPerfMaster::issue_read() {
   if (next_read_transaction_ == read_transactions_.size()) {
     return;
   }
+  if (max_outstanding_ != 0 &&
+      issue_cycles_.size() >= max_outstanding_) {
+    return;
+  }
   const TmRingPerfTxn& txn = read_transactions_[next_read_transaction_];
   if (wave_coordinator_ != nullptr &&
       !wave_coordinator_->can_issue(master_port_, txn.ordinal)) {
@@ -166,6 +172,10 @@ void TmRingPerfMaster::issue_read() {
 
 void TmRingPerfMaster::issue_write() {
   if (next_write_transaction_ == write_transactions_.size()) {
+    return;
+  }
+  if (max_outstanding_ != 0 &&
+      issue_cycles_.size() >= max_outstanding_) {
     return;
   }
   const TmRingPerfTxn& txn = write_transactions_[next_write_transaction_];
