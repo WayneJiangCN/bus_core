@@ -1,7 +1,10 @@
 import csv
+import sys
 import tempfile
 import unittest
 from pathlib import Path
+
+sys.path.insert(0, str(Path(__file__).parent))
 
 from plot_l2_sweep import generate_artifacts, parse_l2_sweep_lines
 
