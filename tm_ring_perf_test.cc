@@ -909,7 +909,7 @@ void run_burst_sweep_case(const std::string& pattern_label,
     SCOPED_TRACE("pattern=" + pattern_label +
                  " burst_len=" + std::to_string(burst_len));
     TmRingPerfCase perf_case = make_128kb_case(
-        "burst_" + pattern_label + "_l2hit_" +
+        "burst_" + pattern_label + "_l2miss_" +
             std::to_string(request_bytes) + "b",
         TmRingPerfOp::READ, pattern, kMultiVringBenchmarkMasters, burst_len);
     if (address_stride != 0) {
@@ -922,7 +922,7 @@ void run_burst_sweep_case(const std::string& pattern_label,
     overrides.home_agent_transaction_entries = 512;
     overrides.home_agent_waiters_per_entry = 8;
     overrides.has_l2_hit_rate_pct = true;
-    overrides.l2_hit_rate_pct = 100;
+    overrides.l2_hit_rate_pct = 0;
     overrides.l2_buffer_depth = 512;
     overrides.l2_response_latency = 256;
     overrides.ddr_bandwidth_limit = 256;
@@ -950,9 +950,12 @@ void run_burst_sweep_case(const std::string& pattern_label,
     const uint64_t expected_responses =
         static_cast<uint64_t>(kMultiVringBenchmarkMasters) *
         perf_case.bytes_per_master / request_bytes;
-    EXPECT_GT(ha.l2_hit_transactions, uint64_t(0));
-    EXPECT_EQ(uint64_t(0), ha.l2_miss_transactions);
+    EXPECT_EQ(uint64_t(0), ha.l2_hit_transactions);
+    EXPECT_GT(ha.l2_miss_transactions, uint64_t(0));
+    EXPECT_GT(ha.backend_read_bytes, uint64_t(0));
     EXPECT_EQ(uint64_t(0),
+              ha.backend_read_bytes % kMultiVringBenchmarkLineBytes);
+    EXPECT_EQ(ha.backend_read_bytes,
               result.perf_result.memory_stats.accepted_read_bytes);
     EXPECT_GT(l2.responses_accepted, uint64_t(0));
     EXPECT_LE(l2.responses_accepted, expected_responses);
@@ -1120,16 +1123,16 @@ TEST(RingOutstandingSweep, PrivateNoMergeRead256B) {
   run_outstanding_sweep_case();
 }
 
-TEST(RingBurstSweep, NoMergeL2HitRead) {
+TEST(RingBurstSweep, NoMergeL2MissRead) {
   run_burst_sweep_case("nomerge", TmRingPerfPattern::STRIDED_PRIVATE,
                        kMultiVringBenchmarkLineBytes);
 }
 
-TEST(RingBurstSweep, PrivateSequentialL2HitRead) {
+TEST(RingBurstSweep, PrivateSequentialL2MissRead) {
   run_burst_sweep_case("private", TmRingPerfPattern::SEQUENTIAL_PRIVATE, 0);
 }
 
-TEST(RingBurstSweep, SharedL2HitRead) {
+TEST(RingBurstSweep, SharedL2MissRead) {
   run_burst_sweep_case("shared", TmRingPerfPattern::SEQUENTIAL_SHARED,
                        kMultiVringBenchmarkLineBytes);
 }
