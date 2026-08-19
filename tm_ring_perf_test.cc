@@ -303,7 +303,7 @@ std::string format_l2_sweep_summary(
 
 std::string format_perf_sweep_summary(
     const PerfSmokeResult& result, const std::string& kind,
-    uint32_t configured_outstanding) {
+    const std::string& pattern_label, uint32_t configured_outstanding) {
   const TmRingPerfResult& perf = result.perf_result;
   const TmRingConnStats& req = perf.ring_pmu.conn.total[
       static_cast<uint32_t>(TmRingSubnet::REQ)];
@@ -342,6 +342,7 @@ std::string format_perf_sweep_summary(
   std::ostringstream out;
   out << std::fixed << std::setprecision(6) << "PERF_SWEEP kind=" << kind
       << " case=" << perf.perf_case.name
+      << " pattern=" << pattern_label
       << " osd_cfg=" << configured_outstanding
       << " osd_peak_min=" << outstanding_peak_min
       << " osd_peak_max=" << outstanding_peak_max
@@ -892,23 +893,28 @@ void run_outstanding_sweep_case() {
     EXPECT_EQ(ha.backend_read_bytes,
               result.perf_result.memory_stats.accepted_read_bytes);
     std::cout << format_perf_sweep_summary(
-        result, "outstanding", outstanding_limit);
+        result, "outstanding", "nomerge", outstanding_limit);
   }
 }
 
-void run_burst_sweep_case() {
+void run_burst_sweep_case(const std::string& pattern_label,
+                          TmRingPerfPattern pattern,
+                          uint64_t address_stride) {
   const uint32_t burst_lengths[] = {1, 2, 4};
   const uint32_t expected_request_bytes[] = {128, 256, 512};
   const uint32_t outstanding_limit = 64;
   for (size_t index = 0; index < 3; ++index) {
     const uint32_t burst_len = burst_lengths[index];
     const uint32_t request_bytes = expected_request_bytes[index];
-    SCOPED_TRACE("burst_len=" + std::to_string(burst_len));
+    SCOPED_TRACE("pattern=" + pattern_label +
+                 " burst_len=" + std::to_string(burst_len));
     TmRingPerfCase perf_case = make_128kb_case(
-        "burst_private_l2hit_" + std::to_string(request_bytes) + "b",
-        TmRingPerfOp::READ, TmRingPerfPattern::STRIDED_PRIVATE,
-        kMultiVringBenchmarkMasters, burst_len);
-    perf_case.stride_bytes = kMultiVringBenchmarkLineBytes;
+        "burst_" + pattern_label + "_l2hit_" +
+            std::to_string(request_bytes) + "b",
+        TmRingPerfOp::READ, pattern, kMultiVringBenchmarkMasters, burst_len);
+    if (address_stride != 0) {
+      perf_case.stride_bytes = address_stride;
+    }
     perf_case.max_outstanding_per_master = outstanding_limit;
 
     PerfOverrides overrides;
@@ -944,16 +950,35 @@ void run_burst_sweep_case() {
     const uint64_t expected_responses =
         static_cast<uint64_t>(kMultiVringBenchmarkMasters) *
         perf_case.bytes_per_master / request_bytes;
+    EXPECT_GT(ha.l2_hit_transactions, uint64_t(0));
     EXPECT_EQ(uint64_t(0), ha.l2_miss_transactions);
     EXPECT_EQ(uint64_t(0),
               result.perf_result.memory_stats.accepted_read_bytes);
-    EXPECT_EQ(expected_responses, l2.responses_accepted);
-    EXPECT_EQ(expected_responses, l2.h_unicast_carriers);
-    EXPECT_EQ(uint64_t(0), l2.h_multicast_carriers);
-    EXPECT_EQ(uint64_t(0), l2.h_scatter_carriers);
-    expect_l2_carrier_size_bucket(l2, request_bytes, expected_responses);
+    EXPECT_GT(l2.responses_accepted, uint64_t(0));
+    EXPECT_LE(l2.responses_accepted, expected_responses);
+    EXPECT_EQ(expected_responses, l2.h_carrier_recipients);
+    EXPECT_EQ(l2.h_carriers,
+              l2.h_unicast_carriers + l2.h_multicast_carriers +
+                  l2.h_scatter_carriers);
+    if (pattern == TmRingPerfPattern::STRIDED_PRIVATE ||
+        pattern == TmRingPerfPattern::SEQUENTIAL_PRIVATE ||
+        (pattern == TmRingPerfPattern::SAME_LINE_SCATTER &&
+         request_bytes == kMultiVringBenchmarkLineBytes)) {
+      EXPECT_EQ(expected_responses, l2.responses_accepted);
+      EXPECT_EQ(expected_responses, l2.h_unicast_carriers);
+      EXPECT_EQ(uint64_t(0), l2.h_multicast_carriers);
+      EXPECT_EQ(uint64_t(0), l2.h_scatter_carriers);
+      expect_l2_carrier_size_bucket(l2, request_bytes, expected_responses);
+    } else if (pattern == TmRingPerfPattern::SAME_LINE_SCATTER) {
+      EXPECT_GT(l2.h_scatter_carriers, uint64_t(0));
+      EXPECT_EQ(uint64_t(0), l2.h_multicast_carriers);
+    } else {
+      EXPECT_GT(l2.h_multicast_carriers, uint64_t(0));
+      EXPECT_EQ(uint64_t(0), l2.h_scatter_carriers);
+      expect_l2_single_physical_carrier_size(l2, request_bytes);
+    }
     std::cout << format_perf_sweep_summary(
-        result, "burst", outstanding_limit);
+        result, "burst", pattern_label, outstanding_limit);
   }
 }
 
@@ -1095,8 +1120,22 @@ TEST(RingOutstandingSweep, PrivateNoMergeRead256B) {
   run_outstanding_sweep_case();
 }
 
-TEST(RingBurstSweep, PrivateL2HitRead) {
-  run_burst_sweep_case();
+TEST(RingBurstSweep, NoMergeL2HitRead) {
+  run_burst_sweep_case("nomerge", TmRingPerfPattern::STRIDED_PRIVATE,
+                       kMultiVringBenchmarkLineBytes);
+}
+
+TEST(RingBurstSweep, PrivateSequentialL2HitRead) {
+  run_burst_sweep_case("private", TmRingPerfPattern::SEQUENTIAL_PRIVATE, 0);
+}
+
+TEST(RingBurstSweep, SameLineScatterL2HitRead) {
+  run_burst_sweep_case("scatter", TmRingPerfPattern::SAME_LINE_SCATTER, 0);
+}
+
+TEST(RingBurstSweep, SharedL2HitRead) {
+  run_burst_sweep_case("shared", TmRingPerfPattern::SEQUENTIAL_SHARED,
+                       kMultiVringBenchmarkLineBytes);
 }
 
 TEST(RingAggregationWaveTest, SameLineScatterRead128B) {
