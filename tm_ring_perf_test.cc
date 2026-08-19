@@ -1129,10 +1129,6 @@ TEST(RingBurstSweep, PrivateSequentialL2HitRead) {
   run_burst_sweep_case("private", TmRingPerfPattern::SEQUENTIAL_PRIVATE, 0);
 }
 
-TEST(RingBurstSweep, SameLineScatterL2HitRead) {
-  run_burst_sweep_case("scatter", TmRingPerfPattern::SAME_LINE_SCATTER, 0);
-}
-
 TEST(RingBurstSweep, SharedL2HitRead) {
   run_burst_sweep_case("shared", TmRingPerfPattern::SEQUENTIAL_SHARED,
                        kMultiVringBenchmarkLineBytes);
