@@ -53,6 +53,10 @@ def validate_burst_records(records):
         ("pattern", "request_bytes"),
         fixed_fields=("osd_cfg",),
     )
+    for record in records:
+        if (record["pattern"] == "scatter" and
+                record["request_bytes"] not in (128, 256)):
+            raise ValueError("scatter supports 128B or 256B requests")
 
 
 def configure_request_axis(axis, records):
@@ -113,6 +117,18 @@ def plot_p99(records, output_path):
     plt.close(figure)
 
 
+def plot_hbm(records, output_path):
+    figure, axis = plt.subplots(figsize=(8.5, 5.2), dpi=150)
+    plot_pattern_metric(axis, records, "hbm_bpc")
+    configure_request_axis(axis, records)
+    axis.set_ylabel("HBM physical bandwidth (B/cycle)")
+    axis.set_title("Request Size / Burst vs HBM Physical Bandwidth")
+    set_nonnegative_y(axis, [record["hbm_bpc"] for record in records])
+    figure.tight_layout()
+    figure.savefig(str(output_path))
+    plt.close(figure)
+
+
 def plot_packet_counts(records, output_path):
     figure, axes = plt.subplots(3, 1, figsize=(8.5, 10.0), dpi=150,
                                sharex=True)
@@ -143,13 +159,15 @@ def generate_artifacts(records, output_dir):
 
     csv_path = output_dir / "burst_sweep_summary.csv"
     bandwidth_path = output_dir / "request_bytes_vs_bandwidth.png"
+    hbm_path = output_dir / "request_bytes_vs_hbm.png"
     p99_path = output_dir / "request_bytes_vs_p99.png"
     packet_path = output_dir / "request_bytes_vs_packet_counts.png"
     write_summary_csv(records, csv_path)
     plot_bandwidth(records, bandwidth_path)
+    plot_hbm(records, hbm_path)
     plot_p99(records, p99_path)
     plot_packet_counts(records, packet_path)
-    return [csv_path, bandwidth_path, p99_path, packet_path]
+    return [csv_path, bandwidth_path, hbm_path, p99_path, packet_path]
 
 
 def main(argv=None):

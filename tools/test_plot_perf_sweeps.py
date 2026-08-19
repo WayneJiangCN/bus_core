@@ -151,7 +151,18 @@ class BurstSweepPlotTest(unittest.TestCase):
             with self.assertRaisesRegex(ValueError, "did not pass"):
                 generate_burst_artifacts(records, directory)
 
-    def test_generator_writes_csv_and_three_png_charts(self):
+    def test_scatter_512b_is_rejected(self):
+        records = parse_burst_sweep_lines([
+            perf_line("burst", "burst_scatter_512b", 64, 4, 512,
+                      400.0, 100.0, 0, 16, 800, pattern="scatter"),
+        ])
+
+        with tempfile.TemporaryDirectory() as directory:
+            with self.assertRaisesRegex(
+                    ValueError, "scatter supports 128B or 256B"):
+                generate_burst_artifacts(records, directory)
+
+    def test_generator_writes_csv_and_four_png_charts(self):
         records = parse_burst_sweep_lines(
             perf_line(
                 "burst", f"burst_{pattern}_{size}b", 64,
@@ -169,6 +180,7 @@ class BurstSweepPlotTest(unittest.TestCase):
                 (256, 425.4 * scale, 358),
                 (512, 502.8 * scale, 598),
             )
+            if pattern != "scatter" or size != 512
         )
 
         with tempfile.TemporaryDirectory() as directory:
@@ -181,13 +193,14 @@ class BurstSweepPlotTest(unittest.TestCase):
                 {
                     "burst_sweep_summary.csv",
                     "request_bytes_vs_bandwidth.png",
+                    "request_bytes_vs_hbm.png",
                     "request_bytes_vs_p99.png",
                     "request_bytes_vs_packet_counts.png",
                 },
                 {path.name for path in outputs},
             )
             OutstandingSweepPlotTest._assert_artifacts(
-                self, outputs, 12, "pattern", "nomerge")
+                self, outputs, 11, "pattern", "nomerge")
 
 
 if __name__ == "__main__":

@@ -23,6 +23,7 @@ constexpr uint32_t kMultiVringBenchmarkMaxAicorePerVring = 4;
 constexpr uint32_t kMultiVringBenchmarkLineBytes = 512;
 constexpr uint32_t kMultiVringBenchmarkBeatBytes = 128;
 constexpr uint32_t kL2SweepPeakBytesPerCycle = 512;
+constexpr uint32_t kL2PathSweepOutstandingPerMaster = 128;
 constexpr uint32_t kMultiVringBenchmarkBYTES_PER_MASTER =  1024* 1024;// 1 MiB
 
 struct PerfSmokeResult {
@@ -44,6 +45,20 @@ struct PerfOverrides {
   uint32_t ddr_bandwidth_limit = 0;
   uint32_t ring_link_width_bytes = 0;
 };
+
+PerfOverrides make_l2_path_sweep_overrides(uint32_t hit_rate_pct) {
+  PerfOverrides overrides;
+  overrides.max_aicore_per_vring = kMultiVringBenchmarkMaxAicorePerVring;
+  overrides.home_agent_transaction_entries = 128;
+  overrides.home_agent_waiters_per_entry = 8;
+  overrides.has_l2_hit_rate_pct = true;
+  overrides.l2_hit_rate_pct = hit_rate_pct;
+  overrides.l2_buffer_depth = 64;
+  overrides.l2_response_latency = 64;
+  overrides.ddr_bandwidth_limit = 256;
+  overrides.ring_link_width_bytes = kMultiVringBenchmarkBeatBytes;
+  return overrides;
+}
 
 std::string perf_config_path() {
   const std::string paths[] = {
@@ -788,16 +803,11 @@ void run_l2_hit_rate_sweep_case(const std::string& pattern_label,
     TmRingPerfCase perf_case = make_128kb_case(
         name, TmRingPerfOp::READ, pattern, kMultiVringBenchmarkMasters, 2);
     perf_case.stride_bytes = address_stride;
+    perf_case.max_outstanding_per_master =
+        kL2PathSweepOutstandingPerMaster;
 
-    PerfOverrides overrides;
-    overrides.max_aicore_per_vring = 4;
-    overrides.home_agent_transaction_entries =256;
-    overrides.home_agent_waiters_per_entry = 8;
-    overrides.has_l2_hit_rate_pct = true;
-    overrides.l2_hit_rate_pct = hit_rate_pct;
-    overrides.l2_buffer_depth = 64;
-    overrides.l2_response_latency = 256;
-    overrides.ddr_bandwidth_limit = 256;
+    const PerfOverrides overrides =
+        make_l2_path_sweep_overrides(hit_rate_pct);
 
     const PerfSmokeResult result = run_perf_smoke(perf_case, overrides);
     expect_perf_block_complete(result, perf_case, false);
@@ -902,8 +912,10 @@ void run_burst_sweep_case(const std::string& pattern_label,
                           uint64_t address_stride) {
   const uint32_t burst_lengths[] = {1, 2, 4};
   const uint32_t expected_request_bytes[] = {128, 256, 512};
-  const uint32_t outstanding_limit = 64;
-  for (size_t index = 0; index < 3; ++index) {
+  const size_t burst_point_count =
+      pattern == TmRingPerfPattern::SAME_LINE_SCATTER ? 2 : 3;
+  const uint32_t outstanding_limit = kL2PathSweepOutstandingPerMaster;
+  for (size_t index = 0; index < burst_point_count; ++index) {
     const uint32_t burst_len = burst_lengths[index];
     const uint32_t request_bytes = expected_request_bytes[index];
     SCOPED_TRACE("pattern=" + pattern_label +
@@ -917,16 +929,7 @@ void run_burst_sweep_case(const std::string& pattern_label,
     }
     perf_case.max_outstanding_per_master = outstanding_limit;
 
-    PerfOverrides overrides;
-    overrides.max_aicore_per_vring = kMultiVringBenchmarkMaxAicorePerVring;
-    overrides.home_agent_transaction_entries = 512;
-    overrides.home_agent_waiters_per_entry = 8;
-    overrides.has_l2_hit_rate_pct = true;
-    overrides.l2_hit_rate_pct = 0;
-    overrides.l2_buffer_depth = 512;
-    overrides.l2_response_latency = 256;
-    overrides.ddr_bandwidth_limit = 256;
-    overrides.ring_link_width_bytes = kMultiVringBenchmarkBeatBytes;
+    const PerfOverrides overrides = make_l2_path_sweep_overrides(0);
 
     const PerfSmokeResult result = run_perf_smoke(perf_case, overrides);
     expect_perf_block_complete(result, perf_case, false);
@@ -964,9 +967,7 @@ void run_burst_sweep_case(const std::string& pattern_label,
               l2.h_unicast_carriers + l2.h_multicast_carriers +
                   l2.h_scatter_carriers);
     if (pattern == TmRingPerfPattern::STRIDED_PRIVATE ||
-        pattern == TmRingPerfPattern::SEQUENTIAL_PRIVATE ||
-        (pattern == TmRingPerfPattern::SAME_LINE_SCATTER &&
-         request_bytes == kMultiVringBenchmarkLineBytes)) {
+        pattern == TmRingPerfPattern::SEQUENTIAL_PRIVATE) {
       EXPECT_EQ(expected_responses, l2.responses_accepted);
       EXPECT_EQ(expected_responses, l2.h_unicast_carriers);
       EXPECT_EQ(uint64_t(0), l2.h_multicast_carriers);
@@ -1130,6 +1131,10 @@ TEST(RingBurstSweep, NoMergeL2MissRead) {
 
 TEST(RingBurstSweep, PrivateSequentialL2MissRead) {
   run_burst_sweep_case("private", TmRingPerfPattern::SEQUENTIAL_PRIVATE, 0);
+}
+
+TEST(RingBurstSweep, SameLineScatterL2MissRead) {
+  run_burst_sweep_case("scatter", TmRingPerfPattern::SAME_LINE_SCATTER, 0);
 }
 
 TEST(RingBurstSweep, SharedL2MissRead) {
