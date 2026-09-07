@@ -73,7 +73,6 @@ class TmRingL2BufferNode : public tm_engine::TmModule {
   bool issue_token_available_ = true;
   std::unordered_map<uint64_t, p_tm_pld_t> open_groups_;
   p_tm_pld_t frozen_summary_response_ = nullptr;
-  TmRingL2GroupSummary frozen_summary_;
   std::vector<TmRingL2GroupSummary> frozen_summaries_;
   p_tm_pld_t frozen_carrier_ = nullptr;
   uint32_t frozen_carrier_vring_ = 0;

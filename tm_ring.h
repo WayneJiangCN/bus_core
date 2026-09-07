@@ -12,8 +12,6 @@
 #include "cfg.h"
 #include "tm_clock.h"
 #include "tm_engine.h"
-#include "tm_inf.h"
-#include "tm_que.h"
 #include "tm_ring_l2_buffer_node.h"
 #include "tm_ring_pmu.h"
 #include "tm_ring_rbrg_l1.h"
@@ -59,8 +57,6 @@ class TmRingFabric : public tm_engine::TmModule {
   bool idle() override;
 
   void attach_master(uint32_t idx, p_tm_ring_biu_t biu);
-  void attach_master(uint32_t idx, p_tm_com_inf_t inf);
-  void attach_target(uint32_t idx, p_tm_com_inf_t inf);
   void attach_target(uint32_t idx, p_tm_mem_t mem);
 
   TmRingPmuSnapshot snapshot_pmu(uint64_t cycle) const;
@@ -92,7 +88,6 @@ class TmRingFabric : public tm_engine::TmModule {
   // Topology owns address/node mapping. DDR/L2 service limits live in TmMem.
   std::shared_ptr<TmRingTopology> topology_;
   void init_topology();
-  void clear_components();
   TmRingDomain create_domain(TmRingDomainType type, uint32_t ring_id,
                              uint32_t station_count);
   void attach_domain(TmRingDomain* domain);
@@ -110,7 +105,6 @@ class TmRingFabric : public tm_engine::TmModule {
   void bind_l2_buffer_nodes();
   void bind_rbrgs();
   void attach_l2_buffers();
-  void bind_master_niu(uint32_t idx, p_tm_ring_m_niu_t niu);
 };
 
 using tm_ring_fabric_t = TmRingFabric;
@@ -165,12 +159,11 @@ inline p_tm_ring_cfg_t tm_make_ring_cfg(std::string name) {
   return ring_cfg;
 }
 
-inline uint32_t tm_ring_endpoint_queue_depth(cfg::p_cfg_t cfg,
-                                             const std::string& key) {
+inline uint32_t tm_ring_positive_cfg(cfg::p_cfg_t cfg,
+                                     const std::string& key) {
   const int value = cfg->get_cfg<int>(key);
-  if (value < 0) {
-    throw std::invalid_argument(
-        "Ring endpoint queue depth must be nonnegative");
+  if (value <= 0) {
+    throw std::invalid_argument(key + " must be positive");
   }
   return static_cast<uint32_t>(value);
 }
@@ -186,8 +179,8 @@ inline p_tm_ring_cfg_t tm_make_ring_cfg(std::string name, cfg::p_cfg_t cfg) {
     throw std::invalid_argument("num_masters must be positive");
   }
   ring_cfg->num_masters = static_cast<uint32_t>(num_masters);
-  ring_cfg->rd_rsp_port_num = static_cast<uint32_t>(
-      cfg->get_cfg<int>("BIU.bus_read_port_num"));
+  ring_cfg->rd_rsp_port_num =
+      tm_ring_positive_cfg(cfg, "BIU.bus_read_port_num");
   ring_cfg->enable_home_agent =
       cfg->get_cfg<int>("RING.enable_home_agent") == 1;
   ring_cfg->home_agent_transaction_entries = static_cast<uint32_t>(
@@ -224,14 +217,14 @@ inline p_tm_ring_cfg_t tm_make_ring_cfg(std::string name, cfg::p_cfg_t cfg) {
   const uint32_t interleave_hash_seed =
       static_cast<uint32_t>(cfg->get_cfg<int>("RING.interleave_hash_seed"));
   const uint32_t target_width_bytes =
-      static_cast<uint32_t>(cfg->get_cfg<int>("RING.target_width_bytes"));
+      tm_ring_positive_cfg(cfg, "RING.target_width_bytes");
   const uint32_t target_fifo_depth =
-      static_cast<uint32_t>(cfg->get_cfg<int>("RING.target_fifo_depth"));
+      tm_ring_positive_cfg(cfg, "RING.target_fifo_depth");
 
   ring_cfg->ring_link_latency =
       static_cast<uint32_t>(cfg->get_cfg<int>("RING.ring_link_latency"));
   ring_cfg->ring_link_width_bytes =
-      static_cast<uint32_t>(cfg->get_cfg<int>("RING.ring_link_width_bytes"));
+      tm_ring_positive_cfg(cfg, "RING.ring_link_width_bytes");
   const int rbrg_queue_depth = cfg->get_cfg<int>("RING.rbrg_queue_depth");
   if (rbrg_queue_depth <= 0) {
     throw std::invalid_argument("RBRG queue depth must be positive");
@@ -254,9 +247,9 @@ inline p_tm_ring_cfg_t tm_make_ring_cfg(std::string name, cfg::p_cfg_t cfg) {
           node_type == static_cast<uint32_t>(TmRingNodeType::RBRG_H);
       queue_depths.inject[subnet] =
           is_rbrg ? ring_cfg->rbrg_queue_depth
-                  : tm_ring_endpoint_queue_depth(
-                        cfg, field_prefix + "inject_depth");
-      queue_depths.eject[subnet] = tm_ring_endpoint_queue_depth(
+                  : tm_ring_positive_cfg(cfg,
+                                         field_prefix + "inject_depth");
+      queue_depths.eject[subnet] = tm_ring_positive_cfg(
           cfg, field_prefix + "eject_depth");
     }
   }

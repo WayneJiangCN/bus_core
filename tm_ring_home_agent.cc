@@ -4,6 +4,7 @@
 #include <iterator>
 #include <limits>
 #include <memory>
+#include <stdexcept>
 #include <vector>
 
 TmRingHomeAgent::TmRingHomeAgent(const TmRingHomeAgentConfig& cfg,
@@ -318,28 +319,31 @@ TmRingL2ResponseCandidate TmRingHomeAgent::front_l2_response() {
 void TmRingHomeAgent::commit_l2_response(
     const TmRingL2AcceptResult& result) {
   if (!result.accepted()) {
-    return;
+    throw std::logic_error(
+        "Home Agent cannot commit a rejected L2 response");
   }
 
   const TmRingL2ResponseCandidate candidate = front_l2_response();
   if (candidate.response == nullptr) {
-    return;
+    throw std::logic_error(
+        "Home Agent has no L2 response candidate to commit");
   }
 
   const TmHaTxnIter transaction_it = response_candidate_;
   TmHaReadTxn& transaction = *transaction_it;
   if (result.is_group()) {
     if (!candidate.fanout_eligible || result.group_token == 0) {
-      return;
+      throw std::logic_error("Invalid L2 fanout group commit");
     }
     if (result.status == TmRingL2AcceptStatus::ACCEPTED_NEW_GROUP) {
       if (candidate.open_group_token != 0) {
-        return;
+        throw std::logic_error(
+            "L2 fanout group already exists for this transaction");
       }
     } else if (result.status == TmRingL2AcceptStatus::MERGED_GROUP) {
       if (candidate.open_group_token == 0 ||
           result.group_token != candidate.open_group_token) {
-        return;
+        throw std::logic_error("L2 fanout group token mismatch");
       }
     }
     transaction.open_group_token = result.group_token;
@@ -368,12 +372,12 @@ void TmRingHomeAgent::commit_l2_response(
   }
 }
 
-bool TmRingHomeAgent::consume_l2_group_summary(
+void TmRingHomeAgent::consume_l2_group_summary(
     const TmRingL2GroupSummary& summary) {
   if (summary.group_token == 0 || summary.recipient_count == 0 ||
       (summary.mode != TmRingFanoutMode::MULTICAST &&
        summary.mode != TmRingFanoutMode::SCATTER)) {
-    return false;
+    throw std::logic_error("Invalid L2 fanout group summary");
   }
 
   TmHaTxnIter transaction_it = entries_.begin();
@@ -383,7 +387,7 @@ bool TmRingHomeAgent::consume_l2_group_summary(
     }
   }
   if (transaction_it == entries_.end()) {
-    return false;
+    throw std::logic_error("L2 fanout group summary has no Home Agent owner");
   }
 
   TmHaReadTxn& transaction = *transaction_it;
@@ -393,7 +397,6 @@ bool TmRingHomeAgent::consume_l2_group_summary(
   if (transaction.next_response_waiter == transaction.waiters.size()) {
     erase_transaction(transaction_it);
   }
-  return true;
 }
 
 uint64_t TmRingHomeAgent::line_base(uint64_t addr) const {

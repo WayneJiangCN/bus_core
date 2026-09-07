@@ -33,16 +33,6 @@ const char* perf_pattern_name(TmRingPerfPattern pattern) {
   return "unknown";
 }
 
-const char* perf_run_mode_name(TmRingPerfRunMode mode) {
-  switch (mode) {
-    case TmRingPerfRunMode::FREE_RUNNING:
-      return "free_running";
-    case TmRingPerfRunMode::AGGREGATION_WAVE:
-      return "aggregation_wave";
-  }
-  return "unknown";
-}
-
 const char* subnet_name(TmRingSubnet subnet) {
   switch (subnet) {
     case TmRingSubnet::REQ:
@@ -193,7 +183,7 @@ std::string tm_ring_format_perf_result(const TmRingPerfResult& result) {
       << " active_masters=" << result.perf_case.active_masters
       << " bytes_per_master=" << result.perf_case.bytes_per_master
       << " burst_len=" << result.perf_case.burst_len
-      << " run_mode=" << perf_run_mode_name(result.perf_case.run_mode)
+      << " run_mode=free_running"
       << " transfer_model=packet_cut_through_approx"
       << " max_aicore_per_vring="
       << result.perf_case.max_aicore_per_vring

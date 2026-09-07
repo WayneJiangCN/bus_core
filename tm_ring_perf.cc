@@ -391,11 +391,6 @@ std::vector<TmRingPerfTxn> tm_ring_build_perf_trace(
     throw std::invalid_argument(
         "shared and same-line scatter traffic must be read-only");
   }
-  if (perf_case.run_mode == TmRingPerfRunMode::AGGREGATION_WAVE &&
-      perf_case.op != TmRingPerfOp::READ) {
-    throw std::invalid_argument(
-        "aggregation wave traffic must be read-only");
-  }
   if (perf_case.pattern == TmRingPerfPattern::SEQUENTIAL_SHARED &&
       perf_case.stride_bytes == 0) {
     throw std::invalid_argument("shared read stride must be nonzero");

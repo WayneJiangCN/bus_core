@@ -36,8 +36,6 @@ class TmRingMemPort : public tm_engine::TmModule {
 
   // Bind target id and its Ring topology. TmMem owns backend service only.
   void attach(uint32_t target_id, std::shared_ptr<TmRingTopology> topology);
-  // Bind the real TmMem interface; inf_ carries both requests and responses.
-  void attach(p_tm_com_inf_t inf);
   void attach(p_tm_mem_t mem);
   void attach_l2_buffer(p_tm_ring_l2_buffer_node_t l2_buffer);
   p_tm_ring_node_interface_t node_interface() const;
@@ -72,6 +70,7 @@ class TmRingMemPort : public tm_engine::TmModule {
   bool has_response(PldCmd cmd, uint32_t lane = 0) const;
   p_tm_pld_t front_response(PldCmd cmd, uint32_t lane = 0) const;
   void pop_response(PldCmd cmd, uint32_t lane = 0);
+  void retire_pending_read();
   uint32_t response_channel(PldCmd cmd, uint32_t lane = 0) const;
 
   uint32_t target_id_ = 0;

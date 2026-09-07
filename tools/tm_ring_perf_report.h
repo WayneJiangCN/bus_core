@@ -3,7 +3,7 @@
 
 #include <string>
 
-#include "tm_ring_perf.h"
+#include "../tm_ring_perf.h"
 
 std::string tm_ring_format_perf_result(const TmRingPerfResult& result);
 

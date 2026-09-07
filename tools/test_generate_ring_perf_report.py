@@ -64,51 +64,6 @@ def multi_ring_perf_block():
     )
 
 
-def aggregation_wave_perf_block():
-    return (
-        perf_block("wave_shared_128b", 1, 1.0)
-        .replace(
-            "burst_len=1",
-            "burst_len=1 run_mode=aggregation_wave "
-            "max_aicore_per_vring=8 home_agent_waiters_per_entry=18 "
-            "l2_response_latency=256",
-        )
-        .replace(
-            "scaling_efficiency=0.900000",
-            "scaling_efficiency=0.000000 scaling_efficiency_available=0",
-        )
-        .replace(
-            "write_hazard_stalls=0",
-            "write_hazard_stalls=0 rd_merged_pending=56 "
-            "rd_merged_inflight=0 rd_merged_responding=0 "
-            "table_full_stalls=0 waiter_full_stalls=0 "
-            "aggregation_closed_stalls=0",
-        )
-        .replace("carrier_512b=0", "carrier_512b=0 carrier_other=0")
-        .replace(
-            "PERF_THEORY total_useful_bytes=1048576",
-            "PERF_THEORY_NO_MERGE total_useful_bytes=1048576 "
-            "physical_packets=128 fabric_min_cycles=131072 "
-            "fabric_ceiling_bpc=8.000000 "
-            "measured_over_fabric_ceiling=0.125000 "
-            "assumption=finite_trace_packet_slot_upper_bound\n"
-            "PERF_THEORY_IDEAL_MERGE total_useful_bytes=1048576 "
-            "logical_read_requests=64 backend_reads=8 "
-            "backend_read_saved=56 h_carriers=8 "
-            "h_unicast_carriers=0 h_multicast_carriers=8 "
-            "h_scatter_carriers=0 h_carrier_recipients=64 v_carriers=8",
-        )
-        .replace(
-            "PERF_RESULT status=PASS",
-            "PERF_THEORY total_useful_bytes=1048576 physical_packets=8 "
-            "fabric_min_cycles=65536 fabric_ceiling_bpc=16.0 "
-            "measured_over_fabric_ceiling=0.500000 "
-            "assumption=finite_trace_packet_slot_upper_bound\n"
-            "PERF_RESULT status=PASS",
-        )
-    )
-
-
 def single_scenario_metric_records():
     return """\
 PERF_MEASUREMENT start_cycle=10 end_cycle=109 window_cycles=100 measurement_valid=1
@@ -277,25 +232,6 @@ class RingPerfParserTest(unittest.TestCase):
         )
         self.assertEqual(
             scenario.value("FANOUT_CROSS_RING", "v_ring_carriers"), "3"
-        )
-
-    def test_parses_aggregation_mode_and_dual_theory_sections(self):
-        scenario = parse_perf_results(aggregation_wave_perf_block())[0]
-
-        self.assertEqual(
-            scenario.value("CONFIG", "run_mode"), "aggregation_wave"
-        )
-        self.assertEqual(
-            scenario.number("CONFIG", "l2_response_latency"), 256
-        )
-        self.assertEqual(
-            scenario.number("HOME_AGENT", "rd_merged_pending"), 56
-        )
-        self.assertEqual(
-            scenario.number("L2_BUFFER", "carrier_other"), 0
-        )
-        self.assertEqual(
-            scenario.number("THEORY_NO_MERGE", "physical_packets"), 128
         )
 
     def test_preserves_single_scenario_metric_records_independently(self):
@@ -528,23 +464,6 @@ class RingPerfHtmlTest(unittest.TestCase):
         self.assertIn("V-Ring 载体（RBRG H_TO_V_DAT）", document)
         self.assertIn("段包节省", document)
         self.assertFalse(has_external_script(document))
-
-    def test_separates_aggregation_validation_from_throughput_comparison(self):
-        scenarios = parse_perf_results(
-            perf_block("free_running_read", 1, 8.0)
-            + aggregation_wave_perf_block()
-        )
-        document = render_html(scenarios, "mixed.txt")
-
-        self.assertIn("同步聚合验证", document)
-        self.assertIn("wave_shared_128b", document)
-        self.assertIn("预期 / 实际 H carrier", document)
-        self.assertIn("N/A", document)
-        bandwidth = document.split('<section id="bandwidth">', 1)[1].split(
-            "</section>", 1
-        )[0]
-        self.assertIn("free_running_read", bandwidth)
-        self.assertNotIn("wave_shared_128b", bandwidth)
 
     def test_external_script_detector_allows_inline_script(self):
         self.assertFalse(

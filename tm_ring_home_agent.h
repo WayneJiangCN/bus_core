@@ -86,7 +86,7 @@ class TmRingHomeAgent {
   bool has_l2_response();
   TmRingL2ResponseCandidate front_l2_response();
   void commit_l2_response(const TmRingL2AcceptResult& result);
-  bool consume_l2_group_summary(const TmRingL2GroupSummary& summary);
+  void consume_l2_group_summary(const TmRingL2GroupSummary& summary);
 
  private:
   struct TmHaWaiter {

@@ -28,6 +28,10 @@ void validate_ring_config(const p_tm_ring_cfg_t& cfg) {
   if (cfg->rbrg_queue_depth == 0 || cfg->rbrg_width_bytes == 0) {
     throw std::invalid_argument("RBRG queue depth and width must be nonzero");
   }
+  if (cfg->ring_link_width_bytes == 0 || cfg->rd_rsp_port_num == 0) {
+    throw std::invalid_argument(
+        "Ring link width and response port count must be nonzero");
+  }
 
   if (cfg->targets.empty()) {
     throw std::invalid_argument("Ring must have at least one target");
@@ -84,7 +88,13 @@ void validate_ring_config(const p_tm_ring_cfg_t& cfg) {
   }
 
   for (const p_tm_ring_target_cfg_t& target : cfg->targets) {
-    if (target == nullptr || target->sector_size == 0 ||
+    if (target == nullptr || target->width == 0 ||
+        target->rd_req_fifo_depth == 0 || target->wr_req_fifo_depth == 0 ||
+        target->wr_dat_fifo_depth == 0) {
+      throw std::invalid_argument(
+          "Each Ring target must have nonzero width and FIFO depths");
+    }
+    if (target->sector_size == 0 ||
         target->sector_size != sector_size) {
       throw std::invalid_argument(
           "Each Ring target must use the configured sector size");
@@ -125,7 +135,6 @@ TmRingFabric::TmRingFabric(p_tm_clk_t clk, p_tm_ring_cfg_t cfg)
 void TmRingFabric::config() {
   pmu_ = std::make_shared<TmRingPmu>();
   init_topology();
-  clear_components();
   h_ring_ = create_domain(TmRingDomainType::H_RING, 0,
                           topology_->h_ring_station_count());
   for (uint32_t ring = 0; ring < topology_->v_ring_count(); ++ring) {
@@ -152,15 +161,6 @@ void TmRingFabric::config() {
 void TmRingFabric::init_topology() {
   topology_ = std::make_shared<TmRingTopology>();
   topology_->config(cfg_);
-}
-
-void TmRingFabric::clear_components() {
-  master_nius_.clear();
-  mem_ports_.clear();
-  l2_buffer_nodes_.clear();
-  h_ring_ = TmRingDomain();
-  v_rings_.clear();
-  rbrgs_.clear();
 }
 
 TmRingFabric::TmRingDomain TmRingFabric::create_domain(
@@ -316,17 +316,11 @@ void TmRingFabric::create_rbrgs() {
 
 void TmRingFabric::bind_master_nius() {
   for (uint32_t i = 0; i < master_nius_.size(); ++i) {
-    bind_master_niu(i, master_nius_[i]);
+    const p_tm_ring_m_niu_t& niu = master_nius_[i];
+    niu->attach(topology_);
+    station(topology_->master_location(i))->bind_node_interface(
+        niu->node_interface());
   }
-}
-
-void TmRingFabric::bind_master_niu(uint32_t idx,
-                                   p_tm_ring_m_niu_t niu) {
-  master_nius_[idx] = niu;
-
-  niu->attach(topology_);
-  station(topology_->master_location(idx))->bind_node_interface(
-      niu->node_interface());
 }
 
 void TmRingFabric::bind_mem_ports() {
@@ -460,20 +454,9 @@ uint32_t TmRingFabric::rbrg_width_bytes() const {
 }
 
 void TmRingFabric::attach_master(uint32_t idx, p_tm_ring_biu_t biu) {
-  if (biu != nullptr) {
-    attach_master(idx, biu->out_intf_);
-  }
-}
-
-void TmRingFabric::attach_master(uint32_t idx, p_tm_com_inf_t inf) {
-  if (idx < master_nius_.size() && inf != nullptr) {
-    master_nius_[idx]->attach(inf);
-  }
-}
-
-void TmRingFabric::attach_target(uint32_t idx, p_tm_com_inf_t inf) {
-  if (idx < mem_ports_.size() && inf != nullptr) {
-    mem_ports_[idx]->attach(inf);
+  if (idx < master_nius_.size() && biu != nullptr &&
+      biu->out_intf_ != nullptr) {
+    master_nius_[idx]->attach(biu->out_intf_);
   }
 }
 

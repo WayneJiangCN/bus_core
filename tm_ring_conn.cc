@@ -8,10 +8,9 @@ TmRingConn::TmRingConn(
     const std::string& name, p_tm_clk_t clk, uint32_t latency,
     uint32_t width_bytes, uint32_t dst_station, TmRingPortDir dst_dir,
     TmRingConnPmuPort pmu)
-    : TmModule(name), latency_(latency), dst_station_(dst_station),
-      dst_dir_(dst_dir), pmu_(pmu) {
+    : TmModule(name), latency_(latency), width_bytes_(width_bytes),
+      dst_station_(dst_station), dst_dir_(dst_dir), pmu_(pmu) {
   pipeline_depth_ = std::max<uint32_t>(1, latency_ + 1);
-  width_bytes_ = std::max<uint32_t>(1, width_bytes);
 
   slot_pipelines_.clear();
   const uint32_t lanes = tm_ring_subnet_count();

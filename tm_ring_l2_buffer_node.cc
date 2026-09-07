@@ -47,7 +47,6 @@ void TmRingL2BufferNode::reset() {
   issue_token_available_ = true;
   open_groups_.clear();
   frozen_summary_response_ = nullptr;
-  frozen_summary_ = TmRingL2GroupSummary();
   frozen_summaries_.clear();
   frozen_carrier_ = nullptr;
   frozen_carrier_vring_ = 0;
@@ -167,8 +166,8 @@ TmRingL2AcceptResult TmRingL2BufferNode::accept_response(
 }
 
 std::vector<TmRingL2GroupSummary> TmRingL2BufferNode::take_frozen_summaries() {
-  std::vector<TmRingL2GroupSummary> summaries = frozen_summaries_;
-  frozen_summaries_.clear();
+  std::vector<TmRingL2GroupSummary> summaries;
+  summaries.swap(frozen_summaries_);
   return summaries;
 }
 
@@ -343,12 +342,13 @@ void TmRingL2BufferNode::freeze_fanout_group(p_tm_pld_t envelope) {
 
   envelope->ring_fanout->active_on_ring = false;
   envelope->ring_fanout->pending_stations = 0;
-  frozen_summary_.group_token = group_token;
-  frozen_summary_.mode = envelope->ring_fanout->mode;
-  frozen_summary_.recipient_count = static_cast<uint32_t>(
+  TmRingL2GroupSummary summary;
+  summary.group_token = group_token;
+  summary.mode = envelope->ring_fanout->mode;
+  summary.recipient_count = static_cast<uint32_t>(
       envelope->ring_fanout->recipients.size());
   frozen_summary_response_ = envelope;
-  frozen_summaries_.push_back(frozen_summary_);
+  frozen_summaries_.push_back(summary);
   open_groups_.erase(group_it);
 }
 
@@ -571,7 +571,6 @@ void TmRingL2BufferNode::service() {
   if (logical_response_complete) {
     if (is_fanout_group) {
       frozen_summary_response_ = nullptr;
-      frozen_summary_ = TmRingL2GroupSummary();
     }
     response_q_->pop_front();
     response_count_--;

@@ -331,10 +331,6 @@ def _optional_number(scenario, section, key, default=0):
     return default if value is None else _parse_number(value)
 
 
-def _run_mode(scenario):
-    return scenario.value("CONFIG", "run_mode", "free_running")
-
-
 def _theory_number(scenario, section, key):
     value = scenario.value(section, key)
     if value is None:
@@ -1627,107 +1623,6 @@ def _bottleneck_section(scenarios):
     ).format(body)
 
 
-def _aggregation_wave_section(scenarios):
-    waves = [
-        scenario
-        for scenario in scenarios
-        if _run_mode(scenario) == "aggregation_wave"
-    ]
-    if not waves:
-        body = '<div class="empty">输入中没有同步 wave 聚合场景。</div>'
-    else:
-        rows = []
-        for scenario in waves:
-            expected_h = _theory_number(
-                scenario, "THEORY_IDEAL_MERGE", "h_carriers"
-            )
-            expected_v = _theory_number(
-                scenario, "THEORY_IDEAL_MERGE", "v_carriers"
-            )
-            actual_v = scenario.value("FANOUT_CROSS_RING", "v_ring_carriers")
-            actual_v_text = "N/A" if actual_v is None else _format_number(
-                _parse_number(actual_v)
-            )
-            admission_stalls = sum(
-                _optional_number(scenario, "HOME_AGENT", key)
-                for key in (
-                    "table_full_stalls",
-                    "waiter_full_stalls",
-                    "aggregation_closed_stalls",
-                )
-            )
-            merge_phases = "{}/{}/{}".format(
-                _optional_number(scenario, "HOME_AGENT", "rd_merged_pending"),
-                _optional_number(scenario, "HOME_AGENT", "rd_merged_inflight"),
-                _optional_number(
-                    scenario, "HOME_AGENT", "rd_merged_responding"
-                ),
-            )
-            rows.append(
-                (
-                    '<tr><th>{}</th><td>{}</td><td>{} / {}</td>'
-                    '<td>{} / {}</td><td>{} / {}</td><td>{} / {}</td>'
-                    '<td>{} / {}</td><td>{}</td><td>{}</td><td>{}</td>'
-                    '</tr>'
-                ).format(
-                    html_lib.escape(scenario.case_name),
-                    html_lib.escape(scenario.value("CONFIG", "pattern")),
-                    _format_number(expected_h),
-                    _format_number(scenario.number("L2_BUFFER", "h_carriers")),
-                    _format_number(expected_v),
-                    actual_v_text,
-                    _format_number(
-                        _theory_number(
-                            scenario,
-                            "THEORY_IDEAL_MERGE",
-                            "backend_read_saved",
-                        )
-                    ),
-                    _format_number(
-                        scenario.number("HOME_AGENT", "backend_read_saved")
-                    ),
-                    _format_number(
-                        _theory_number(
-                            scenario,
-                            "THEORY_IDEAL_MERGE",
-                            "h_multicast_carriers",
-                        )
-                    ),
-                    _format_number(
-                        scenario.number("L2_BUFFER", "h_multicast_carriers")
-                    ),
-                    _format_number(
-                        _theory_number(
-                            scenario,
-                            "THEORY_IDEAL_MERGE",
-                            "h_scatter_carriers",
-                        )
-                    ),
-                    _format_number(
-                        scenario.number("L2_BUFFER", "h_scatter_carriers")
-                    ),
-                    merge_phases,
-                    _format_number(admission_stalls),
-                    _scaling_efficiency_text(scenario),
-                )
-            )
-        body = (
-            '<div class="table-wrap"><table><thead><tr>'
-            '<th>场景</th><th>Pattern</th><th>预期 / 实际 H carrier</th>'
-            '<th>预期 / 实际 V carrier</th><th>预期 / 实际后端读节省</th>'
-            '<th>预期 / 实际 multicast</th><th>预期 / 实际 scatter</th>'
-            '<th>HA merge P/I/R</th><th>HA admission stalls</th>'
-            '<th>扩展效率</th>'
-            '</tr></thead><tbody>{}</tbody></table></div>'
-        ).format("".join(rows))
-    return (
-        '<section id="aggregation-wave"><div class="section-heading">'
-        '<h2>同步聚合验证</h2>'
-        '<p>短 trace 只验证 carrier 合并，不参与持续吞吐排名。</p>'
-        '</div>{}</section>'
-    ).format(body)
-
-
 def _details_section(scenarios):
     rows = []
     raw = []
@@ -1795,16 +1690,9 @@ def render_html(scenarios, source_name):
         raise PerfReportError("cannot render an empty scenario list")
 
     passed = sum(1 for scenario in scenarios if _scenario_passes(scenario))
-    free_running = [
-        scenario for scenario in scenarios if _run_mode(scenario) == "free_running"
-    ]
-    best = (
-        max(
-            free_running,
-            key=lambda scenario: scenario.number("BANDWIDTH", "end_to_end_bpc"),
-        )
-        if free_running
-        else None
+    best = max(
+        scenarios,
+        key=lambda scenario: scenario.number("BANDWIDTH", "end_to_end_bpc"),
     )
     summary = "".join(
         (
@@ -1812,12 +1700,10 @@ def render_html(scenarios, source_name):
             _metric_card("PASS", passed, "其余 {}".format(len(scenarios) - passed)),
             _metric_card(
                 "最高端到端带宽",
-                "N/A"
-                if best is None
-                else "{} B/cycle".format(
+                "{} B/cycle".format(
                     _format_number(best.number("BANDWIDTH", "end_to_end_bpc"))
                 ),
-                "无 free-running 场景" if best is None else best.case_name,
+                best.case_name,
             ),
             _metric_card("输入", source_name, "原始 TXT 可追溯"),
         )
@@ -1987,14 +1873,11 @@ pre { overflow:auto; padding:12px; background:#151d21; color:#dbe4e8; font-size:
     body = "".join(
         (
             '<div class="metrics">{}</div>'.format(summary),
-            _scenario_profile_section(free_running)
-            if free_running
-            else "",
-            _bandwidth_section(free_running) if free_running else "",
-            _latency_section(free_running) if free_running else "",
-            _shared_section(free_running),
-            _bottleneck_section(free_running),
-            _aggregation_wave_section(scenarios),
+            _scenario_profile_section(scenarios),
+            _bandwidth_section(scenarios),
+            _latency_section(scenarios),
+            _shared_section(scenarios),
+            _bottleneck_section(scenarios),
             _details_section(scenarios),
         )
     )

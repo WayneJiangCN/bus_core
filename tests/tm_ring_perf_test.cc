@@ -7,11 +7,11 @@
 #include <sstream>
 #include <vector>
 
-#include "tm_ring.h"
-#include "tm_ring_perf.h"
-#include "tm_ring_perf_master.h"
-#include "tm_ring_perf_report.h"
-#include "tm_ring_pmu.h"
+#include "../tm_ring.h"
+#include "../tm_ring_perf.h"
+#include "../tm_ring_perf_master.h"
+#include "../tm_ring_pmu.h"
+#include "../tools/tm_ring_perf_report.h"
 
 namespace {
 
@@ -159,19 +159,6 @@ PerfSmokeResult run_perf_smoke(const TmRingPerfCase& perf_case,
     master_traces[txn.master_port].push_back(txn);
   }
 
-  std::shared_ptr<TmRingPerfWaveCoordinator> wave_coordinator;
-  if (effective_case.run_mode == TmRingPerfRunMode::AGGREGATION_WAVE) {
-    const size_t transactions_per_master = master_traces.front().size();
-    for (const std::vector<TmRingPerfTxn>& master_trace : master_traces) {
-      if (master_trace.size() != transactions_per_master) {
-        ADD_FAILURE() << "aggregation wave traces must have equal lengths";
-        return PerfSmokeResult();
-      }
-    }
-    wave_coordinator = std::make_shared<TmRingPerfWaveCoordinator>(
-        effective_case.active_masters);
-  }
-
   std::vector<p_pem_biu_t> bius;
   std::vector<std::shared_ptr<TmRingPerfMaster>> masters;
   for (uint32_t master_id = 0; master_id < perf_case.active_masters;
@@ -190,7 +177,7 @@ PerfSmokeResult run_perf_smoke(const TmRingPerfCase& perf_case,
 
     auto master = std::make_shared<TmRingPerfMaster>();
     master->config("perf_master" + std::to_string(master_id), clk,
-                   master_id, master_traces[master_id], wave_coordinator,
+                   master_id, master_traces[master_id],
                    effective_case.max_outstanding_per_master);
     master->attach(biu);
     master->build();
@@ -655,139 +642,6 @@ void run_multi_vring_no_merge_read_benchmark(
   expect_perf_block_complete(result, perf_case);
 }
 
-void run_aggregation_wave_test(
-    const std::string& name, TmRingPerfPattern pattern, uint32_t masters,
-    uint32_t max_aicore_per_vring, uint32_t burst_len,
-    uint64_t address_stride, uint32_t l2_response_latency,
-    PerfAggregationExpectation expectation) {
-  ASSERT_GT(max_aicore_per_vring, uint32_t(0));
-  ASSERT_GT(l2_response_latency, uint32_t(0));
-  const uint32_t request_bytes =
-      burst_len * kMultiVringBenchmarkBeatBytes;
-  const uint32_t expected_vrings =
-      (masters + max_aicore_per_vring - 1) / max_aicore_per_vring;
-  ASSERT_GT(expected_vrings, uint32_t(1));
-  ASSERT_EQ(uint64_t(0), uint64_t(4 * 1024) % request_bytes);
-  if (expectation == PerfAggregationExpectation::SCATTER) {
-    ASSERT_EQ(uint32_t(0),
-              kMultiVringBenchmarkLineBytes % request_bytes);
-    const uint32_t recipients_per_line =
-        kMultiVringBenchmarkLineBytes / request_bytes;
-    ASSERT_EQ(uint32_t(0), masters % recipients_per_line);
-    ASSERT_EQ(uint32_t(0),
-              max_aicore_per_vring % recipients_per_line);
-  }
-
-  TmRingPerfCase perf_case;
-  perf_case.name = name;
-  perf_case.op = TmRingPerfOp::READ;
-  perf_case.pattern = pattern;
-  perf_case.active_masters = masters;
-  perf_case.bytes_per_master = 4 * 1024;
-  perf_case.burst_len = burst_len;
-  perf_case.read_base = 64ull * 1024 * 1024;
-  perf_case.stride_bytes = address_stride;
-  perf_case.drain_cycle_limit = 2000000;
-  perf_case.run_mode = TmRingPerfRunMode::AGGREGATION_WAVE;
-
-  PerfOverrides overrides;
-  overrides.max_aicore_per_vring = max_aicore_per_vring;
-  overrides.home_agent_waiters_per_entry = masters;
-  overrides.l2_response_latency = l2_response_latency;
-  const PerfSmokeResult result = run_perf_smoke(perf_case, overrides);
-  const TmRingPerfEstimate& ideal = result.perf_result.estimate;
-  const TmRingPerfEstimate& no_merge = result.perf_result.no_merge_estimate;
-  const TmRingHomeAgentStats& ha = result.perf_result.ring_pmu.ha.total;
-  const TmRingL2BufferStats& l2 = result.perf_result.ring_pmu.l2.total;
-  const uint64_t actual_v_carriers =
-      v_ring_dat_carriers(result.perf_result);
-
-  std::ostringstream diagnostic;
-  diagnostic << "l2_response_latency=" << l2_response_latency
-             << " backend_reads(no_merge/ideal/actual)="
-             << no_merge.backend_reads << "/" << ideal.backend_reads << "/"
-             << ha.rd_entries_allocated
-             << " backend_saved(ideal/actual)="
-             << ideal.backend_read_saved << "/" << ha.backend_read_saved
-             << " merged(pending/inflight/responding)="
-             << ha.rd_merged_pending << "/" << ha.rd_merged_inflight << "/"
-             << ha.rd_merged_responding
-             << " admission_stalls(table/waiter/closed)="
-             << ha.table_full_stall_cycles << "/" << ha.waiter_full_stall_cycles
-             << "/" << ha.aggregation_closed_stall_cycles
-             << " h_carriers(no_merge/ideal/actual)=" << no_merge.h_carriers
-             << "/" << ideal.h_carriers << "/" << l2.h_carriers
-             << " h_multicast(ideal/actual)="
-             << ideal.h_multicast_carriers << "/" << l2.h_multicast_carriers
-             << " h_scatter(ideal/actual)=" << ideal.h_scatter_carriers
-             << "/" << l2.h_scatter_carriers
-             << " h_recipients(no_merge/actual)="
-             << no_merge.h_carrier_recipients << "/"
-             << l2.h_carrier_recipients
-             << " v_carriers(no_merge/ideal/actual)=" << no_merge.v_carriers
-             << "/" << ideal.v_carriers << "/" << actual_v_carriers;
-  SCOPED_TRACE(diagnostic.str());
-
-  ASSERT_TRUE(result.idle);
-  ASSERT_TRUE(result.perf_result.drained);
-  ASSERT_EQ(uint64_t(0), result.perf_result.protocol_errors);
-  ASSERT_EQ(static_cast<size_t>(expected_vrings + 1),
-            result.perf_result.ring_pmu.conn.domains.size());
-  ASSERT_EQ(static_cast<size_t>(expected_vrings),
-            result.perf_result.ring_pmu.rbrg.instances.size());
-  for (const TmRingRbrgStats& stats :
-       result.perf_result.ring_pmu.rbrg.instances) {
-    ASSERT_GT(stats.paths[static_cast<uint32_t>(
-                  TmRingRbrgPath::H_TO_V_DAT)].packets,
-              uint64_t(0));
-  }
-  ASSERT_EQ(no_merge.logical_read_requests, ha.rd_requests);
-  ASSERT_EQ(no_merge.backend_reads, ha.rd_requests);
-  ASSERT_EQ(ha.rd_requests,
-            ha.rd_entries_allocated + ha.backend_read_saved);
-  ASSERT_EQ(
-      ha.backend_read_saved,
-      ha.rd_merged_pending + ha.rd_merged_inflight + ha.rd_merged_responding);
-  ASSERT_GT(ha.backend_read_saved, uint64_t(0));
-  ASSERT_LT(l2.h_carriers, no_merge.h_carriers);
-  ASSERT_LT(actual_v_carriers, no_merge.v_carriers);
-  ASSERT_LE(ideal.h_carriers, no_merge.h_carriers);
-  ASSERT_LE(ideal.v_carriers, no_merge.v_carriers);
-  const uint64_t h_near_ideal_limit =
-      ideal.h_carriers + (no_merge.h_carriers - ideal.h_carriers + 3) / 4;
-  const uint64_t v_near_ideal_limit =
-      ideal.v_carriers + (no_merge.v_carriers - ideal.v_carriers + 3) / 4;
-  ASSERT_LE(l2.h_carriers, h_near_ideal_limit);
-  ASSERT_LE(actual_v_carriers, v_near_ideal_limit);
-  ASSERT_GE(ha.backend_read_saved,
-            (ideal.backend_read_saved * 3 + 3) / 4);
-  const AggregatedReadExpectation expected =
-      make_aggregated_read_expectation(
-          perf_case.bytes_per_master, masters, max_aicore_per_vring,
-          request_bytes, expectation);
-  ASSERT_EQ(expected.logical_responses, ha.rd_requests);
-  ASSERT_EQ(expected.responses_accepted, ha.rd_entries_allocated);
-  ASSERT_EQ(expected.logical_responses - expected.responses_accepted,
-            ha.backend_read_saved);
-  ASSERT_EQ(expected.responses_accepted, l2.responses_accepted);
-  ASSERT_EQ(expected.recipients, l2.h_carrier_recipients);
-  ASSERT_EQ(expected.carriers, actual_v_carriers);
-  ASSERT_EQ(uint64_t(0), ha.table_full_stall_cycles);
-  ASSERT_EQ(uint64_t(0), ha.waiter_full_stall_cycles);
-  ASSERT_EQ(uint64_t(0), ha.aggregation_closed_stall_cycles);
-  if (expectation == PerfAggregationExpectation::SCATTER) {
-    ASSERT_EQ(expected.carriers, l2.h_scatter_carriers);
-    ASSERT_EQ(uint64_t(0), l2.h_multicast_carriers);
-  } else {
-    ASSERT_EQ(expected.carriers, l2.h_multicast_carriers);
-    ASSERT_EQ(uint64_t(0), l2.h_scatter_carriers);
-  }
-  ASSERT_EQ(uint64_t(0), l2.h_unicast_carriers);
-  expect_l2_carrier_size_bucket(
-      l2, expected.physical_carrier_bytes, expected.carriers);
-  expect_perf_block_complete(result, perf_case);
-}
-
 void run_l2_hit_rate_sweep_case(const std::string& pattern_label,
                                 TmRingPerfPattern pattern,
                                 uint64_t address_stride) {
@@ -1140,43 +994,6 @@ TEST(RingBurstSweep, SameLineScatterL2MissRead) {
 TEST(RingBurstSweep, SharedL2MissRead) {
   run_burst_sweep_case("shared", TmRingPerfPattern::SEQUENTIAL_SHARED,
                        kMultiVringBenchmarkLineBytes);
-}
-
-TEST(RingAggregationWaveTest, SameLineScatterRead128B) {
-  run_aggregation_wave_test(
-      "wave_same_line_scatter_read_128b",
-      TmRingPerfPattern::SAME_LINE_SCATTER, kMultiVringBenchmarkMasters,
-      kMultiVringBenchmarkMaxAicorePerVring, 1, 0, 256,
-      PerfAggregationExpectation::SCATTER);
-}
-
-TEST(RingAggregationWaveTest, SameLineScatterRead256B) {
-  run_aggregation_wave_test(
-      "wave_same_line_scatter_read_256b",
-      TmRingPerfPattern::SAME_LINE_SCATTER, kMultiVringBenchmarkMasters,
-      kMultiVringBenchmarkMaxAicorePerVring, 2, 0, 256,
-      PerfAggregationExpectation::SCATTER);
-}
-
-TEST(RingAggregationWaveTest, SharedRead128B) {
-  run_aggregation_wave_test(
-      "wave_shared_read_128b", TmRingPerfPattern::SEQUENTIAL_SHARED,
-      kMultiVringBenchmarkMasters, kMultiVringBenchmarkMaxAicorePerVring,
-      1, 512, 256, PerfAggregationExpectation::MULTICAST);
-}
-
-TEST(RingAggregationWaveTest, SharedRead256B) {
-  run_aggregation_wave_test(
-      "wave_shared_read_256b", TmRingPerfPattern::SEQUENTIAL_SHARED,
-      kMultiVringBenchmarkMasters, kMultiVringBenchmarkMaxAicorePerVring,
-      2, 512, 256, PerfAggregationExpectation::MULTICAST);
-}
-
-TEST(RingAggregationWaveTest, SharedRead512B) {
-  run_aggregation_wave_test(
-      "wave_shared_read_512b", TmRingPerfPattern::SEQUENTIAL_SHARED,
-      kMultiVringBenchmarkMasters, kMultiVringBenchmarkMaxAicorePerVring,
-      4, 512, 256, PerfAggregationExpectation::MULTICAST);
 }
 
 }  // namespace

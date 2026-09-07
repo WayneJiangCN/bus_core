@@ -172,10 +172,6 @@ class TmRingNodeInterface {
     record_pop(state);
   }
 
-  bool push_eject(TmRingSubnet subnet, p_tm_pld_t pld) {
-    return push_eject(subnet, TmRingPortDir::CW, pld);
-  }
-
   bool push_eject(TmRingSubnet subnet, TmRingPortDir direction,
                   p_tm_pld_t pld) {
     QueueState& state = eject_state(subnet, direction);

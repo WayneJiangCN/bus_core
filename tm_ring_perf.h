@@ -23,11 +23,6 @@ enum class TmRingPerfPattern {
   SINGLE_TARGET
 };
 
-enum class TmRingPerfRunMode {
-  FREE_RUNNING,
-  AGGREGATION_WAVE
-};
-
 enum class TmRingPerfAggregationModel {
   NO_MERGE,
   IDEAL_TRACE_MERGE
@@ -46,7 +41,6 @@ struct TmRingPerfCase {
   uint64_t stride_bytes = 128;
   uint32_t target_id = 0;
   uint64_t drain_cycle_limit = 200000;
-  TmRingPerfRunMode run_mode = TmRingPerfRunMode::FREE_RUNNING;
   uint32_t max_aicore_per_vring = 0;
   uint32_t home_agent_waiters_per_entry = 0;
   uint32_t l2_response_latency = 0;

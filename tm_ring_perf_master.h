@@ -4,7 +4,6 @@
 #include <stdint.h>
 
 #include <cstddef>
-#include <memory>
 #include <unordered_map>
 #include <unordered_set>
 #include <vector>
@@ -12,19 +11,6 @@
 #include "pem_biu.h"
 #include "tm_engine.h"
 #include "tm_ring_perf.h"
-
-class TmRingPerfWaveCoordinator {
- public:
-  explicit TmRingPerfWaveCoordinator(uint32_t masters);
-
-  bool can_issue(uint32_t master, uint64_t wave) const;
-  void record_completion(uint32_t master, uint64_t wave);
-  uint64_t current_wave() const { return current_wave_; }
-
- private:
-  uint64_t current_wave_ = 0;
-  std::vector<uint64_t> completed_waves_;
-};
 
 class TmRingPerfMaster : public tm_engine::TmModule {
  public:
@@ -34,9 +20,6 @@ class TmRingPerfMaster : public tm_engine::TmModule {
   void config(const std::string& name, tm_engine::p_tm_clk_t clk,
               uint32_t master_port,
               const std::vector<TmRingPerfTxn>& transactions,
-              const std::shared_ptr<TmRingPerfWaveCoordinator>&
-                  wave_coordinator =
-                      std::shared_ptr<TmRingPerfWaveCoordinator>(),
               uint32_t max_outstanding = 0);
   void attach(p_pem_biu_t biu);
   void build();
@@ -72,9 +55,7 @@ class TmRingPerfMaster : public tm_engine::TmModule {
   uint32_t max_outstanding_ = 0;
   std::unordered_map<uint64_t, uint64_t> issue_cycles_;
   std::unordered_map<uint64_t, uint32_t> outstanding_sizes_;
-  std::unordered_map<uint64_t, uint64_t> outstanding_waves_;
   std::unordered_set<uint64_t> completed_gids_;
-  std::shared_ptr<TmRingPerfWaveCoordinator> wave_coordinator_;
   TmRingPerfMasterStats stats_;
 };
 

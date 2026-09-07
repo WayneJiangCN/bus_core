@@ -1,6 +1,7 @@
 #include "tm_ring_mem_port.h"
 
 #include <cstring>
+#include <stdexcept>
 
 #include "tm_pld.h"
 
@@ -112,18 +113,14 @@ bool TmRingMemPort::idle() const {
          pending_rd_rsp_ == 0 &&
          (home_agent_ == nullptr || home_agent_->idle());
 }
-// Attach a communication interface to the memory port.
-void TmRingMemPort::attach(p_tm_com_inf_t inf) {
-  inf_->connect(inf);
-#if TM_RING_LOG_ENABLE
-  PEM_LOG_INFO(log_, "[{0:d}] attach_mem_inf target:{1:d}", time(), target_id_);
-#endif
-}
-
 void TmRingMemPort::attach(p_tm_mem_t mem) {
   if (mem != nullptr) {
     mem_ = mem;
-    attach(mem->rw_inf_);
+    inf_->connect(mem->rw_inf_);
+#if TM_RING_LOG_ENABLE
+    PEM_LOG_INFO(log_, "[{0:d}] attach_mem_inf target:{1:d}", time(),
+                 target_id_);
+#endif
   }
 }
 
@@ -424,7 +421,7 @@ bool TmRingMemPort::issue_home_agent_backend_read() {
  * 结果/重试：成功时 transaction 进入 RESPONDING；不匹配响应不弹出，留给普通读响应路径处理。
  */
 bool TmRingMemPort::capture_home_agent_backend_rsp() {
-  if (home_agent_ == nullptr || rd_rsp_port_num_ == 0) {
+  if (home_agent_ == nullptr) {
     return false;
   }
 
@@ -482,9 +479,7 @@ bool TmRingMemPort::send_home_agent_l2_rsp() {
   }
 
   home_agent_->commit_l2_response(result);
-  if (pending_rd_rsp_ != 0) {
-    pending_rd_rsp_--;
-  }
+  retire_pending_read();
 #if TM_RING_LOG_ENABLE
   PEM_LOG_INFO(log_,
                "[{0:d}] handoff_home_agent_rsp target:{1:d} gid:{2:d} "
@@ -530,7 +525,7 @@ void TmRingMemPort::recv_mem_rsp() {
  * 结果/重试：成功才 pop 后端响应并减少 pending_rd_rsp_；Buffer 或 DAT 反压时保持原响应。
  */
 bool TmRingMemPort::recv_rd_cmd_rsp() {
-  if (l2_buffer_ == nullptr || rd_rsp_port_num_ == 0) {
+  if (l2_buffer_ == nullptr) {
     return false;
   }
 
@@ -563,9 +558,7 @@ bool TmRingMemPort::recv_rd_cmd_rsp() {
       continue;
     }
     pop_response(PldCmd::RD, backend_lane);
-    if (pending_rd_rsp_ != 0) {
-      pending_rd_rsp_--;
-    }
+    retire_pending_read();
 #if TM_RING_LOG_ENABLE
     PEM_LOG_INFO(log_,
                  "[{0:d}] send_rd_rsp target:{1:d} gid:{2:d} "
@@ -578,6 +571,13 @@ bool TmRingMemPort::recv_rd_cmd_rsp() {
     return true;
   }
   return false;
+}
+
+void TmRingMemPort::retire_pending_read() {
+  if (pending_rd_rsp_ == 0) {
+    throw std::logic_error("Ring MemPort read-response count underflow");
+  }
+  --pending_rd_rsp_;
 }
 
 /*

@@ -1,6 +1,6 @@
 #include "pem_trdemo.h"
 
-#include "tm_ring_types.h"
+#include "../tm_ring_types.h"
 
 #include <algorithm>
 #include <iostream>
