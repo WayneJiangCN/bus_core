@@ -25,6 +25,8 @@ constexpr uint32_t kMultiVringBenchmarkBeatBytes = 128;
 constexpr uint32_t kL2SweepPeakBytesPerCycle = 512;
 constexpr uint32_t kL2PathSweepOutstandingPerMaster = 128;
 constexpr uint32_t kMultiVringBenchmarkBYTES_PER_MASTER =  1024* 1024;// 1 MiB
+constexpr uint64_t kSameAddressBytesPerMaster = 128 * 1024;
+constexpr uint32_t kSameAddressOutstandingPerMaster = 64;
 
 struct PerfSmokeResult {
   std::vector<TmRingPerfMasterStats> master_stats;
@@ -75,7 +77,9 @@ std::string perf_config_path() {
 
 PerfSmokeResult run_perf_smoke(const TmRingPerfCase& perf_case,
                                const PerfOverrides& overrides =
-                                   PerfOverrides()) {
+                                   PerfOverrides(),
+                               const std::vector<TmRingPerfTxn>*
+                                   explicit_trace = nullptr) {
   const std::string config_path = perf_config_path();
   if (config_path.empty()) {
     ADD_FAILURE() << "pem_config_cloud.toml is not available";
@@ -140,8 +144,11 @@ PerfSmokeResult run_perf_smoke(const TmRingPerfCase& perf_case,
   TmRingTopology topology;
   topology.config(ring_cfg);
   const std::vector<TmRingPerfTxn> trace =
-      tm_ring_build_perf_trace(effective_case, ring_cfg->num_masters,
-                               topology, ring_cfg->ring_link_width_bytes);
+      explicit_trace == nullptr
+          ? tm_ring_build_perf_trace(effective_case, ring_cfg->num_masters,
+                                     topology,
+                                     ring_cfg->ring_link_width_bytes)
+          : *explicit_trace;
   const TmRingPerfEstimate estimate =
       tm_ring_estimate_fabric(trace, topology, *ring_cfg,
                               TmRingPerfAggregationModel::IDEAL_TRACE_MERGE);
@@ -360,6 +367,27 @@ std::string format_perf_sweep_summary(
       << " queue_full_stalls=" << perf.memory_stats.queue_full_stall_cycles
       << " hbm_osd_peak=" << perf.memory_stats.outstanding_peak
       << " p99=" << perf.latency_p99
+      << " status=" << (pass ? "PASS" : "INCOMPLETE") << "\n";
+  return out.str();
+}
+
+std::string format_same_address_core_summary(
+    const PerfSmokeResult& result, const std::string& scenario) {
+  const TmRingPerfResult& perf = result.perf_result;
+  const TmRingHomeAgentStats& ha = perf.ring_pmu.ha.total;
+  const TmRingL2BufferStats& l2 = perf.ring_pmu.l2.total;
+  const bool pass = result.idle && perf.drained && perf.protocol_errors == 0;
+
+  std::ostringstream out;
+  out << std::fixed << std::setprecision(6)
+      << "SAME_ADDRESS_CORE scenario=" << scenario
+      << " e2e_bpc=" << perf.end_to_end_bandwidth_bpc
+      << " p99=" << perf.latency_p99
+      << " backend_reads=" << ha.rd_backend_issued
+      << " backend_read_saved=" << ha.backend_read_saved
+      << " write_hazard_stalls=" << ha.write_hazard_stall_cycles
+      << " h_carriers=" << l2.h_carriers
+      << " h_carrier_recipients=" << l2.h_carrier_recipients
       << " status=" << (pass ? "PASS" : "INCOMPLETE") << "\n";
   return out.str();
 }
@@ -840,6 +868,138 @@ void run_burst_sweep_case(const std::string& pattern_label,
   }
 }
 
+std::vector<TmRingPerfTxn> build_same_address_read_write_trace(
+    const TmRingPerfCase& perf_case, uint32_t beat_bytes) {
+  std::vector<TmRingPerfTxn> trace;
+  if (perf_case.op != TmRingPerfOp::READ_WRITE) {
+    ADD_FAILURE() << "same-address conflict trace must be read/write";
+    return trace;
+  }
+  const uint32_t request_bytes =
+      tm_ring_perf_request_bytes(perf_case, beat_bytes);
+  if (perf_case.bytes_per_master == 0 ||
+      perf_case.bytes_per_master % request_bytes != 0 ||
+      perf_case.stride_bytes == 0) {
+    ADD_FAILURE() << "same-address conflict trace is not request aligned";
+    return trace;
+  }
+
+  const uint64_t transactions_per_master =
+      perf_case.bytes_per_master / request_bytes;
+  trace.reserve(static_cast<size_t>(perf_case.active_masters) *
+                static_cast<size_t>(transactions_per_master) * 2);
+  for (uint32_t master = 0; master < perf_case.active_masters; ++master) {
+    for (uint64_t ordinal = 0; ordinal < transactions_per_master;
+         ++ordinal) {
+      const uint64_t address =
+          perf_case.read_base + ordinal * perf_case.stride_bytes;
+      TmRingPerfTxn read;
+      read.master_port = master;
+      read.cmd = PldCmd::RD;
+      read.addr = address;
+      read.size = request_bytes;
+      read.ordinal = ordinal * 2;
+      trace.push_back(read);
+
+      TmRingPerfTxn write = read;
+      write.cmd = PldCmd::WR;
+      write.ordinal = ordinal * 2 + 1;
+      trace.push_back(write);
+    }
+  }
+  return trace;
+}
+
+enum class SameAddressExpectation {
+  NO_MERGE_READ,
+  SHARED_READ,
+  SCATTER_READ,
+  PRIVATE_READ_WRITE,
+  SAME_ADDRESS_READ_WRITE
+};
+
+void run_same_address_sweep_case(
+    const std::string& scenario, TmRingPerfOp op,
+    TmRingPerfPattern pattern, uint64_t address_stride,
+    SameAddressExpectation expectation) {
+  TmRingPerfCase perf_case = make_128kb_case(
+      "same_address_" + scenario, op, pattern,
+      kMultiVringBenchmarkMasters, 1);
+  perf_case.bytes_per_master = kSameAddressBytesPerMaster;
+  perf_case.max_outstanding_per_master =
+      kSameAddressOutstandingPerMaster;
+  perf_case.stride_bytes = address_stride;
+
+  const PerfOverrides overrides = make_l2_path_sweep_overrides(0);
+  std::vector<TmRingPerfTxn> explicit_trace;
+  const std::vector<TmRingPerfTxn>* trace_override = nullptr;
+  if (expectation == SameAddressExpectation::SAME_ADDRESS_READ_WRITE) {
+    explicit_trace = build_same_address_read_write_trace(
+        perf_case, overrides.ring_link_width_bytes);
+    const uint64_t transactions_per_master =
+        perf_case.bytes_per_master /
+        tm_ring_perf_request_bytes(perf_case,
+                                   overrides.ring_link_width_bytes);
+    ASSERT_EQ(static_cast<size_t>(perf_case.active_masters *
+                                  transactions_per_master * 2),
+              explicit_trace.size());
+    for (size_t index = 0; index < explicit_trace.size(); index += 2) {
+      EXPECT_EQ(PldCmd::RD, explicit_trace[index].cmd);
+      EXPECT_EQ(PldCmd::WR, explicit_trace[index + 1].cmd);
+      EXPECT_EQ(explicit_trace[index].addr,
+                explicit_trace[index + 1].addr);
+    }
+    for (uint32_t master = 1; master < perf_case.active_masters; ++master) {
+      const size_t master_start =
+          static_cast<size_t>(master * transactions_per_master * 2);
+      EXPECT_EQ(explicit_trace.front().addr,
+                explicit_trace[master_start].addr);
+    }
+    trace_override = &explicit_trace;
+  }
+
+  const PerfSmokeResult result =
+      run_perf_smoke(perf_case, overrides, trace_override);
+  expect_perf_block_complete(result, perf_case, false);
+  const TmRingHomeAgentStats& ha = result.perf_result.ring_pmu.ha.total;
+  const TmRingL2BufferStats& l2 = result.perf_result.ring_pmu.l2.total;
+
+  switch (expectation) {
+    case SameAddressExpectation::NO_MERGE_READ:
+      EXPECT_EQ(uint64_t(0), ha.backend_read_saved);
+      EXPECT_EQ(uint64_t(0), ha.write_hazard_stall_cycles);
+      EXPECT_GT(l2.h_unicast_carriers, uint64_t(0));
+      EXPECT_EQ(uint64_t(0), l2.h_multicast_carriers);
+      EXPECT_EQ(uint64_t(0), l2.h_scatter_carriers);
+      break;
+    case SameAddressExpectation::SHARED_READ:
+      EXPECT_GT(ha.backend_read_saved, uint64_t(0));
+      EXPECT_EQ(uint64_t(0), ha.write_hazard_stall_cycles);
+      EXPECT_GT(l2.h_multicast_carriers, uint64_t(0));
+      EXPECT_EQ(uint64_t(0), l2.h_scatter_carriers);
+      break;
+    case SameAddressExpectation::SCATTER_READ:
+      EXPECT_GT(ha.backend_read_saved, uint64_t(0));
+      EXPECT_EQ(uint64_t(0), ha.write_hazard_stall_cycles);
+      EXPECT_GT(l2.h_scatter_carriers, uint64_t(0));
+      EXPECT_EQ(uint64_t(0), l2.h_multicast_carriers);
+      break;
+    case SameAddressExpectation::PRIVATE_READ_WRITE:
+      EXPECT_EQ(uint64_t(0), ha.backend_read_saved);
+      EXPECT_EQ(uint64_t(0), ha.write_hazard_stall_cycles);
+      EXPECT_GT(result.perf_result.memory_stats.accepted_write_bytes,
+                uint64_t(0));
+      break;
+    case SameAddressExpectation::SAME_ADDRESS_READ_WRITE:
+      EXPECT_GT(ha.write_hazard_stall_cycles, uint64_t(0));
+      EXPECT_GT(result.perf_result.memory_stats.accepted_write_bytes,
+                uint64_t(0));
+      break;
+  }
+
+  std::cout << format_same_address_core_summary(result, scenario);
+}
+
 TEST(RingPerfBenchmark, MultiVringPrivateRead128B) {
   run_multi_vring_128kb_benchmark(
       "multi_vring_private_read_128b", TmRingPerfOp::READ,
@@ -994,6 +1154,42 @@ TEST(RingBurstSweep, SameLineScatterL2MissRead) {
 TEST(RingBurstSweep, SharedL2MissRead) {
   run_burst_sweep_case("shared", TmRingPerfPattern::SEQUENTIAL_SHARED,
                        kMultiVringBenchmarkLineBytes);
+}
+
+TEST(RingSameAddressSweep, NoMergeRead128B) {
+  run_same_address_sweep_case(
+      "nomerge_read", TmRingPerfOp::READ,
+      TmRingPerfPattern::STRIDED_PRIVATE, kMultiVringBenchmarkLineBytes,
+      SameAddressExpectation::NO_MERGE_READ);
+}
+
+TEST(RingSameAddressSweep, SharedRead128B) {
+  run_same_address_sweep_case(
+      "shared_read", TmRingPerfOp::READ,
+      TmRingPerfPattern::SEQUENTIAL_SHARED, kMultiVringBenchmarkLineBytes,
+      SameAddressExpectation::SHARED_READ);
+}
+
+TEST(RingSameAddressSweep, SameLineScatterRead128B) {
+  run_same_address_sweep_case(
+      "scatter_read", TmRingPerfOp::READ,
+      TmRingPerfPattern::SAME_LINE_SCATTER, 0,
+      SameAddressExpectation::SCATTER_READ);
+}
+
+TEST(RingSameAddressSweep, PrivateReadWrite128B) {
+  run_same_address_sweep_case(
+      "private_read_write", TmRingPerfOp::READ_WRITE,
+      TmRingPerfPattern::STRIDED_PRIVATE, kMultiVringBenchmarkLineBytes,
+      SameAddressExpectation::PRIVATE_READ_WRITE);
+}
+
+TEST(RingSameAddressSweep, SameAddressReadWrite128B) {
+  run_same_address_sweep_case(
+      "same_address_read_write", TmRingPerfOp::READ_WRITE,
+      TmRingPerfPattern::SEQUENTIAL_PRIVATE,
+      kMultiVringBenchmarkLineBytes,
+      SameAddressExpectation::SAME_ADDRESS_READ_WRITE);
 }
 
 }  // namespace

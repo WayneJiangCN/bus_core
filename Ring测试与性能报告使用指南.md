@@ -1,6 +1,6 @@
 # Ring 测试与性能报告使用指南
 
-本文说明如何运行 Ring Google Test、保存测试日志、生成 HTML 性能报告，以及生成 L2 命中率、Outstanding 和 Burst 扫描图。命令以 Linux 工程目录为例：
+本文说明如何运行 Ring Google Test、保存测试日志、生成 HTML 性能报告，以及生成 L2 命中率、Outstanding、Burst 和同地址访问专题图。命令以 Linux 工程目录为例：
 
 ```text
 ~/wayne/model_training/
@@ -22,7 +22,7 @@
 cd ~/wayne/model_training/build/exe
 
 bash ../../src/aicore/run_ring_test.sh \
-  --gtest_filter='RingPerfBenchmark.*:RingL2HitRateSweep.*:RingOutstandingSweep.*:RingBurstSweep.*'
+  --gtest_filter='RingPerfBenchmark.*:RingL2HitRateSweep.*:RingOutstandingSweep.*:RingBurstSweep.*:RingSameAddressSweep.*'
 ```
 
 测试结束后生成两份日志：
@@ -189,6 +189,7 @@ bash ../../src/aicore/run_ring_test.sh
 | `RingL2HitRateSweep.*` | 扫描 L2 命中率 | 有效带宽、HBM 带宽和 P99 延迟随命中率变化 |
 | `RingOutstandingSweep.*` | 扫描每个 Master 的 Outstanding | 并发度、带宽、延迟、后端压力和阻塞关系 |
 | `RingBurstSweep.*` | 扫描请求大小或 Burst 长度 | 请求粒度对包数量、DAT/HBM 流量和性能的影响 |
+| `RingSameAddressSweep.*` | 比较同地址读取、同行分段读取和同地址读写冲突 | 后端读取节省、H-Ring 承载包复用、写冲突等待、带宽和 P99 延迟 |
 
 推荐先运行一个固定场景确认功能，再执行完整扫描：
 
@@ -310,6 +311,51 @@ burst_charts/request_bytes_vs_hbm.png
 burst_charts/request_bytes_vs_p99.png
 burst_charts/request_bytes_vs_packet_counts.png
 ```
+
+### 6.4 同地址访问专题
+
+该专题固定 8 个 Master、每条 V-Ring 最多 4 个 Master、128 B 请求、
+每 Master 最多 64 个在途请求和 0% L2 命中率，对比以下五种场景：
+
+- `nomerge_read`：不同 Master 访问独立缓存行，作为无共享读取基线；
+- `shared_read`：不同 Master 读取相同地址和相同数据范围；
+- `scatter_read`：不同 Master 读取同一缓存行中的不同数据范围；
+- `private_read_write`：读写地址空间互相独立，作为无同址冲突基线；
+- `same_address_read_write`：不同 Master 对相同地址持续发出读写请求。
+
+云端运行测试后，只提取每个场景的一行核心结果：
+
+```bash
+bash ../../src/aicore/run_ring_test.sh \
+  --gtest_filter='RingSameAddressSweep.*'
+
+grep '^SAME_ADDRESS_CORE ' logs/full/<时间戳>.log \
+  > same_address_core.txt
+```
+
+完整测试日志保留在云端，只需将 `same_address_core.txt` 复制到本地。该文件
+固定包含五行场景结果，每行仅保留有效带宽、P99 延迟、后端读取次数、节省的
+后端读取次数、写冲突等待周期、H-Ring 承载包数、接收端数量和通过状态。
+
+本地生成 CSV 和图片：
+
+```bash
+python ../../src/aicore/tools/plot_same_address_sweep.py \
+  same_address_core.txt \
+  -o same_address_charts
+```
+
+主要输出：
+
+```text
+same_address_charts/same_address_core_summary.csv
+same_address_charts/same_address_bandwidth_latency.png
+same_address_charts/same_address_backend_traffic.png
+same_address_charts/same_address_fanout_conflict.png
+```
+
+该专题不包含 Atomic；在原子操作的顺序、互斥和完成语义加入模型前，不得
+把同址普通读写结果解释为 Atomic 性能。
 
 ## 7. Shell 指令说明
 

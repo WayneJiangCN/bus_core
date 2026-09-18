@@ -1,0 +1,18 @@
+{
+  "$schema": "ppt-edit-spec/v1",
+  "selected_slides": [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28],
+  "edits": [
+    {
+      "slide": 3,
+      "address": {"shape_id": 8, "paragraph": 0},
+      "expected_text": "数据搬运通路（MTE）与加载/存储通路（LD/ST）",
+      "new_text": "MTE数据搬运与LD/ST访存均经过片上互连和存储系统；"
+    },
+    {
+      "slide": 3,
+      "address": {"shape_id": 8, "paragraph": 1},
+      "expected_text": "需要评估请求粒度、并发深度和反压对完成时间的影响。",
+      "new_text": "请求大小、在途数量和下游反压共同决定访存延迟与有效带宽。"
+    }
+  ]
+}
